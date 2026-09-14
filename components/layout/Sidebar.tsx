@@ -17,11 +17,14 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar() {
-  const { 
-    activeTab, 
-    setActiveTab, 
-    setIsSpotlightOpen 
+  const {
+    activeTab,
+    setActiveTab,
+    setIsSpotlightOpen,
+    alerts
   } = useInventory();
+
+  const unreadAlertsCount = alerts.filter((a) => !a.read).length;
 
   const navItems: {
     id: NavigationTab | 'scanner';
@@ -87,6 +90,14 @@ export default function Sidebar() {
                 }`} />
                 <span>{item.label}</span>
               </div>
+
+              {item.id === 'alerts' && unreadAlertsCount > 0 && (
+                <span className={`min-w-4 h-4 px-1 rounded-full text-[9px] font-medium flex items-center justify-center ${
+                  isActive ? 'bg-white text-red-600' : 'bg-red-600 text-white'
+                }`}>
+                  {unreadAlertsCount}
+                </span>
+              )}
 
               {isActive && <ChevronRight className="w-3.5 h-3.5 text-white/90" />}
             </button>
