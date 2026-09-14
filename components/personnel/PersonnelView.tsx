@@ -1,0 +1,437 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useInventory } from '@/context/InventoryContext';
+import { Employee, ITAsset, TelecomPlan, StarlinkKit } from '@/types/inventory';
+import DataTable, { Column } from '@/components/common/DataTable';
+import { 
+  Users, 
+  UserPlus, 
+  Download, 
+  Mail, 
+  Phone, 
+  Building, 
+  Laptop, 
+  Smartphone, 
+  Satellite, 
+  Edit2, 
+  Trash2, 
+  Eye, 
+  X, 
+  ShieldCheck, 
+  Briefcase,
+  Layers
+} from 'lucide-react';
+
+export default function PersonnelView() {
+  const { 
+    employees, 
+    openEmployeeModal, 
+    deleteEmployee, 
+    getEmployeeAssignedAssets, 
+    formatCurrency, 
+    exportCSV 
+  } = useInventory();
+
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  const columns: Column<Employee>[] = [
+    {
+      key: 'employeeId',
+      label: 'Matricule',
+      sortable: true,
+      width: '120px',
+      render: (emp) => (
+        <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
+          {emp.employeeId}
+        </span>
+      )
+    },
+    {
+      key: 'fullName',
+      label: 'Collaborateur',
+      sortable: true,
+      render: (emp) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-rose-700 text-white font-medium text-xs flex items-center justify-center shrink-0 shadow-xs">
+            {emp.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </div>
+          <div>
+            <div className="font-semibold text-slate-900">{emp.fullName}</div>
+            <div className="text-[11px] text-slate-500">{emp.email}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'department',
+      label: 'Département & Poste',
+      sortable: true,
+      render: (emp) => (
+        <div>
+          <div className="font-medium text-slate-800">{emp.jobTitle}</div>
+          <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+            <Building className="w-3 h-3 text-slate-400" />
+            <span>{emp.department}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'location',
+      label: 'Site d\'affectation',
+      sortable: true,
+      render: (emp) => (
+        <span className="text-slate-600 text-xs">{emp.location}</span>
+      )
+    },
+    {
+      key: 'status',
+      label: 'Statut',
+      sortable: true,
+      align: 'center',
+      render: (emp) => {
+        if (emp.status === 'active') {
+          return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Actif
+            </span>
+          );
+        } else if (emp.status === 'on_leave') {
+          return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+              En mission
+            </span>
+          );
+        }
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+            Inactif
+          </span>
+        );
+      }
+    },
+    {
+      key: 'dotation',
+      label: 'Matériels Assignés',
+      align: 'center',
+      render: (emp) => {
+        const assets = getEmployeeAssignedAssets(emp.id);
+        const totalCount = assets.it.length + assets.plans.length + assets.starlink.length;
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            {totalCount === 0 ? (
+              <span className="text-slate-400 text-xs italic">Aucun</span>
+            ) : (
+              <div className="flex items-center gap-1">
+                {assets.it.length > 0 && (
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium" title={`${assets.it.length} équipement(s) IT`}>
+                    <Laptop className="w-3 h-3 text-red-600" />
+                    <span>{assets.it.length}</span>
+                  </span>
+                )}
+                {assets.plans.length > 0 && (
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium" title={`${assets.plans.length} forfait(s) / SIM`}>
+                    <Smartphone className="w-3 h-3 text-orange-600" />
+                    <span>{assets.plans.length}</span>
+                  </span>
+                )}
+                {assets.starlink.length > 0 && (
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium" title={`${assets.starlink.length} kit(s) Starlink`}>
+                    <Satellite className="w-3 h-3 text-cyan-600" />
+                    <span>{assets.starlink.length}</span>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      align: 'right',
+      render: (emp) => (
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setSelectedEmployee(emp)}
+            title="Consulter la dotation"
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-red-600 transition-colors shadow-2xs"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => openEmployeeModal(emp)}
+            title="Modifier collaborateur"
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`Supprimer la fiche de ${emp.fullName} (${emp.employeeId}) ?`)) {
+                deleteEmployee(emp.id);
+              }
+            }}
+            title="Supprimer"
+            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors shadow-2xs"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Top Banner */}
+      <div className="lebron-card p-5 bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-md border border-slate-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold tracking-widest uppercase text-red-300">
+              LEBRONSA S.A. • RESSOURCES HUMAINES & DOTATIONS
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
+            Répertoire du Personnel & Collaborateurs
+          </h1>
+          <p className="text-xs text-slate-300 mt-1">
+            Suivi nominatif des équipements IT, flottes mobiles et terminaux satellite attribués à chaque salarié.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/15 text-center">
+            <span className="text-[10px] text-slate-300 block uppercase font-medium">Collaborateurs</span>
+            <span className="text-xl font-bold text-white">{employees.length}</span>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/15 text-center">
+            <span className="text-[10px] text-slate-300 block uppercase font-medium">En Mission</span>
+            <span className="text-xl font-bold text-amber-300">
+              {employees.filter(e => e.status === 'on_leave').length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Data Table */}
+      <DataTable
+        items={employees}
+        columns={columns}
+        searchPlaceholder="Rechercher collaborateur par nom, matricule, département, email..."
+        searchFields={['fullName', 'employeeId', 'department', 'email', 'jobTitle', 'location']}
+        filters={[
+          {
+            key: 'department',
+            label: 'Département',
+            options: [
+              { label: 'Direction IT & Cloud', value: 'Direction IT & Cloud' },
+              { label: 'Data & IA', value: 'Data & Intelligence Artificielle' },
+              { label: 'DevOps & Télécoms', value: 'DevOps & Télécoms' },
+              { label: 'Opérations Chantiers', value: 'Opérations Chantiers & Mines' },
+              { label: 'Opérations Maritimes', value: 'Opérations Maritimes' },
+              { label: 'Logistique & Stocks', value: 'Logistique & Approvisionnements' },
+              { label: 'Direction Générale', value: 'Direction Générale & RH' }
+            ]
+          },
+          {
+            key: 'status',
+            label: 'Statut',
+            options: [
+              { label: 'Actif en poste', value: 'active' },
+              { label: 'En mission', value: 'on_leave' },
+              { label: 'Inactif', value: 'inactive' }
+            ]
+          }
+        ]}
+        actionButtons={
+          <>
+            <button
+              onClick={() => exportCSV('personnel')}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
+
+            <button
+              onClick={() => openEmployeeModal()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Nouveau Collaborateur</span>
+            </button>
+          </>
+        }
+        onRowClick={(emp) => setSelectedEmployee(emp)}
+      />
+
+      {/* Detailed Side Panel / Modal for Selected Employee */}
+      {selectedEmployee && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+          <div className="lebron-card w-full max-w-2xl bg-white border border-slate-200 shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-4 border-b border-slate-200">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white font-medium text-base flex items-center justify-center shadow-sm">
+                  {selectedEmployee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-900">{selectedEmployee.fullName}</h3>
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-semibold">
+                      {selectedEmployee.employeeId}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {selectedEmployee.jobTitle} • {selectedEmployee.department}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedEmployee(null)}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Employee Contact & Info Cards */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[11px] text-slate-400 font-medium">Email Professionnel</span>
+                <div className="text-slate-800 font-semibold mt-0.5 truncate">{selectedEmployee.email}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[11px] text-slate-400 font-medium">Téléphone</span>
+                <div className="text-slate-800 font-semibold mt-0.5">{selectedEmployee.phone}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[11px] text-slate-400 font-medium">Site d&apos;affectation</span>
+                <div className="text-slate-800 font-semibold mt-0.5">{selectedEmployee.location}</div>
+              </div>
+            </div>
+
+            {/* Dotation / Assigned Assets Section */}
+            {(() => {
+              const assets = getEmployeeAssignedAssets(selectedEmployee.id);
+              const totalVal = assets.totalValue;
+
+              return (
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        Dotation Matériel & Lignes en cours
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Équipements actuellement sous la garde de ce collaborateur
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block font-medium">Valeur Totale Dotation</span>
+                      <span className="text-sm font-bold text-red-700">{formatCurrency(totalVal)}</span>
+                    </div>
+                  </div>
+
+                  {assets.it.length === 0 && assets.plans.length === 0 && assets.starlink.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      Aucun équipement informatique ou forfait n&apos;est actuellement assigné à ce salarié.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* IT Assets */}
+                      {assets.it.map(item => (
+                        <div key={item.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-700 flex items-center justify-center shrink-0">
+                              <Laptop className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-slate-900 text-xs">{item.name}</div>
+                              <div className="text-[11px] text-slate-500 font-mono">
+                                Tag: {item.assetTag} • SN: {item.serialNumber}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right text-xs">
+                            <div className="font-bold text-slate-900">{formatCurrency(item.purchaseCost)}</div>
+                            <span className="text-[10px] text-emerald-600 font-semibold">En service</span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Telecom Plans */}
+                      {assets.plans.map(plan => (
+                        <div key={plan.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                              <Smartphone className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-slate-900 text-xs">{plan.name} ({plan.operator})</div>
+                              <div className="text-[11px] text-slate-500 font-mono">
+                                N°: {plan.phoneNumber || 'Data SIM'} • {plan.simType}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right text-xs">
+                            <div className="font-bold text-orange-600">{formatCurrency(plan.monthlyCost)}/mois</div>
+                            <span className="text-[10px] text-slate-500">{plan.dataUsedGb} Go consommés</span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Starlink Kits */}
+                      {assets.starlink.map(kit => (
+                        <div key={kit.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0">
+                              <Satellite className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-slate-900 text-xs">{kit.name}</div>
+                              <div className="text-[11px] text-slate-500 font-mono">
+                                Kit: {kit.kitNumber} • Dish: {kit.dishSerial}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right text-xs">
+                            <div className="font-bold text-cyan-700">{kit.tier}</div>
+                            <span className="text-[10px] text-emerald-600 font-semibold">Terminal actif</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div className="mt-6 pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  const emp = selectedEmployee;
+                  setSelectedEmployee(null);
+                  openEmployeeModal(emp);
+                }}
+                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors"
+              >
+                Modifier la fiche
+              </button>
+              <button
+                onClick={() => setSelectedEmployee(null)}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-xs shadow-xs"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
