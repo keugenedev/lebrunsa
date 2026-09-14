@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import "remixicon/fonts/remixicon.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -11,7 +12,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "Lebronsa S.A. | Système d'Inventaire, Équipements & Flotte",
-  description: "Plateforme professionnelle d'inventaire d'entreprise pour Lebronsa S.A. : équipements IT, forfaits télécoms, terminaux Starlink, électronique et dotations collaborateurs.",
+  description: "Plateforme professionnelle d'inventaire d'entreprise pour Lebronsa S.A. : équipements IT, forfaits télécoms, terminaux Starlink, électronique et affectations collaborateurs.",
   icons: {
     icon: "/Lebrunog.png",
   }

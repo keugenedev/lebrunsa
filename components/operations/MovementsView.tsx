@@ -209,10 +209,10 @@ export default function MovementsView() {
         actionButtons={
           <button
             onClick={() => setIsNewMoveModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
+            className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ Enregistrer un Prêt / Sortie</span>
+            <i className="ri-add-line text-base"></i>
+            <span>Enregistrer un Prêt / Sortie</span>
           </button>
         }
       />
@@ -305,7 +305,7 @@ export default function MovementsView() {
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="ex: Dotation pour mission sur site..."
+                  placeholder="ex: Affectation pour mission sur site..."
                   className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none"
                 />
               </div>

@@ -1,18 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
-  ChevronsRight, 
-  ArrowUpDown, 
-  ArrowUp, 
-  ArrowDown, 
-  X, 
-  SlidersHorizontal 
-} from 'lucide-react';
 
 export interface Column<T> {
   key: string;
@@ -147,195 +135,201 @@ export default function DataTable<T extends { id: string }>({
   const paginatedItems = processedItems.slice(startIndex, endIndex);
 
   return (
-    <div className="space-y-4">
-      {/* Table Header Section */}
+    <div className="w-full max-w-full overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 sm:px-6 shadow-xs">
+      {/* En-tête avec Titre à gauche, Boutons d'action à droite */}
       {(title || actionButtons) && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            {title && (
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold tracking-tight text-slate-800">{title}</h2>
-                {badge}
-              </div>
-            )}
-            {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between w-full max-w-full min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {title}
+              </h3>
+              {badge}
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              {subtitle || `${processedItems.length} élément(s)`}
+            </p>
           </div>
-          {actionButtons && <div className="flex items-center gap-2.5">{actionButtons}</div>}
+
+          {actionButtons && (
+            <div className="flex flex-wrap items-center gap-2 max-w-full min-w-0">
+              {actionButtons}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Control Bar: Search & Filters */}
-      <div className="lebron-card p-3.5 flex flex-col md:flex-row items-center justify-between gap-3 bg-white">
-        <div className="flex items-center gap-3 w-full md:w-auto flex-1">
-          {/* Search bar */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="w-full pl-9 pr-8 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
-            />
-            {search && (
-              <button
-                onClick={() => handleSearchChange('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+      {/* Barre d'outils de filtres responsive */}
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 w-full max-w-full min-w-0">
+        <div className="min-w-0 w-full max-w-full relative">
+          <input
+            value={search}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            placeholder={searchPlaceholder}
+            className="h-11 w-full min-w-0 max-w-full truncate rounded-lg border border-gray-300 bg-white pl-10 pr-9 py-2.5 text-sm text-gray-800 shadow-xs placeholder:text-gray-400 focus:border-red-400 focus:outline-hidden focus:ring-3 focus:ring-red-500/10"
+          />
+          <i className="ri-search-line absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
+          {search && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+            >
+              <i className="ri-close-line text-base"></i>
+            </button>
+          )}
+        </div>
+
+        {filters && filters.map((filter) => (
+          <div key={filter.key} className="min-w-0 w-full max-w-full">
+            <select
+              value={activeFilters[filter.key] || 'all'}
+              onChange={(event) => handleFilterChange(filter.key, event.target.value)}
+              className="h-11 w-full min-w-0 max-w-full truncate rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-800 shadow-xs focus:border-red-400 focus:outline-hidden focus:ring-3 focus:ring-red-500/10 cursor-pointer"
+            >
+              <option value="all">Toutes options ({filter.label})</option>
+              {filter.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
-
-          {/* Filters */}
-          {filters && filters.map(filter => (
-            <div key={filter.key} className="shrink-0">
-              <select
-                value={activeFilters[filter.key] || 'all'}
-                onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-                className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
-              >
-                <option value="all">Tous ({filter.label})</option>
-                {filter.options.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-
-        {/* Rows per page selector */}
-        <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0 self-end md:self-center">
-          <span>Lignes par page :</span>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="px-2 py-1 rounded bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-          </select>
-        </div>
+        ))}
       </div>
 
-      {/* Main Table */}
-      <div className="lebron-card overflow-hidden bg-white border border-slate-200 shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50/90 text-slate-500 uppercase text-[11px] tracking-wider border-b border-slate-200 font-medium select-none">
-              <tr>
-                {columns.map(col => (
-                  <th
-                    key={col.key}
-                    style={{ width: col.width }}
-                    className={`px-4 py-3.5 ${
-                      col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
-                    } ${col.sortable ? 'cursor-pointer hover:bg-slate-100/70 transition-colors' : ''}`}
-                    onClick={() => col.sortable && handleSort(col.key)}
-                  >
-                    <div className={`inline-flex items-center gap-1.5 ${
-                      col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'
-                    }`}>
-                      <span>{col.label}</span>
-                      {col.sortable && (
-                        sortKey === col.key ? (
-                          sortOrder === 'asc' ? (
-                            <ArrowUp className="w-3.5 h-3.5 text-red-600" />
-                          ) : (
-                            <ArrowDown className="w-3.5 h-3.5 text-red-600" />
-                          )
+      {/* Table responsive */}
+      <div className="max-w-full overflow-x-auto">
+        <table className="w-full text-left text-sm border-collapse">
+          <thead className="border-y border-gray-100">
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  style={{ width: col.width }}
+                  className={`py-3 px-4 text-start text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                    col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
+                  } ${col.sortable ? 'cursor-pointer select-none hover:text-gray-800 transition-colors' : ''}`}
+                  onClick={() => col.sortable && handleSort(col.key)}
+                >
+                  <div className={`inline-flex items-center gap-1.5 ${
+                    col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'
+                  }`}>
+                    <span>{col.label}</span>
+                    {col.sortable && (
+                      sortKey === col.key ? (
+                        sortOrder === 'asc' ? (
+                          <i className="ri-arrow-up-line text-red-600 text-sm"></i>
                         ) : (
-                          <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                          <i className="ri-arrow-down-line text-red-600 text-sm"></i>
                         )
-                      )}
-                    </div>
-                  </th>
-                ))}
+                      ) : (
+                        <i className="ri-arrow-up-down-line text-gray-400 text-xs"></i>
+                      )
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {paginatedItems.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="py-8 text-center text-sm text-gray-500">
+                  {emptyMessage}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {paginatedItems.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-slate-400 text-xs">
-                    {emptyMessage}
-                  </td>
+            ) : (
+              paginatedItems.map((item) => (
+                <tr
+                  key={item.id}
+                  onClick={() => onRowClick && onRowClick(item)}
+                  className={`hover:bg-gray-50/70 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                >
+                  {columns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={`py-3 px-4 text-sm text-gray-700 ${
+                        col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
+                      }`}
+                    >
+                      {col.render ? col.render(item) : (item as any)[col.key]}
+                    </td>
+                  ))}
                 </tr>
-              ) : (
-                paginatedItems.map((item) => (
-                  <tr
-                    key={item.id}
-                    onClick={() => onRowClick && onRowClick(item)}
-                    className={`hover:bg-slate-50/80 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                  >
-                    {columns.map(col => (
-                      <td
-                        key={col.key}
-                        className={`px-4 py-3.5 ${
-                          col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
-                        }`}
-                      >
-                        {col.render ? col.render(item) : (item as any)[col.key]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination en bas */}
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 pt-3">
+        <div className="text-sm text-gray-500">
+          Affichage de <span className="font-semibold text-gray-800">{totalItems === 0 ? 0 : startIndex + 1}</span> à{' '}
+          <span className="font-semibold text-gray-800">{endIndex}</span> sur{' '}
+          <span className="font-semibold text-gray-800">{totalItems}</span> élément(s)
         </div>
 
-        {/* Pagination Bar */}
-        <div className="px-4 py-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <div>
-            Affichage de <strong className="text-slate-800 font-medium">{totalItems === 0 ? 0 : startIndex + 1}</strong> à{' '}
-            <strong className="text-slate-800 font-medium">{endIndex}</strong> sur{' '}
-            <strong className="text-slate-800 font-medium">{totalItems}</strong> éléments
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+            <span className="text-xs">Lignes :</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-medium text-gray-700 focus:outline-hidden focus:border-red-400 cursor-pointer"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
               title="Première page"
             >
-              <ChevronsLeft className="w-4 h-4" />
+              <i className="ri-arrow-left-double-line text-base"></i>
             </button>
             <button
+              type="button"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600"
-              title="Page précédente"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              title="Précédent"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <i className="ri-arrow-left-s-line text-base"></i>
             </button>
 
-            <span className="px-3 py-1 font-medium text-slate-700 bg-white border border-slate-200 rounded-lg text-xs">
+            <span className="px-3.5 py-1.5 text-xs font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-lg">
               Page {currentPage} / {totalPages}
             </span>
 
             <button
+              type="button"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages || totalItems === 0}
-              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600"
-              title="Page suivante"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              title="Suivant"
             >
-              <ChevronRight className="w-4 h-4" />
+              <i className="ri-arrow-right-s-line text-base"></i>
             </button>
             <button
+              type="button"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages || totalItems === 0}
-              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
               title="Dernière page"
             >
-              <ChevronsRight className="w-4 h-4" />
+              <i className="ri-arrow-right-double-line text-base"></i>
             </button>
           </div>
         </div>

@@ -37,28 +37,22 @@ export default function PersonnelView() {
 
   const columns: Column<Employee>[] = [
     {
-      key: 'employeeId',
-      label: 'Matricule',
-      sortable: true,
-      width: '120px',
-      render: (emp) => (
-        <span className="font-mono font-semibold text-xs px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
-          {emp.employeeId}
-        </span>
-      )
-    },
-    {
       key: 'fullName',
-      label: 'Collaborateur',
+      label: 'Photo + Nom',
       sortable: true,
       render: (emp) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-rose-700 text-white font-medium text-xs flex items-center justify-center shrink-0 shadow-xs">
+          <div className="h-10 w-10 rounded-full border border-gray-200 bg-red-50 p-0.5 flex items-center justify-center font-bold text-xs text-red-600 shrink-0 shadow-2xs">
             {emp.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
           <div>
-            <div className="font-semibold text-slate-900">{emp.fullName}</div>
-            <div className="text-[11px] text-slate-500">{emp.email}</div>
+            <p className="text-sm font-semibold text-gray-800">
+              {emp.fullName}
+            </p>
+            <p className="text-xs font-semibold text-red-600 mt-0.5 flex items-center gap-1.5">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-red-500"></span>
+              {emp.employeeId}
+            </p>
           </div>
         </div>
       )
@@ -113,7 +107,7 @@ export default function PersonnelView() {
       }
     },
     {
-      key: 'dotation',
+      key: 'assignedAssets',
       label: 'Matériels Assignés',
       align: 'center',
       render: (emp) => {
@@ -154,31 +148,34 @@ export default function PersonnelView() {
       label: 'Actions',
       align: 'right',
       render: (emp) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
           <button
+            type="button"
             onClick={() => setSelectedEmployee(emp)}
-            title="Consulter la dotation"
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-red-600 transition-colors shadow-2xs"
+            title="Consulter les équipements"
+            className="inline-flex items-center justify-center text-gray-500 transition hover:text-red-600 cursor-pointer"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <i className="ri-eye-line text-lg"></i>
           </button>
           <button
+            type="button"
             onClick={() => openEmployeeModal(emp)}
             title="Modifier collaborateur"
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs"
+            className="inline-flex items-center justify-center text-gray-500 transition hover:text-gray-800 cursor-pointer"
           >
-            <Edit2 className="w-3.5 h-3.5" />
+            <i className="ri-pencil-line text-lg"></i>
           </button>
           <button
+            type="button"
             onClick={() => {
               if (confirm(`Supprimer la fiche de ${emp.fullName} (${emp.employeeId}) ?`)) {
                 deleteEmployee(emp.id);
               }
             }}
             title="Supprimer"
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors shadow-2xs"
+            className="inline-flex items-center justify-center text-red-500 transition hover:text-red-700 cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <i className="ri-delete-bin-line text-lg"></i>
           </button>
         </div>
       )
@@ -192,7 +189,7 @@ export default function PersonnelView() {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold tracking-widest uppercase text-red-300">
-              LEBRONSA S.A. • RESSOURCES HUMAINES & DOTATIONS
+              LEBRONSA S.A. • RESSOURCES HUMAINES & SALARIÉS
             </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
@@ -251,18 +248,18 @@ export default function PersonnelView() {
           <>
             <button
               onClick={() => exportCSV('personnel')}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+              className="h-10 flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-gray-50 border border-gray-300 text-xs font-medium text-gray-700 transition shadow-xs cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <i className="ri-file-download-line text-base text-gray-500"></i>
               <span>Export CSV</span>
             </button>
 
             <button
               onClick={() => openEmployeeModal()}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
+              className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>+ Nouveau Collaborateur</span>
+              <i className="ri-user-add-line text-base"></i>
+              <span>Nouveau Collaborateur</span>
             </button>
           </>
         }
@@ -315,7 +312,7 @@ export default function PersonnelView() {
               </div>
             </div>
 
-            {/* Dotation / Assigned Assets Section */}
+            {/* Assigned Assets Section */}
             {(() => {
               const assets = getEmployeeAssignedAssets(selectedEmployee.id);
               const totalVal = assets.totalValue;
@@ -325,14 +322,14 @@ export default function PersonnelView() {
                   <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">
-                        Dotation Matériel & Lignes en cours
+                        Équipements & Lignes attribués
                       </h4>
                       <p className="text-[11px] text-slate-500">
                         Équipements actuellement sous la garde de ce collaborateur
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block font-medium">Valeur Totale Dotation</span>
+                      <span className="text-[10px] text-slate-400 block font-medium">Valeur des Équipements</span>
                       <span className="text-sm font-bold text-red-700">{formatCurrency(totalVal)}</span>
                     </div>
                   </div>

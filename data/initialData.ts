@@ -25,7 +25,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     location: 'Siège Social - Étage 3',
     status: 'active',
     hireDate: '2022-06-15',
-    notes: 'Dotation calcul scientifique ThinkPad P16s.'
+    notes: 'Attribution calcul scientifique ThinkPad P16s.'
   },
   {
     id: 'emp-3',
@@ -155,7 +155,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     location: 'Siège Social - Étage 3',
     createdAt: '2024-01-20T10:30:00Z',
     updatedAt: '2024-01-20T10:30:00Z',
-    notes: 'Dotation calcul scientifique lourd.'
+    notes: 'Attribution calcul scientifique lourd.'
   },
   {
     id: 'it-3',

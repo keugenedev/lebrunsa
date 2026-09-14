@@ -66,7 +66,7 @@ export default function OverviewView() {
             Tableau de Bord & Supervision Générale
           </h1>
           <p className="text-xs text-slate-300 mt-0.5">
-            Supervisez les actifs informatiques, liaisons satellites Starlink, abonnements télécoms et dotations salariés.
+            Supervisez les actifs informatiques, liaisons satellites Starlink, abonnements télécoms et équipements des collaborateurs.
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export default function OverviewView() {
               {stats.employeesCount} salariés
             </div>
             <div className="mt-1 text-[11px] text-slate-500">
-              {stats.itCount - stats.unassignedITCount} dotations IT actives
+              {stats.itCount - stats.unassignedITCount} équipements IT assignés
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">

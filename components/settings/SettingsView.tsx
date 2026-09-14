@@ -3,23 +3,18 @@
 import React from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { 
-  Settings, 
   Download, 
   RotateCcw, 
-  Coins, 
   ShieldCheck, 
   Database, 
   Server, 
   FileSpreadsheet, 
-  CheckCircle2,
   Users,
   Building
 } from 'lucide-react';
 
 export default function SettingsView() {
   const { 
-    currency, 
-    setCurrency, 
     exportCSV, 
     resetToDefaultData, 
     stats 
@@ -56,53 +51,36 @@ export default function SettingsView() {
           Configuration & Sauvegardes Lebronsa S.A.
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Personnalisez la devise financière, gérez les exports de données et la persistance locale du système.
+          Gérez les exports de données tabulaires, les sauvegardes complètes et la persistance locale du système.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Currency & Financial Display */}
+        {/* Enterprise Information Card */}
         <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
             <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
-              <Coins className="w-5 h-5" />
+              <Building className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Devise Principale du Parc</h3>
-              <p className="text-[11px] text-slate-500">Unité monétaire utilisée pour la valorisation et les factures</p>
+              <h3 className="text-sm font-bold text-slate-900">Entité & Organisation</h3>
+              <p className="text-[11px] text-slate-500">Profil d&apos;entreprise et supervision des actifs</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <button
-              onClick={() => setCurrency('EUR')}
-              className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
-                currency === 'EUR'
-                  ? 'bg-red-50 border-red-300 text-red-900 shadow-2xs'
-                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <div>
-                <div className="font-semibold text-sm">Euro (€)</div>
-                <div className="text-[10px] text-slate-500">Devise de référence</div>
-              </div>
-              {currency === 'EUR' && <CheckCircle2 className="w-4 h-4 text-red-600" />}
-            </button>
-
-            <button
-              onClick={() => setCurrency('USD')}
-              className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
-                currency === 'USD'
-                  ? 'bg-red-50 border-red-300 text-red-900 shadow-2xs'
-                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              <div>
-                <div className="font-semibold text-sm">Dollar US ($)</div>
-                <div className="text-[10px] text-slate-500">Conversion automatique</div>
-              </div>
-              {currency === 'USD' && <CheckCircle2 className="w-4 h-4 text-red-600" />}
-            </button>
+          <div className="space-y-2 text-xs text-slate-700">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <span className="text-slate-500">Organisation :</span>
+              <span className="font-bold text-slate-900">LEBRONSA S.A.</span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <span className="text-slate-500">Réseau & Flotte :</span>
+              <span className="font-semibold text-slate-900">Parc IT, Starlink & Lignes Mobiles</span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <span className="text-slate-500">Gestion Technique :</span>
+              <span className="font-semibold text-red-700">Direction des Opérations & SI</span>
+            </div>
           </div>
         </div>
 

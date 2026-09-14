@@ -163,31 +163,34 @@ export default function ElectronicsView() {
       label: 'Actions',
       align: 'right',
       render: (item) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
           <button
+            type="button"
             onClick={() => openQRModal(item)}
             title="Imprimer étiquette casier"
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-red-600 transition-colors shadow-2xs"
+            className="inline-flex items-center justify-center text-gray-500 transition hover:text-red-600 cursor-pointer"
           >
-            <QrCode className="w-3.5 h-3.5" />
+            <i className="ri-qr-code-line text-lg"></i>
           </button>
           <button
+            type="button"
             onClick={() => openAddModal('electronics', item)}
             title="Modifier"
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs"
+            className="inline-flex items-center justify-center text-gray-500 transition hover:text-gray-800 cursor-pointer"
           >
-            <Edit2 className="w-3.5 h-3.5" />
+            <i className="ri-pencil-line text-lg"></i>
           </button>
           <button
+            type="button"
             onClick={() => {
               if (confirm(`Supprimer le composant ${item.name} ?`)) {
                 deleteElectronic(item.id);
               }
             }}
             title="Supprimer"
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors shadow-2xs"
+            className="inline-flex items-center justify-center text-red-500 transition hover:text-red-700 cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <i className="ri-delete-bin-line text-lg"></i>
           </button>
         </div>
       )
@@ -243,18 +246,18 @@ export default function ElectronicsView() {
           <>
             <button
               onClick={() => exportCSV('electronics')}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 transition-colors shadow-2xs"
+              className="h-10 flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-gray-50 border border-gray-300 text-xs font-medium text-gray-700 transition shadow-xs cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <i className="ri-file-download-line text-base text-gray-500"></i>
               <span>Export Stock</span>
             </button>
 
             <button
               onClick={() => openAddModal('electronics')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
+              className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>+ Ajouter un Composant</span>
+              <i className="ri-add-line text-base"></i>
+              <span>Ajouter un Composant</span>
             </button>
           </>
         }
