@@ -57,7 +57,7 @@ export default function StarlinkView() {
       sortable: true,
       width: '120px',
       render: (kit) => (
-        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
+        <span className="font-mono text-xs font-bold text-slate-900 whitespace-nowrap select-all tracking-tight">
           {kit.assetTag}
         </span>
       )

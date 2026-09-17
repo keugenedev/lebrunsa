@@ -47,7 +47,7 @@ export default function ElectronicsView() {
       sortable: true,
       width: '120px',
       render: (item) => (
-        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
+        <span className="font-mono text-xs font-bold text-slate-900 whitespace-nowrap select-all tracking-tight">
           {item.assetTag}
         </span>
       )

@@ -135,18 +135,18 @@ export default function DataTable<T extends { id: string }>({
   const paginatedItems = processedItems.slice(startIndex, endIndex);
 
   return (
-    <div className="w-full max-w-full overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 sm:px-6 shadow-xs">
+    <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs">
       {/* En-tête avec Titre à gauche, Boutons d'action à droite */}
       {(title || actionButtons) && (
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between w-full max-w-full min-w-0">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full max-w-full min-w-0">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
                 {title}
               </h3>
               {badge}
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-0.5 text-xs text-slate-500">
               {subtitle || `${processedItems.length} élément(s)`}
             </p>
           </div>
@@ -166,16 +166,16 @@ export default function DataTable<T extends { id: string }>({
             value={search}
             onChange={(event) => handleSearchChange(event.target.value)}
             placeholder={searchPlaceholder}
-            className="h-11 w-full min-w-0 max-w-full truncate rounded-lg border border-gray-300 bg-white pl-10 pr-9 py-2.5 text-sm text-gray-800 shadow-xs placeholder:text-gray-400 focus:border-red-400 focus:outline-hidden focus:ring-3 focus:ring-red-500/10"
+            className="h-9.5 w-full min-w-0 max-w-full truncate rounded-xl border border-slate-300 bg-slate-50/70 pl-9 pr-8 py-2 text-xs text-slate-800 shadow-2xs placeholder:text-slate-400 focus:bg-white focus:border-red-600 focus:outline-hidden focus:ring-1 focus:ring-red-600 transition-colors"
           />
-          <i className="ri-search-line absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none"></i>
+          <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
           {search && (
             <button
               type="button"
               onClick={() => handleSearchChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
-              <i className="ri-close-line text-base"></i>
+              <i className="ri-close-line text-sm"></i>
             </button>
           )}
         </div>
@@ -185,7 +185,7 @@ export default function DataTable<T extends { id: string }>({
             <select
               value={activeFilters[filter.key] || 'all'}
               onChange={(event) => handleFilterChange(filter.key, event.target.value)}
-              className="h-11 w-full min-w-0 max-w-full truncate rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-800 shadow-xs focus:border-red-400 focus:outline-hidden focus:ring-3 focus:ring-red-500/10 cursor-pointer"
+              className="h-9.5 w-full min-w-0 max-w-full truncate rounded-xl border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs text-slate-800 shadow-2xs focus:bg-white focus:border-red-600 focus:outline-hidden focus:ring-1 focus:ring-red-600 cursor-pointer transition-colors"
             >
               <option value="all">Toutes options ({filter.label})</option>
               {filter.options.map((opt) => (
@@ -199,43 +199,32 @@ export default function DataTable<T extends { id: string }>({
       </div>
 
       {/* Table responsive */}
-      <div className="max-w-full overflow-x-auto">
-        <table className="w-full text-left text-sm border-collapse">
-          <thead className="border-y border-gray-100">
+      <div className="max-w-full overflow-x-auto rounded-xl border border-slate-200/80">
+        <table className="w-full text-left text-xs border-collapse">
+          <thead className="bg-slate-50/80 border-b border-slate-200">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
                   style={{ width: col.width }}
-                  className={`py-3 px-4 text-start text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                  className={`py-2 px-3 text-start text-[11px] font-semibold text-slate-500 uppercase tracking-wider ${
                     col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
-                  } ${col.sortable ? 'cursor-pointer select-none hover:text-gray-800 transition-colors' : ''}`}
+                  } ${col.sortable ? 'cursor-pointer select-none hover:text-slate-800 transition-colors' : ''}`}
                   onClick={() => col.sortable && handleSort(col.key)}
                 >
-                  <div className={`inline-flex items-center gap-1.5 ${
+                  <div className={`inline-flex items-center ${
                     col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'
                   }`}>
                     <span>{col.label}</span>
-                    {col.sortable && (
-                      sortKey === col.key ? (
-                        sortOrder === 'asc' ? (
-                          <i className="ri-arrow-up-line text-red-600 text-sm"></i>
-                        ) : (
-                          <i className="ri-arrow-down-line text-red-600 text-sm"></i>
-                        )
-                      ) : (
-                        <i className="ri-arrow-up-down-line text-gray-400 text-xs"></i>
-                      )
-                    )}
                   </div>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {paginatedItems.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="py-8 text-center text-sm text-gray-500">
+                <td colSpan={columns.length} className="py-8 text-center text-xs text-slate-400">
                   {emptyMessage}
                 </td>
               </tr>
@@ -244,12 +233,12 @@ export default function DataTable<T extends { id: string }>({
                 <tr
                   key={item.id}
                   onClick={() => onRowClick && onRowClick(item)}
-                  className={`hover:bg-gray-50/70 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`hover:bg-slate-50/80 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={`py-3 px-4 text-sm text-gray-700 ${
+                      className={`py-2 px-3 text-xs text-slate-700 ${
                         col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -264,23 +253,23 @@ export default function DataTable<T extends { id: string }>({
       </div>
 
       {/* Pagination en bas */}
-      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 pt-3">
-        <div className="text-sm text-gray-500">
-          Affichage de <span className="font-semibold text-gray-800">{totalItems === 0 ? 0 : startIndex + 1}</span> à{' '}
-          <span className="font-semibold text-gray-800">{endIndex}</span> sur{' '}
-          <span className="font-semibold text-gray-800">{totalItems}</span> élément(s)
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-3.5">
+        <div className="text-xs text-slate-500">
+          Affichage de <span className="font-semibold text-slate-800">{totalItems === 0 ? 0 : startIndex + 1}</span> à{' '}
+          <span className="font-semibold text-slate-800">{endIndex}</span> sur{' '}
+          <span className="font-semibold text-slate-800">{totalItems}</span> élément(s)
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="text-xs">Lignes :</span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span>Lignes :</span>
             <select
               value={rowsPerPage}
               onChange={(e) => {
                 setRowsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-xs font-medium text-gray-700 focus:outline-hidden focus:border-red-400 cursor-pointer"
+              className="h-8 rounded-lg border border-slate-300 bg-slate-50/70 px-2 text-xs font-medium text-slate-700 focus:outline-hidden focus:border-red-600 cursor-pointer"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -294,22 +283,22 @@ export default function DataTable<T extends { id: string }>({
               type="button"
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
               title="Première page"
             >
-              <i className="ri-arrow-left-double-line text-base"></i>
+              <i className="ri-arrow-left-double-line text-xs"></i>
             </button>
             <button
               type="button"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
               title="Précédent"
             >
-              <i className="ri-arrow-left-s-line text-base"></i>
+              <i className="ri-arrow-left-s-line text-xs"></i>
             </button>
 
-            <span className="px-3.5 py-1.5 text-xs font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-lg">
+            <span className="px-2.5 py-1 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg">
               Page {currentPage} / {totalPages}
             </span>
 
@@ -317,19 +306,19 @@ export default function DataTable<T extends { id: string }>({
               type="button"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages || totalItems === 0}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
               title="Suivant"
             >
-              <i className="ri-arrow-right-s-line text-base"></i>
+              <i className="ri-arrow-right-s-line text-xs"></i>
             </button>
             <button
               type="button"
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages || totalItems === 0}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
               title="Dernière page"
             >
-              <i className="ri-arrow-right-double-line text-base"></i>
+              <i className="ri-arrow-right-double-line text-xs"></i>
             </button>
           </div>
         </div>

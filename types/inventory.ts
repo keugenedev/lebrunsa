@@ -1,4 +1,19 @@
-export type AssetCategory = 'it' | 'plans' | 'starlink' | 'electronics';
+export type AssetCategory = 'it' | 'plans' | 'starlink' | 'electronics' | 'printers';
+
+export type NavigationTab = 
+  | 'overview' 
+  | 'it' 
+  | 'printers'
+  | 'network'
+  | 'ups'
+  | 'applications'
+  | 'plans' 
+  | 'starlink' 
+  | 'electronics' 
+  | 'personnel'
+  | 'movements' 
+  | 'alerts' 
+  | 'settings';
 
 export type AssetStatus = 
   | 'available' 
@@ -37,6 +52,69 @@ export interface ITAsset extends BaseAsset {
   purchaseDate: string;
   warrantyExpiry: string;
   purchaseCost: number;
+  workstation?: WorkstationDetails;
+  company?: string;
+}
+
+export interface PrinterAsset {
+  id: string;
+  assetTag: string;
+  company: 'Lebrun S.A.' | 'Autobiz' | 'Caribe Motors' | 'Leader Foods' | string;
+  site: 'Delmas 52' | 'Aéroport Depot' | string;
+  name: string;
+  brand: string; // 'Hp'
+  model: string;
+  serialNumber: string;
+  ipAddress: string;
+  type: 'Multifonction' | 'Laser' | 'Laser (Cheque)' | string;
+  status: 'Fonctionnel' | 'Maintenance' | 'En panne';
+  observations: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NetworkAsset {
+  id: string;
+  assetTag: string;
+  company: string;
+  site: string;
+  deviceType: string; // 'Switch Gigabit rackable' | 'Switch Ethernet' | 'Point d\'accès / équipement Wi‑Fi'
+  brand: string;
+  model: string;
+  hostname: string;
+  serialNumber: string;
+  ipAddress: string;
+  macAddress: string;
+  status: string;
+  observations: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UPSAsset {
+  id: string;
+  assetTag: string;
+  company: string;
+  site: string;
+  name: string;
+  brand: string;
+  model: string;
+  capacity: string;
+  reference: string;
+  status: string;
+  observations: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ApplicationAccount {
+  id: string;
+  username: string;
+  lastName: string;
+  firstName: string;
+  password?: string;
+  applications: string;
+  organization: string;
 }
 
 export interface TelecomPlan extends BaseAsset {
@@ -89,18 +167,51 @@ export interface ElectronicComponent extends BaseAsset {
   voltageRating?: string;
 }
 
+export interface WorkstationDetails {
+  type: string; // Desktop, Laptop
+  pcName: string; // LEBHWP6KH2
+  pcSerial: string; // HWP6KH2
+  pcSpecs: string; // Windows 10 Pro Intel Core I5 @ 3.30 GHz 500 Gb SSD 8 Gb Ram
+  monitorModel: string; // Dell 22"
+  monitorSerial: string; // CN-0HN22V-FCC00-22SA48B-A16
+  monitorObs: string; // Good ou Trace dans l'ecran (deffecteux)
+  keyboard: string; // Clavier Dell cable
+  keyboardDetails: string; // Clavier Alpha numerique
+  keyboardObs: string; // Good
+  mouse: string; // Dell
+  mouseDetails: string; // Souris Bureau (Cable), Bleutooth (Wirless)
+  mouseObs: string; // Good
+  generalState: string; // Good
+  observations: string; // Good
+}
+
+export interface UserAccountDetails {
+  windowsUsername: string; // Admin, ALEXIS
+  windowsPassword?: string; // 198936, N/A
+  appUsername: string; // rmdguerrier, autobiz1
+  appPassword?: string; // 1234, ET@1234
+  applications: string; // Microsoft GP
+  organization: string; // Lebrun s.a | Autobiz S.A
+}
+
 export interface Employee {
   id: string;
-  employeeId: string; // Matricule, e.g. EMP-0101
+  employeeId: string; // Matricule / Tag (ex: EMP-LEB-001)
+  company: 'Lebrun S.A.' | 'Autobiz' | 'Caribe Motors' | 'Leader Foods' | string;
+  site: string; // Delmas 52
+  lastName: string;
+  firstName: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone?: string;
   department: string;
   jobTitle: string;
   location: string;
   status: 'active' | 'on_leave' | 'inactive';
   hireDate: string;
   notes?: string;
+  workstation?: WorkstationDetails;
+  accounts?: UserAccountDetails;
 }
 
 export type AnyAsset = ITAsset | TelecomPlan | StarlinkKit | ElectronicComponent;

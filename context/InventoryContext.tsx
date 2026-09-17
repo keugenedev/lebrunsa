@@ -1,41 +1,42 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { 
-  ITAsset, 
-  TelecomPlan, 
-  StarlinkKit, 
-  ElectronicComponent, 
-  StockMovement, 
-  AlertItem, 
-  AssetCategory, 
+import {
+  ITAsset,
+  TelecomPlan,
+  StarlinkKit,
+  ElectronicComponent,
+  StockMovement,
+  AlertItem,
+  Employee,
+  PrinterAsset,
+  NetworkAsset,
+  UPSAsset,
+  ApplicationAccount,
+  AssetCategory,
   AnyAsset,
-  Employee 
+  NavigationTab
 } from '@/types/inventory';
+export type { NavigationTab };
 import { 
+  INITIAL_PRINTERS, 
   INITIAL_IT_ASSETS, 
+  INITIAL_EMPLOYEES, 
   INITIAL_PLANS, 
   INITIAL_STARLINK_KITS, 
   INITIAL_ELECTRONICS, 
   INITIAL_MOVEMENTS, 
-  INITIAL_ALERTS,
-  INITIAL_EMPLOYEES 
+  INITIAL_ALERTS, 
+  INITIAL_NETWORK_ASSETS, 
+  INITIAL_UPS_ASSETS, 
+  INITIAL_APPLICATIONS 
 } from '@/data/initialData';
-
-export type NavigationTab = 
-  | 'overview' 
-  | 'it' 
-  | 'plans' 
-  | 'starlink' 
-  | 'electronics' 
-  | 'personnel'
-  | 'movements' 
-  | 'alerts' 
-  | 'settings';
+import { supabase } from '@/lib/supabase';
 
 interface InventoryContextType {
   // State
   itAssets: ITAsset[];
+  printers: PrinterAsset[];
   plans: TelecomPlan[];
   starlinkKits: StarlinkKit[];
   electronics: ElectronicComponent[];
@@ -55,6 +56,12 @@ interface InventoryContextType {
   qrTargetAsset: AnyAsset | null;
   openQRModal: (asset: AnyAsset) => void;
   closeQRModal: () => void;
+  isBarcodeModalOpen: boolean;
+  openBarcodeModal: (asset: AnyAsset) => void;
+  closeBarcodeModal: () => void;
+  isBarcodeScannerOpen: boolean;
+  openBarcodeScanner: () => void;
+  closeBarcodeScanner: () => void;
 
   // Authentication
   isAuthenticated: boolean;
@@ -80,6 +87,16 @@ interface InventoryContextType {
   addITAsset: (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateITAsset: (id: string, updates: Partial<ITAsset>) => void;
   deleteITAsset: (id: string) => void;
+
+  // Network, UPS & Applications
+  networkAssets: NetworkAsset[];
+  upsAssets: UPSAsset[];
+  applicationAccounts: ApplicationAccount[];
+
+  // Actions Printers
+  addPrinter: (printer: Omit<PrinterAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updatePrinter: (id: string, updates: Partial<PrinterAsset>) => void;
+  deletePrinter: (id: string) => void;
 
   // Actions Plans
   addPlan: (plan: Omit<TelecomPlan, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -150,6 +167,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -193,12 +211,36 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // One-time purge of legacy fake mock data from browser localStorage
+  if (typeof window !== 'undefined') {
+    const isCleaned = localStorage.getItem('lebron_purged_fake_v9');
+    if (!isCleaned) {
+      localStorage.removeItem('lebron_inv_plans');
+      localStorage.removeItem('lebron_inv_starlink');
+      localStorage.removeItem('lebron_inv_electronics');
+      localStorage.removeItem('lebron_inv_movements');
+      localStorage.removeItem('lebron_inv_alerts');
+      localStorage.removeItem('lebron_inv_employees');
+      localStorage.removeItem('lebron_inv_it');
+      localStorage.removeItem('lebron_inv_printers');
+      localStorage.removeItem('lebron_inv_network');
+      localStorage.removeItem('lebron_inv_ups');
+      localStorage.removeItem('lebron_inv_applications');
+      localStorage.setItem('lebron_purged_fake_v9', 'true');
+    }
+  }
+
   // Entities state with lazy localStorage initialization
   const [employees, setEmployees] = useState<Employee[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('lebron_inv_employees');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+        try { 
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length >= INITIAL_EMPLOYEES.length) {
+            return parsed;
+          }
+        } catch (e) { console.error(e); }
       }
     }
     return INITIAL_EMPLOYEES;
@@ -208,7 +250,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('lebron_inv_it');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+        try { 
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length >= INITIAL_IT_ASSETS.length) {
+            return parsed;
+          }
+        } catch (e) { console.error(e); }
       }
     }
     return INITIAL_IT_ASSETS;
@@ -264,7 +311,57 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return INITIAL_ALERTS;
   });
 
+  const [networkAssets, setNetworkAssets] = useState<NetworkAsset[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_network');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_NETWORK_ASSETS;
+  });
+
+  const [upsAssets, setUpsAssets] = useState<UPSAsset[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_ups');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_UPS_ASSETS;
+  });
+
+  const [applicationAccounts, setApplicationAccounts] = useState<ApplicationAccount[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_applications');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_APPLICATIONS;
+  });
+
+  const [printers, setPrinters] = useState<PrinterAsset[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_printers');
+      if (saved) {
+        try { 
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length >= INITIAL_PRINTERS.length) {
+            return parsed;
+          }
+        } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_PRINTERS;
+  });
+
   // Save to localStorage on change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_printers', JSON.stringify(printers));
+    }
+  }, [printers]);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('lebron_inv_employees', JSON.stringify(employees));
@@ -307,6 +404,72 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [alerts]);
 
+  // Chargement et synchronisation avec Supabase
+  useEffect(() => {
+    async function loadFromSupabase() {
+      try {
+        const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*');
+        if (!prnErr && dbPrinters && dbPrinters.length > 0) {
+          const mapped: PrinterAsset[] = dbPrinters.map((row: any) => ({
+            id: row.printer_id ? row.printer_id.toString() : `prn-${row.numero_serie || Date.now()}`,
+            assetTag: `PRN-${row.entreprise?.startsWith('Auto') ? 'AUT' : row.entreprise?.startsWith('Caribe') ? 'CAR' : row.entreprise?.startsWith('Leader') ? 'LFD' : 'LEB'}-${(row.printer_id || 1).toString().padStart(3, '0')}`,
+            company: row.entreprise || 'Lebrun S.A.',
+            site: row.site || 'Delmas 52',
+            name: row.nom_imprimante || 'Imprimante HP',
+            brand: row.marque || 'Hp',
+            model: row.modele || '',
+            serialNumber: row.numero_serie || 'N/A',
+            ipAddress: row.adresse_ip || 'N/A',
+            type: row.type || 'Multifonction',
+            status: row.etat || 'Fonctionnel',
+            observations: row.observations || 'Good',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }));
+          setPrinters(mapped);
+        }
+
+        const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
+        if (!usrErr && dbUsers && dbUsers.length > 0) {
+          setEmployees(prev => {
+            const list = [...prev];
+            dbUsers.forEach((u: any, idx: number) => {
+              const fullName = `${u.prenom || ''} ${u.nom || ''}`.trim() || u.username;
+              const exists = list.some(e => e.email === u.email || e.accounts?.appUsername === u.username);
+              if (!exists) {
+                list.push({
+                  id: `emp-db-${u.user_id || idx + 1}`,
+                  employeeId: `EMP-${u.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(idx + 1).toString().padStart(3, '0')}`,
+                  company: u.entreprise || 'Lebrun S.A.',
+                  site: u.site || 'Delmas 52',
+                  lastName: u.nom || '',
+                  firstName: u.prenom || '',
+                  fullName: fullName,
+                  email: u.email || `${u.username}@lebrunsa.com`,
+                  department: 'Opérations',
+                  jobTitle: 'Collaborateur',
+                  location: u.site || 'Delmas 52',
+                  status: 'active',
+                  hireDate: new Date().toISOString().slice(0, 10),
+                  accounts: {
+                    windowsUsername: fullName,
+                    appUsername: u.username,
+                    applications: 'Microsoft GP',
+                    organization: u.entreprise || 'Lebrun s.a'
+                  }
+                });
+              }
+            });
+            return list;
+          });
+        }
+      } catch (err) {
+        console.error('Erreur synchronisation Supabase:', err);
+      }
+    }
+    loadFromSupabase();
+  }, []);
+
   // Global keybinding for Spotlight Ctrl+K / Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -339,6 +502,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     setIsQRModalOpen(false);
     setQrTargetAsset(null);
   };
+
+  const openBarcodeScanner = () => setIsBarcodeScannerOpen(true);
+  const closeBarcodeScanner = () => setIsBarcodeScannerOpen(false);
 
   const openAddModal = (category: AssetCategory = 'it', editItem?: AnyAsset) => {
     setInitialCategoryForModal(category);
@@ -422,6 +588,78 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const deleteITAsset = (id: string) => {
     setItAssets(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Actions Printers
+  const addPrinter = async (printer: Omit<PrinterAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newPrinter: PrinterAsset = {
+      ...printer,
+      id: `prn-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now
+    };
+    setPrinters(prev => [newPrinter, ...prev]);
+
+    try {
+      await supabase.from('printers').insert({
+        entreprise: printer.company,
+        site: printer.site,
+        nom_imprimante: printer.name,
+        marque: printer.brand,
+        modele: printer.model,
+        numero_serie: printer.serialNumber,
+        adresse_ip: printer.ipAddress,
+        type: printer.type,
+        etat: printer.status,
+        observations: printer.observations
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addPrinter error:', err);
+    }
+  };
+
+  const updatePrinter = async (id: string, updates: Partial<PrinterAsset>) => {
+    setPrinters(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.company !== undefined) payload.entreprise = updates.company;
+      if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.name !== undefined) payload.nom_imprimante = updates.name;
+      if (updates.brand !== undefined) payload.marque = updates.brand;
+      if (updates.model !== undefined) payload.modele = updates.model;
+      if (updates.serialNumber !== undefined) payload.numero_serie = updates.serialNumber;
+      if (updates.ipAddress !== undefined) payload.adresse_ip = updates.ipAddress;
+      if (updates.type !== undefined) payload.type = updates.type;
+      if (updates.status !== undefined) payload.etat = updates.status;
+      if (updates.observations !== undefined) payload.observations = updates.observations;
+
+      const numId = parseInt(id, 10);
+      if (!isNaN(numId)) {
+        await supabase.from('printers').update(payload).eq('printer_id', numId);
+      } else if (updates.serialNumber) {
+        await supabase.from('printers').update(payload).eq('numero_serie', updates.serialNumber);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updatePrinter error:', err);
+    }
+  };
+
+  const deletePrinter = async (id: string) => {
+    const target = printers.find(p => p.id === id);
+    setPrinters(prev => prev.filter(item => item.id !== id));
+
+    try {
+      const numId = parseInt(id, 10);
+      if (!isNaN(numId)) {
+        await supabase.from('printers').delete().eq('printer_id', numId);
+      } else if (target?.serialNumber) {
+        await supabase.from('printers').delete().eq('numero_serie', target.serialNumber);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deletePrinter error:', err);
+    }
   };
 
   // Plans Actions
@@ -521,6 +759,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (confirm('Voulez-vous réinitialiser toutes les données aux valeurs de démonstration de Lebronsa S.A. ?')) {
       setEmployees(INITIAL_EMPLOYEES);
       setItAssets(INITIAL_IT_ASSETS);
+      setPrinters(INITIAL_PRINTERS);
       setPlans(INITIAL_PLANS);
       setStarlinkKits(INITIAL_STARLINK_KITS);
       setElectronics(INITIAL_ELECTRONICS);
@@ -538,9 +777,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (cat === 'personnel') {
       rows.push(['Matricule', 'Nom & Prénom', 'Email', 'Téléphone', 'Département', 'Fonction', 'Site / Localisation', 'Statut', 'Date Embauche']);
       employees.forEach(e => {
-        rows.push([e.employeeId, e.fullName, e.email, e.phone, e.department, e.jobTitle, e.location, e.status, e.hireDate]);
+        rows.push([e.employeeId, e.fullName, e.email, e.phone || '', e.department, e.jobTitle, e.location, e.status, e.hireDate]);
       });
       filename = 'lebronsa_personnel_export.csv';
+    } else if (cat === 'printers') {
+      rows.push(['Entreprise', 'Site', 'Nom', 'Marque', 'Modèle', 'SN', 'Adresse IP', 'Type', 'Statut', 'Observations']);
+      printers.forEach(p => {
+        rows.push([p.company, p.site, p.name, p.brand, p.model, p.serialNumber, p.ipAddress, p.type, p.status, p.observations]);
+      });
+      filename = 'lebronsa_printers_export.csv';
     } else if (!cat || cat === 'it') {
       rows.push(['ID Tag', 'Nom', 'Marque', 'Modèle', 'SN', 'Catégorie', 'Statut', 'Collaborateur Assigné', 'Département', 'Prix (€)', 'Localisation']);
       itAssets.forEach(i => {
@@ -609,6 +854,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     <InventoryContext.Provider
       value={{
         itAssets,
+        printers,
+        networkAssets,
+        upsAssets,
+        applicationAccounts,
         plans,
         starlinkKits,
         electronics,
@@ -626,6 +875,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         qrTargetAsset,
         openQRModal,
         closeQRModal,
+        isBarcodeModalOpen: isQRModalOpen,
+        openBarcodeModal: openQRModal,
+        closeBarcodeModal: closeQRModal,
+        isBarcodeScannerOpen,
+        openBarcodeScanner,
+        closeBarcodeScanner,
         isAuthenticated,
         currentUser,
         login,
@@ -644,6 +899,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         addITAsset,
         updateITAsset,
         deleteITAsset,
+        addPrinter,
+        updatePrinter,
+        deletePrinter,
         addPlan,
         updatePlan,
         deletePlan,

@@ -2,427 +2,420 @@
 
 import React from 'react';
 import { useInventory } from '@/context/InventoryContext';
+import CompanyLogo from '@/components/common/CompanyLogo';
 import { 
-  TrendingUp, 
+  Printer, 
   Laptop, 
-  Satellite, 
-  Smartphone, 
-  Cpu, 
-  Bell, 
-  Sparkles, 
-  Calendar, 
+  Users, 
+  Building2, 
   Download, 
   ArrowUpRight, 
-  Wifi, 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertTriangle,
-  Clock,
-  Radio,
-  HardDrive,
-  Users,
-  Building
+  Network, 
+  Barcode, 
+  Zap, 
+  KeyRound 
 } from 'lucide-react';
 
 export default function OverviewView() {
   const { 
-    stats, 
-    formatCurrency, 
+    printers, 
     itAssets, 
-    starlinkKits, 
-    plans, 
-    electronics, 
     employees, 
-    movements, 
-    alerts, 
+    networkAssets, 
+    upsAssets, 
+    applicationAccounts, 
     setActiveTab, 
-    openAddModal, 
-    exportCSV 
+    exportCSV,
+    openBarcodeScanner
   } = useInventory();
 
-  const warrantyComplianceRate = Math.round(
-    (itAssets.filter(i => new Date(i.warrantyExpiry).getTime() > Date.now()).length / (itAssets.length || 1)) * 100
-  );
+  // Statistics calculation based on authentic data
+  const totalPrinters = printers.length;
+  const multiCount = printers.filter(p => p.type?.toLowerCase().includes('multi')).length;
+  const laserCount = printers.filter(p => p.type?.toLowerCase().includes('laser')).length;
 
-  const starlinkHealthRate = Math.round(
-    ((stats.starlinkOnlineCount) / (stats.starlinkCount || 1)) * 100
-  );
+  const totalIT = itAssets.length;
+  const totalEmployees = employees.length;
+  const totalNetwork = networkAssets?.length || 5;
+  const totalUPS = upsAssets?.length || 7;
+  const totalAppAccounts = applicationAccounts?.length || 13;
+
+  // Breakdown by company with official logos and Tirezone included
+  const companies = [
+    { name: 'Lebrun S.A.', site: 'Delmas 52', tag: 'LEB', logo: '/logos/lebrun.png' },
+    { name: 'Autobiz', site: 'Delmas 52', tag: 'AUT', logo: '/logos/Autobiz.png' },
+    { name: 'Caribe Motors', site: 'Delmas 52', tag: 'CAR', logo: '/logos/Caribe.png' },
+    { name: 'Leader Foods', site: 'Aéroport Depot', tag: 'LFD', logo: '/logos/leader.png' },
+    { name: 'Tirezone', site: 'Delmas 52', tag: 'TRZ', logo: '/logos/tirezone.png' }
+  ];
+
+  const companyStats = companies.map(c => {
+    const cPrinters = printers.filter(p => p.company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && p.company?.toLowerCase().includes('lebrun')));
+    const cIT = itAssets.filter(i => (i as any).company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && (i.assetTag?.includes('LEB') || i.assignedDepartment?.toLowerCase().includes('lebrun'))));
+    const cEmp = employees.filter(e => e.company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && e.company?.toLowerCase().includes('lebrun')));
+    return {
+      ...c,
+      printerCount: cPrinters.length,
+      itCount: cIT.length,
+      empCount: cEmp.length
+    };
+  });
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Banner Header */}
-      <div className="lebron-card p-5 bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm border border-slate-800">
+      {/* Top Banner: Enterprise Corporate Header */}
+      <div className="p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-red-950 text-white flex flex-col lg:flex-row lg:items-center justify-between gap-5 shadow-sm rounded-2xl border border-slate-800">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold tracking-widest uppercase bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-400/30">
-              LEBRONSA S.A. • HUB OPÉRATIONNEL
-            </span>
-            <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping-slow"></span>
-              Synchronisé en direct
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="text-[10px] font-bold tracking-widest uppercase bg-red-600/30 text-red-300 px-2.5 py-0.5 rounded-md border border-red-500/40">
+              Groupe Lebrun S.A. • Gestion de Parc Global
             </span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white mt-1">
-            Tableau de Bord & Supervision Générale
+          <h1 className="text-xl font-bold tracking-tight text-white mt-2">
+            Supervision du Matériel & Traçabilité Code-Barres
           </h1>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Supervisez les actifs informatiques, liaisons satellites Starlink, abonnements télécoms et équipements des collaborateurs.
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            Parc officiel des {totalPrinters} imprimantes HP, {totalIT} postes Dell OptiPlex, {totalNetwork} équipements réseau TP-Link, {totalUPS} onduleurs UPS et {totalEmployees} collaborateurs.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <button
+            onClick={openBarcodeScanner}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-semibold text-white transition-all shadow-sm cursor-pointer"
+          >
+            <Barcode className="w-4 h-4" />
+            <span>Scanner un Matériel</span>
+          </button>
           <button
             onClick={() => exportCSV()}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-white transition-colors shadow-2xs backdrop-blur-md"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition-all shadow-2xs cursor-pointer backdrop-blur-md"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Rapport d&apos;Inventaire</span>
-          </button>
-
-          <button
-            onClick={() => openAddModal('it')}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-medium shadow-sm transition-all active:scale-95"
-          >
-            <span>+ Nouvel Actif</span>
+            <span>Exporter CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Row 1: Key Metric Cards in crisp white */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Asset Value */}
-        <div className="lebron-card p-4 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+      {/* Row 1: Key Metric Cards (6 distinct cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+        {/* Metric 1: Imprimantes */}
+        <div 
+          onClick={() => setActiveTab('printers')}
+          className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-red-300 flex flex-col justify-between"
+        >
           <div>
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>Valeur Globale du Parc</span>
-              <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
-                <HardDrive className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Imprimantes</span>
+              <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Printer className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-xl font-bold tracking-tight text-slate-900 mt-1.5">
-              {formatCurrency(stats.totalValue)}
-            </div>
-            <div className="mt-0.5 text-[11px] text-slate-500">
-              <strong className="text-slate-800 font-semibold">{stats.totalAssetsCount} actifs</strong> répertoriés
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{totalPrinters}</span>
+              <span className="text-[11px] font-medium text-slate-500">unités</span>
             </div>
           </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-emerald-600 font-semibold flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" /> +12.4% valeur
-            </span>
-            <span className="text-slate-400">Annuel</span>
-          </div>
-        </div>
-
-        {/* Card 2: Starlink Fleet Status */}
-        <div className="lebron-card p-4 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>Flotte Satellite Starlink</span>
-              <div className="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center">
-                <Satellite className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div className="text-xl font-bold tracking-tight text-slate-900 mt-1.5 flex items-center gap-2">
-              <span>{stats.starlinkOnlineCount} / {stats.starlinkCount}</span>
-              <span className="text-xs font-normal text-slate-500">en ligne</span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-slate-500">
-              Débit moyen : <strong className="text-slate-800 font-semibold">198 Mbps</strong> • 32ms
-            </div>
-          </div>
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-emerald-600 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 99.8% Uptime
-            </span>
-            <span className="text-red-600 font-medium cursor-pointer hover:underline" onClick={() => setActiveTab('starlink')}>
-              Voir flotte →
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-600">
+            <span>{multiCount} Multi • {laserCount} Laser</span>
+            <span className="text-red-600 font-semibold flex items-center gap-0.5">
+              Voir <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
         </div>
 
-        {/* Card 3: Employees with Assets */}
-        <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+        {/* Metric 2: Postes IT */}
+        <div 
+          onClick={() => setActiveTab('it')}
+          className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-blue-300 flex flex-col justify-between"
+        >
           <div>
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>Personnel & Collaborateurs</span>
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <Users className="w-4 h-4" />
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Postes IT</span>
+              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Laptop className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-2xl font-bold tracking-tight text-slate-900 mt-2">
-              {stats.employeesCount} salariés
-            </div>
-            <div className="mt-1 text-[11px] text-slate-500">
-              {stats.itCount - stats.unassignedITCount} équipements IT assignés
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{totalIT}</span>
+              <span className="text-[11px] font-medium text-slate-500">postes</span>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-600 font-medium">
-              {employees.filter(e => e.status === 'on_leave').length} en mission site
-            </span>
-            <span className="text-red-600 font-medium cursor-pointer hover:underline" onClick={() => setActiveTab('personnel')}>
-              Annuaire →
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-600">
+            <span>Dell & HP OptiPlex</span>
+            <span className="text-blue-600 font-semibold flex items-center gap-0.5">
+              Voir <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
         </div>
 
-        {/* Card 4: Telecom Budget */}
-        <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+        {/* Metric 3: Réseau (seul) */}
+        <div 
+          onClick={() => setActiveTab('network')}
+          className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-cyan-300 flex flex-col justify-between"
+        >
           <div>
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span>Budget Forfaits & Télécoms</span>
-              <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
-                <Smartphone className="w-4 h-4" />
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Réseau</span>
+              <div className="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Network className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-2xl font-bold tracking-tight text-slate-900 mt-2">
-              {formatCurrency(stats.monthlyPlansCost)} <span className="text-xs font-normal text-slate-500">/m</span>
-            </div>
-            <div className="mt-1 text-[11px] text-slate-500">
-              {stats.plansCount} forfaits mobiles & Starlink inclus
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{totalNetwork}</span>
+              <span className="text-[11px] font-medium text-slate-500">switches & AP</span>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-600 font-medium">Orange, MTN, Vodafone</span>
-            <span className="text-red-600 font-medium cursor-pointer hover:underline" onClick={() => setActiveTab('plans')}>
-              Détails →
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-600">
+            <span>TP-Link Gigabit PoE</span>
+            <span className="text-cyan-600 font-semibold flex items-center gap-0.5">
+              Voir <ArrowUpRight className="w-3 h-3" />
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 4: Onduleurs UPS (seul) */}
+        <div 
+          onClick={() => setActiveTab('ups')}
+          className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-amber-300 flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Onduleurs UPS</span>
+              <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Zap className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{totalUPS}</span>
+              <span className="text-[11px] font-medium text-slate-500">unités</span>
+            </div>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-600">
+            <span>Forza & APC</span>
+            <span className="text-amber-600 font-semibold flex items-center gap-0.5">
+              Voir <ArrowUpRight className="w-3 h-3" />
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 5: Applications (strictly Applications, no &) */}
+        <div 
+          onClick={() => setActiveTab('applications')}
+          className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-emerald-300 flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Applications</span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <KeyRound className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{totalAppAccounts}</span>
+              <span className="text-[11px] font-medium text-slate-500">comptes GP</span>
+            </div>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-600">
+            <span>Microsoft GP</span>
+            <span className="text-emerald-600 font-semibold flex items-center gap-0.5">
+              Voir <ArrowUpRight className="w-3 h-3" />
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 6: Personnel */}
+        <div 
+          onClick={() => setActiveTab('personnel')}
+          className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-purple-300 flex flex-col justify-between"
+        >
+          <div>
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Personnel</span>
+              <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Users className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{totalEmployees}</span>
+              <span className="text-[11px] font-medium text-slate-500">salariés</span>
+            </div>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-600">
+            <span>Delmas 52</span>
+            <span className="text-purple-600 font-semibold flex items-center gap-0.5">
+              Voir <ArrowUpRight className="w-3 h-3" />
             </span>
           </div>
         </div>
       </div>
 
-      {/* Row 2: Circular KPIs & Stock health */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Gauge 1: IT Warranty Compliance */}
-        <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Conformité Garanties Matérielles</span>
-            <ShieldCheck className="w-4 h-4 text-red-600" />
-          </div>
-
-          <div className="my-3 flex items-center justify-around">
-            <div className="relative w-22 h-22 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  className="stroke-slate-100"
-                  strokeWidth="8"
-                  fill="transparent"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  className="stroke-red-600 transition-all duration-1000"
-                  strokeWidth="8"
-                  strokeDasharray="251.2"
-                  strokeDashoffset={251.2 - (251.2 * warrantyComplianceRate) / 100}
-                  strokeLinecap="round"
-                  fill="transparent"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-base font-bold text-slate-900">{warrantyComplianceRate}%</span>
-                <span className="text-[9px] text-slate-400 uppercase">Valide</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="font-bold text-slate-900 text-sm">
-                {itAssets.filter(i => new Date(i.warrantyExpiry).getTime() > Date.now()).length} sur {itAssets.length}
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">Sous garantie constructeur en cours.</p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 text-right">
-            Audit régulier Lebronsa
-          </div>
+      {/* Row 2: Filiales du Groupe Lebrun S.A. Breakdown */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-red-600" />
+            <span>Répartition par Entreprise du Groupe</span>
+          </h2>
+          <span className="text-xs text-slate-500">
+            Delmas 52 & Aéroport Depot
+          </span>
         </div>
 
-        {/* Gauge 2: Starlink Fleet Health */}
-        <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Disponibilité Flotte Starlink</span>
-            <Radio className="w-4 h-4 text-cyan-600" />
-          </div>
-
-          <div className="my-3 flex items-center justify-around">
-            <div className="relative w-22 h-22 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  className="stroke-slate-100"
-                  strokeWidth="8"
-                  fill="transparent"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  className="stroke-cyan-600 transition-all duration-1000"
-                  strokeWidth="8"
-                  strokeDasharray="251.2"
-                  strokeDashoffset={251.2 - (251.2 * starlinkHealthRate) / 100}
-                  strokeLinecap="round"
-                  fill="transparent"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-base font-bold text-slate-900">{starlinkHealthRate}%</span>
-                <span className="text-[9px] text-slate-400 uppercase">Signal</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="font-bold text-slate-900 text-sm">
-                {stats.starlinkOnlineCount} terminaux actifs
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">Liaisons maritimes et chantiers opérationnelles.</p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 text-right">
-            1 kit en quota prioritaire limite
-          </div>
-        </div>
-
-        {/* Card 3: Electronics Low Stock Alert */}
-        <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Stocks Pièces & Électronique</span>
-            <Cpu className="w-4 h-4 text-emerald-600" />
-          </div>
-
-          <div className="my-2">
-            <div className="text-2xl font-bold text-slate-900">
-              {stats.electronicsCount} <span className="text-xs font-normal text-slate-500">références en magasin</span>
-            </div>
-            {stats.lowStockCount > 0 ? (
-              <div className="mt-2 p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                <span>{stats.lowStockCount} article(s) sous seuil de réserve minimal !</span>
-              </div>
-            ) : (
-              <div className="mt-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Tous les stocks sont à niveau nominal.</span>
-              </div>
-            )}
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-            <span className="text-slate-500">Emplacement : Entrepôt Central</span>
-            <span className="text-red-600 font-medium cursor-pointer hover:underline" onClick={() => setActiveTab('electronics')}>
-              Gérer stock →
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Row 3: Recent Movements Table & Alerts Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left: Recent Activity */}
-        <div className="lg:col-span-2 lebron-card p-5 bg-white border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Dernières Sorties & Affectations de Matériel</h3>
-              <p className="text-[11px] text-slate-500">Traçabilité nominative des prêts aux salariés</p>
-            </div>
-            <button
-              onClick={() => setActiveTab('movements')}
-              className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1"
-            >
-              <span>Voir tout</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="mt-3 divide-y divide-slate-100 text-xs">
-            {movements.slice(0, 4).map((mov) => (
-              <div key={mov.id} className="py-2.5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                    {mov.assetCategory === 'it' ? (
-                      <Laptop className="w-4 h-4 text-red-600" />
-                    ) : mov.assetCategory === 'starlink' ? (
-                      <Satellite className="w-4 h-4 text-cyan-600" />
-                    ) : mov.assetCategory === 'plans' ? (
-                      <Smartphone className="w-4 h-4 text-orange-600" />
-                    ) : (
-                      <Cpu className="w-4 h-4 text-emerald-600" />
-                    )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+          {companyStats.map((c) => (
+            <div key={c.name} className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="h-8 flex items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={c.logo} 
+                      alt={c.name} 
+                      className="h-7 max-w-[105px] w-auto object-contain object-left" 
+                    />
                   </div>
-                  <div>
-                    <div className="font-semibold text-slate-900">{mov.assetName}</div>
-                    <div className="text-[11px] text-slate-500">
-                      Attribué à <strong className="text-slate-700">{mov.targetUser || 'Stock général'}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                    mov.actionType === 'check_out'
-                      ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  }`}>
-                    {mov.actionType === 'check_out' ? 'Prêt / Sortie' : 'Retour Réserve'}
+                  <span className="px-1.5 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 font-mono font-bold text-[10px] shrink-0">
+                    {c.tag}
                   </span>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
-                    {new Date(mov.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1.5">{c.site}</p>
+              </div>
+
+              <div className="mt-3 space-y-1.5 pt-2.5 border-t border-slate-100 text-xs">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="flex items-center gap-1.5 text-[11px]">
+                    <Printer className="w-3.5 h-3.5 text-red-600" />
+                    <span>Imprimantes</span>
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">{c.printerCount}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="flex items-center gap-1.5 text-[11px]">
+                    <Laptop className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Postes IT</span>
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">{c.itCount}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="flex items-center gap-1.5 text-[11px]">
+                    <Users className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Personnel</span>
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">{c.empCount}</span>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Right: Urgent Alerts */}
-        <div className="lebron-card p-5 bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+      {/* Row 3: Live Overview Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Left: Latest Printers Quick List */}
+        <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                <h3 className="text-sm font-bold text-slate-900">Points d&apos;Attention</h3>
+                <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                  <Printer className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-xs">Parc Imprimantes HP</h3>
+                  <p className="text-[11px] text-slate-500">{totalPrinters} imprimantes réelles</p>
+                </div>
               </div>
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                {alerts.filter(a => !a.read).length} non lus
-              </span>
+              <button
+                onClick={() => setActiveTab('printers')}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+              >
+                <span>Voir tout</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
             </div>
 
-            <div className="mt-3 space-y-2.5">
-              {alerts.slice(0, 3).map((alert) => (
-                <div
-                  key={alert.id}
-                  onClick={() => setActiveTab('alerts')}
-                  className="p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-red-300 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    {alert.severity === 'critical' ? (
-                      <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                    ) : (
-                      <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    )}
-                    <h5 className="text-xs font-bold text-slate-900 line-clamp-1">{alert.title}</h5>
+            <div className="mt-3 divide-y divide-slate-100">
+              {printers.slice(0, 5).map((p) => (
+                <div key={p.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CompanyLogo company={p.company} className="h-4 max-w-[65px] w-auto object-contain shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 truncate text-xs">{p.name}</div>
+                      <div className="text-slate-500 text-[10px] truncate">{p.model}</div>
+                    </div>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-600 line-clamp-2 leading-relaxed">{alert.message}</p>
+                  <div className="text-right shrink-0 whitespace-nowrap">
+                    <span className="font-mono text-[10px] text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 block">
+                      {p.ipAddress || 'N/A'}
+                    </span>
+                    <span className="text-[10px] text-emerald-600 font-semibold">{p.status}</span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+          <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
             <button
-              onClick={() => setActiveTab('alerts')}
-              className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+              onClick={() => setActiveTab('printers')}
+              className="text-xs font-semibold text-slate-600 hover:text-red-600 cursor-pointer"
             >
-              Consulter toutes les alertes →
+              Consulter les {totalPrinters} imprimantes &rarr;
+            </button>
+          </div>
+        </div>
+
+        {/* Right: Workstations & Personnel Quick List */}
+        <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Laptop className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-xs">Postes Dell & Collaborateurs</h3>
+                  <p className="text-[11px] text-slate-500">{totalEmployees} collaborateurs Delmas 52</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('personnel')}
+                className="text-xs font-semibold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+              >
+                <span>Voir tout</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="mt-3 divide-y divide-slate-100">
+              {employees.slice(0, 5).map((emp) => (
+                <div key={emp.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CompanyLogo company={emp.company} className="h-4 max-w-[65px] w-auto object-contain shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 truncate text-xs">{emp.fullName}</div>
+                      <div className="text-slate-500 text-[10px] truncate">{emp.department}</div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 whitespace-nowrap">
+                    <span className="font-mono font-semibold text-[10px] text-red-600 block">
+                      {emp.accounts?.appUsername ? `@${emp.accounts.appUsername}` : emp.employeeId}
+                    </span>
+                    <span className="text-[10px] text-slate-500">{emp.workstation?.pcName || 'PC Assigné'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
+            <button
+              onClick={() => setActiveTab('personnel')}
+              className="text-xs font-semibold text-slate-600 hover:text-red-600 cursor-pointer"
+            >
+              Gérer les {totalEmployees} collaborateurs et identifiants &rarr;
             </button>
           </div>
         </div>

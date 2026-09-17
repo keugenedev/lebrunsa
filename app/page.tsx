@@ -6,21 +6,27 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import OverviewView from '@/components/dashboard/OverviewView';
 import ITEquipmentView from '@/components/inventory/ITEquipmentView';
-import StarlinkView from '@/components/starlink/StarlinkView';
-import TelecomPlansView from '@/components/plans/TelecomPlansView';
-import ElectronicsView from '@/components/electronics/ElectronicsView';
+import PrintersView from '@/components/printers/PrintersView';
 import PersonnelView from '@/components/personnel/PersonnelView';
-import MovementsView from '@/components/operations/MovementsView';
-import AlertsView from '@/components/operations/AlertsView';
+import NetworkView from '@/components/network/NetworkView';
+import UPSView from '@/components/ups/UPSView';
+import ApplicationsView from '@/components/applications/ApplicationsView';
 import SettingsView from '@/components/settings/SettingsView';
-import QRCodeModal from '@/components/common/QRCodeModal';
+import BarcodeModal from '@/components/common/BarcodeModal';
+import BarcodeScannerModal from '@/components/common/BarcodeScannerModal';
+import GlobalBarcodeListener from '@/components/common/GlobalBarcodeListener';
 import AssetModal from '@/components/common/AssetModal';
 import EmployeeModal from '@/components/personnel/EmployeeModal';
 import QuickSearchModal from '@/components/common/QuickSearchModal';
 import LoginPage from '@/components/auth/LoginPage';
 
 function MainContent() {
-  const { activeTab, isAuthenticated } = useInventory();
+  const { 
+    activeTab, 
+    isAuthenticated, 
+    isBarcodeScannerOpen, 
+    closeBarcodeScanner 
+  } = useInventory();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -30,7 +36,7 @@ function MainContent() {
   if (!mounted) {
     return (
       <div className="min-h-screen w-screen bg-[#f8fafc] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -43,20 +49,18 @@ function MainContent() {
     switch (activeTab) {
       case 'overview':
         return <OverviewView />;
+      case 'printers':
+        return <PrintersView />;
       case 'it':
         return <ITEquipmentView />;
-      case 'starlink':
-        return <StarlinkView />;
-      case 'plans':
-        return <TelecomPlansView />;
-      case 'electronics':
-        return <ElectronicsView />;
+      case 'network':
+        return <NetworkView />;
+      case 'ups':
+        return <UPSView />;
+      case 'applications':
+        return <ApplicationsView />;
       case 'personnel':
         return <PersonnelView />;
-      case 'movements':
-        return <MovementsView />;
-      case 'alerts':
-        return <AlertsView />;
       case 'settings':
         return <SettingsView />;
       default:
@@ -73,15 +77,20 @@ function MainContent() {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Header />
 
-        <main className="flex-1 overflow-y-auto px-6 py-6 scroll-smooth bg-[#f8fafc]">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto px-6 lg:px-8 py-6 scroll-smooth bg-[#f8fafc]">
+          <div className="w-full max-w-7xl 2xl:max-w-[1540px] mx-auto space-y-6">
             {renderActiveTab()}
           </div>
         </main>
       </div>
 
-      {/* Global Modals */}
-      <QRCodeModal />
+      {/* Global Modals & Listeners */}
+      <BarcodeModal />
+      <BarcodeScannerModal 
+        isOpen={isBarcodeScannerOpen} 
+        onClose={closeBarcodeScanner} 
+      />
+      <GlobalBarcodeListener />
       <AssetModal />
       <EmployeeModal />
       <QuickSearchModal />
