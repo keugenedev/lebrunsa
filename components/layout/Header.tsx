@@ -14,7 +14,8 @@ import {
   AlertOctagon, 
   Info, 
   X,
-  ExternalLink
+  ExternalLink,
+  LogOut
 } from 'lucide-react';
 
 export default function Header() {
@@ -26,7 +27,8 @@ export default function Header() {
     openAddModal, 
     exportCSV, 
     setIsSpotlightOpen, 
-    setActiveTab 
+    setActiveTab,
+    logout 
   } = useInventory();
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -197,10 +199,20 @@ export default function Header() {
             const defaultCategory = activeTab === 'plans' ? 'plans' : activeTab === 'starlink' ? 'starlink' : activeTab === 'electronics' ? 'electronics' : 'it';
             openAddModal(defaultCategory);
           }}
-          className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition-all active:scale-95"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition-all active:scale-95 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>+ Nouvel Élément</span>
+        </button>
+
+        {/* Déconnexion */}
+        <button
+          onClick={logout}
+          title="Se déconnecter"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200/90 text-xs font-medium transition-colors cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Déconnexion</span>
         </button>
       </div>
     </header>

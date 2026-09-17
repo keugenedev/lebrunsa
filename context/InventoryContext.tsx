@@ -56,6 +56,12 @@ interface InventoryContextType {
   openQRModal: (asset: AnyAsset) => void;
   closeQRModal: () => void;
 
+  // Authentication
+  isAuthenticated: boolean;
+  currentUser: { name: string; email: string; role: string } | null;
+  login: (email: string, password?: string) => boolean;
+  logout: () => void;
+
   isAddModalOpen: boolean;
   editingAsset: AnyAsset | null;
   initialCategoryForModal: AssetCategory;
@@ -144,6 +150,48 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lebron_auth') === 'true';
+    }
+    return false;
+  });
+
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_user');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return null;
+  });
+
+  const login = (email: string, _password?: string): boolean => {
+    const user = {
+      name: email.split('@')[0] || 'Utilisateur',
+      email: email,
+      role: 'Administrateur Inventaire'
+    };
+    setIsAuthenticated(true);
+    setCurrentUser(user);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_auth', 'true');
+      localStorage.setItem('lebron_user', JSON.stringify(user));
+    }
+    return true;
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('lebron_auth');
+      localStorage.removeItem('lebron_user');
+    }
+  };
 
   // Entities state with lazy localStorage initialization
   const [employees, setEmployees] = useState<Employee[]>(() => {
@@ -578,6 +626,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         qrTargetAsset,
         openQRModal,
         closeQRModal,
+        isAuthenticated,
+        currentUser,
+        login,
+        logout,
         isAddModalOpen,
         editingAsset,
         initialCategoryForModal,

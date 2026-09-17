@@ -17,9 +17,27 @@ import QRCodeModal from '@/components/common/QRCodeModal';
 import AssetModal from '@/components/common/AssetModal';
 import EmployeeModal from '@/components/personnel/EmployeeModal';
 import QuickSearchModal from '@/components/common/QuickSearchModal';
+import LoginPage from '@/components/auth/LoginPage';
 
 function MainContent() {
-  const { activeTab } = useInventory();
+  const { activeTab, isAuthenticated } = useInventory();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen w-screen bg-[#f8fafc] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   const renderActiveTab = () => {
     switch (activeTab) {

@@ -13,7 +13,8 @@ import {
   Bell, 
   Settings, 
   QrCode, 
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -21,7 +22,9 @@ export default function Sidebar() {
     activeTab,
     setActiveTab,
     setIsSpotlightOpen,
-    alerts
+    alerts,
+    logout,
+    currentUser
   } = useInventory();
 
   const unreadAlertsCount = alerts.filter((a) => !a.read).length;
@@ -103,6 +106,25 @@ export default function Sidebar() {
             </button>
           );
         })}
+      </div>
+
+      {/* User Session & Logout */}
+      <div className="px-3 py-2 border-t border-slate-100 bg-slate-50/40">
+        <button
+          onClick={logout}
+          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer group"
+          title="Se déconnecter"
+        >
+          <div className="flex items-center gap-2 truncate">
+            <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-semibold text-[10px]">
+              {currentUser?.name ? currentUser.name[0] : 'A'}
+            </div>
+            <span className="truncate max-w-[100px] text-slate-700 group-hover:text-red-600">
+              {currentUser?.email || 'admin@lebrunsa.com'}
+            </span>
+          </div>
+          <LogOut className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-red-600" />
+        </button>
       </div>
 
       {/* Bottom: Company Name in Small, Elegant Format */}
