@@ -67,7 +67,7 @@ export default function NetworkEquipmentView() {
 
   const handleExportCSV = () => {
     if (activeSubTab === 'network') {
-      const headers = ['Tag', 'Entreprise', 'Site', 'Type d\'équipement', 'Marque', 'Modèle', 'N° Série', 'Adresse IP', 'État', 'Observations'];
+      const headers = ['Tag', 'Entreprise', 'Site', "Type d'équipement", 'Marque', 'Modèle', 'N° Série', 'Adresse IP', 'État', 'Observations'];
       const rows = filteredNetwork.map(n => [
         n.assetTag,
         n.company,

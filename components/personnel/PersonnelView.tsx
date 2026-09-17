@@ -73,7 +73,7 @@ export default function PersonnelView() {
     },
     {
       key: 'location',
-      label: 'Site d\'affectation',
+      label: "Site d'affectation",
       sortable: true,
       render: (emp) => (
         <span className="text-slate-600 text-xs">{emp.location}</span>
@@ -153,7 +153,7 @@ export default function PersonnelView() {
             type="button"
             onClick={() => setSelectedEmployee(emp)}
             title="Consulter les équipements"
-            className="inline-flex items-center justify-center text-gray-500 transition hover:text-red-600 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-red-600 cursor-pointer"
           >
             <i className="ri-eye-line text-lg"></i>
           </button>
@@ -161,7 +161,7 @@ export default function PersonnelView() {
             type="button"
             onClick={() => openEmployeeModal(emp)}
             title="Modifier collaborateur"
-            className="inline-flex items-center justify-center text-gray-500 transition hover:text-gray-800 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-700 cursor-pointer"
           >
             <i className="ri-pencil-line text-lg"></i>
           </button>
@@ -173,7 +173,7 @@ export default function PersonnelView() {
               }
             }}
             title="Supprimer"
-            className="inline-flex items-center justify-center text-red-500 transition hover:text-red-700 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-red-600 cursor-pointer"
           >
             <i className="ri-delete-bin-line text-lg"></i>
           </button>

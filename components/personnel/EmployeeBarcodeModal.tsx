@@ -54,12 +54,12 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
         {/* Header Modal */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-400">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-white">
               <BarcodeIcon className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
                   {employee.company || 'Lebrun S.A.'} • {employee.site || employee.location}
                 </span>
               </div>
@@ -99,11 +99,6 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
                 <h3 className="text-sm font-bold text-slate-900">{employee.fullName}</h3>
                 <p className="text-slate-500 font-medium text-xs">{employee.jobTitle} • {employee.department}</p>
                 <p className="text-slate-400 text-[11px] font-mono mt-0.5">Matricule : {employee.employeeId}</p>
-              </div>
-
-              <div className="flex items-center justify-center md:justify-start gap-1.5 text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 w-fit">
-                <ShieldCheck className="w-3 h-3" />
-                <span>Code 128 Certifié • Scannable par douchette</span>
               </div>
             </div>
 

@@ -107,7 +107,7 @@ export default function MovementsView() {
     },
     {
       key: 'actionType',
-      label: 'Type d\'Opération',
+      label: "Type d'Opération",
       sortable: true,
       align: 'center',
       render: (mov) => {

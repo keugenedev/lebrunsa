@@ -88,13 +88,13 @@ export default function ApplicationsView() {
           </span>
           <button
             onClick={() => handleCopy(`user-${acc.id}`, acc.username)}
-            className="text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer"
+            className="text-slate-400 hover:text-slate-600 transition-colors p-1 cursor-pointer"
             title="Copier le nom d'utilisateur"
           >
             {copiedId === `user-${acc.id}` ? (
               <Check className="w-3 h-3 text-emerald-600" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3 h-3 text-slate-400" />
             )}
           </button>
         </div>
@@ -130,20 +130,20 @@ export default function ApplicationsView() {
             </span>
             <button
               onClick={() => togglePassword(acc.id)}
-              className="text-slate-400 hover:text-slate-700 transition-colors p-1"
+              className="text-slate-400 hover:text-slate-600 transition-colors p-1 cursor-pointer"
               title={isVisible ? 'Masquer' : 'Afficher'}
             >
               {isVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
             <button
               onClick={() => handleCopy(`pass-${acc.id}`, acc.password!)}
-              className="text-slate-400 hover:text-slate-700 transition-colors p-1"
+              className="text-slate-400 hover:text-slate-600 transition-colors p-1 cursor-pointer"
               title="Copier le mot de passe"
             >
               {copiedId === `pass-${acc.id}` ? (
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
               ) : (
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
           </div>
@@ -154,11 +154,9 @@ export default function ApplicationsView() {
       key: 'applications',
       label: 'Applications Autorisées',
       sortable: true,
-      width: '160px',
       render: (acc) => (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
-          <ShieldCheck className="w-3 h-3 text-blue-600" />
-          <span>{acc.applications}</span>
+        <span className="text-xs text-slate-800 font-medium">
+          {acc.applications}
         </span>
       )
     },

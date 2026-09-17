@@ -151,7 +151,7 @@ export default function PrintersView() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Entreprise', 'Adresse / Site', 'Nom de l\'imprimante', 'Marque', 'Modèle', 'N° de série', 'Adresse IP', 'Type', 'État', 'Observations'];
+    const headers = ['Entreprise', 'Adresse / Site', "Nom de l'imprimante", 'Marque', 'Modèle', 'N° de série', 'Adresse IP', 'Type', 'État', 'Observations'];
     const rows = filteredPrinters.map(p => [
       p.company,
       p.site,
@@ -504,7 +504,7 @@ export default function PrintersView() {
           <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden my-auto">
             <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
               <h3 className="text-sm font-bold">
-                {editingPrinter ? 'Modifier l\'Imprimante' : 'Nouvelle Imprimante'}
+                {editingPrinter ? "Modifier l'Imprimante" : "Nouvelle Imprimante"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -645,7 +645,7 @@ export default function PrintersView() {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium shadow-xs"
                 >
-                  {editingPrinter ? 'Enregistrer les modifications' : 'Ajouter l\'imprimante'}
+                  {editingPrinter ? "Enregistrer les modifications" : "Ajouter l'imprimante"}
                 </button>
               </div>
             </form>

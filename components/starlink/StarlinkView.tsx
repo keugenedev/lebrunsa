@@ -43,7 +43,7 @@ export default function StarlinkView() {
         downloadSpeedMbps: simulatedDown,
         uploadSpeedMbps: simulatedUp,
         latencyMs: simulatedLatency,
-        lastPing: 'À l\'instant',
+        lastPing: "À l'instant",
         networkStatus: 'online'
       });
       setTestingKitId(null);
