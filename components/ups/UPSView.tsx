@@ -172,7 +172,7 @@ export default function UPSView() {
               }
             }}
             title="Supprimer cet onduleur"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -198,17 +198,17 @@ export default function UPSView() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => openUPSModal()}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Ajouter Onduleur</span>
           </button>
           <button
             onClick={handleExportCSV}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
             title="Exporter en fichier Excel / CSV"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>Exporter Excel</span>
           </button>
         </div>

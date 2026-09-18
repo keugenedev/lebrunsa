@@ -124,7 +124,7 @@ export default function AssetModal() {
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
               <Plus className="w-4 h-4" />
             </div>
             <div>
@@ -311,7 +311,7 @@ export default function AssetModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               {editingAsset ? 'Enregistrer les modifications' : 'Créer le Poste IT'}
             </button>

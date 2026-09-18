@@ -169,7 +169,7 @@ export default function ElectronicsView() {
             type="button"
             onClick={() => openQRModal(item)}
             title="Imprimer étiquette casier"
-            className="inline-flex items-center justify-center text-gray-500 transition hover:text-red-600 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-qr-code-line text-lg"></i>
           </button>
@@ -177,7 +177,7 @@ export default function ElectronicsView() {
             type="button"
             onClick={() => openAddModal('electronics', item)}
             title="Modifier"
-            className="inline-flex items-center justify-center text-gray-500 transition hover:text-gray-800 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-pencil-line text-lg"></i>
           </button>
@@ -189,7 +189,7 @@ export default function ElectronicsView() {
               }
             }}
             title="Supprimer"
-            className="inline-flex items-center justify-center text-red-500 transition hover:text-red-700 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-delete-bin-line text-lg"></i>
           </button>
@@ -247,15 +247,15 @@ export default function ElectronicsView() {
           <>
             <button
               onClick={() => exportCSV('electronics')}
-              className="h-10 flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-gray-50 border border-gray-300 text-xs font-medium text-gray-700 transition shadow-xs cursor-pointer"
+              className="h-10 flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
             >
-              <i className="ri-file-download-line text-base text-gray-500"></i>
+              <i className="ri-file-download-line text-base text-slate-600"></i>
               <span>Export Stock</span>
             </button>
 
             <button
               onClick={() => openAddModal('electronics')}
-              className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
+              className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
             >
               <i className="ri-add-line text-base"></i>
               <span>Ajouter un Composant</span>

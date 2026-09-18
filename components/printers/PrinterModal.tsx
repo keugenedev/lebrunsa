@@ -102,7 +102,7 @@ export default function PrinterModal() {
         {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-red-600/30 border border-red-400/40 flex items-center justify-center text-red-400">
+            <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
               <Printer className="w-4 h-4" />
             </div>
             <div>
@@ -262,7 +262,7 @@ export default function PrinterModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors shadow-xs cursor-pointer"
             >
               {editingPrinter ? "Enregistrer les modifications" : "Ajouter l'Imprimante"}
             </button>

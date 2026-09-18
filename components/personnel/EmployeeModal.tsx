@@ -143,7 +143,7 @@ export default function EmployeeModal() {
         {/* Header */}
         <div className="flex items-center justify-between pb-3 2xl:pb-4 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 2xl:w-12 2xl:h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
+            <div className="w-10 h-10 2xl:w-12 2xl:h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
               <UserPlus className="w-5 h-5 2xl:w-6 2xl:h-6" />
             </div>
             <div>
@@ -357,7 +357,7 @@ export default function EmployeeModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               {editingEmployee ? 'Enregistrer les modifications' : 'Créer le Collaborateur'}
             </button>

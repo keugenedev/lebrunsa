@@ -249,7 +249,7 @@ export default function ITEquipmentView() {
             type="button"
             onClick={() => setSelectedAssetForView(asset)}
             title="Consulter tous les détails (Souris, Clavier, Écran, Utilisateur...)"
-            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600 transition cursor-pointer"
+            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
           >
             <Eye className="w-4 h-4" />
           </button>
@@ -257,7 +257,7 @@ export default function ITEquipmentView() {
             type="button"
             onClick={() => openQRModal(asset)}
             title="Générer étiquette Code-barres (Code 128)"
-            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-red-600 transition cursor-pointer"
+            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
           >
             <Barcode className="w-4 h-4" />
           </button>
@@ -265,7 +265,7 @@ export default function ITEquipmentView() {
             type="button"
             onClick={() => openAddModal('it', asset)}
             title="Modifier le poste"
-            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-gray-900 transition cursor-pointer"
+            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -277,7 +277,7 @@ export default function ITEquipmentView() {
               }
             }}
             title="Supprimer"
-            className="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition cursor-pointer"
+            className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -302,17 +302,17 @@ export default function ITEquipmentView() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => openAddModal('it')}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nouveau Poste IT</span>
           </button>
           <button
             onClick={() => exportCSV('it')}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
             title="Exporter en fichier Excel / CSV"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>Exporter Excel</span>
           </button>
         </div>

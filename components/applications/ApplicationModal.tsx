@@ -198,7 +198,7 @@ export default function ApplicationModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors shadow-xs cursor-pointer"
             >
               {editingApplicationAccount ? "Enregistrer les modifications" : "Ajouter l'Accès"}
             </button>

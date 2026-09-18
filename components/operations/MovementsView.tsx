@@ -210,7 +210,7 @@ export default function MovementsView() {
         actionButtons={
           <button
             onClick={() => setIsNewMoveModalOpen(true)}
-            className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
+            className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
           >
             <i className="ri-add-line text-base"></i>
             <span>Enregistrer un Prêt / Sortie</span>
@@ -223,11 +223,11 @@ export default function MovementsView() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
           <div className="lebron-card w-full max-w-md p-6 bg-white border border-slate-200 shadow-2xl relative">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <ArrowLeftRight className="w-4 h-4 text-red-600" />
+              <ArrowLeftRight className="w-4 h-4 text-slate-700" />
               <span>Enregistrer un Mouvement</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Affectation nominative à un salarié ou retour en stock central Lebronsa S.A.
+              Affectation nominative à un salarié ou retour en stock central Lebrun S.A.
             </p>
 
             <form onSubmit={handleSaveMovement} className="mt-4 space-y-4 text-xs">
@@ -237,7 +237,7 @@ export default function MovementsView() {
                   required
                   value={selectedAssetId}
                   onChange={(e) => setSelectedAssetId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
                 >
                   <option value="">Sélectionnez un équipement...</option>
                   <optgroup label="Équipements IT">
@@ -271,7 +271,7 @@ export default function MovementsView() {
                       onClick={() => setActionType(t.id as any)}
                       className={`py-2 rounded-lg text-xs font-medium border transition-all ${
                         actionType === t.id
-                          ? 'bg-red-50 text-red-700 border-red-300'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs font-semibold'
                           : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -288,7 +288,7 @@ export default function MovementsView() {
                     required
                     value={selectedEmployeeId}
                     onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
                   >
                     <option value="">Sélectionnez un collaborateur...</option>
                     {employees.map(e => (
@@ -321,7 +321,7 @@ export default function MovementsView() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium shadow-xs"
+                  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium shadow-xs"
                 >
                   Valider le mouvement
                 </button>

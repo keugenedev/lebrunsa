@@ -43,15 +43,15 @@ export default function PersonnelView() {
       sortable: true,
       render: (emp) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full border border-gray-200 bg-red-50 p-0.5 flex items-center justify-center font-bold text-xs text-red-600 shrink-0 shadow-2xs">
+          <div className="h-10 w-10 rounded-full border border-slate-200 bg-slate-100 p-0.5 flex items-center justify-center font-bold text-xs text-slate-700 shrink-0 shadow-2xs">
             {emp.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">
+            <p className="text-sm font-semibold text-slate-800">
               {emp.fullName}
             </p>
-            <p className="text-xs font-semibold text-red-600 mt-0.5 flex items-center gap-1.5">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-red-500"></span>
+            <p className="text-xs font-semibold text-slate-600 mt-0.5 flex items-center gap-1.5">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-slate-400"></span>
               {emp.employeeId}
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function PersonnelView() {
             type="button"
             onClick={() => setSelectedEmployee(emp)}
             title="Consulter les équipements"
-            className="inline-flex items-center justify-center text-slate-400 transition hover:text-red-600 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-eye-line text-lg"></i>
           </button>
@@ -176,7 +176,7 @@ export default function PersonnelView() {
               }
             }}
             title="Supprimer"
-            className="inline-flex items-center justify-center text-slate-400 transition hover:text-red-600 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-delete-bin-line text-lg"></i>
           </button>
@@ -201,17 +201,17 @@ export default function PersonnelView() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => openEmployeeModal()}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nouveau Collaborateur</span>
           </button>
           <button
             onClick={() => exportCSV('personnel')}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
             title="Exporter en fichier Excel / CSV"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-slate-600" />
             <span>Exporter Excel</span>
           </button>
         </div>
@@ -256,13 +256,13 @@ export default function PersonnelView() {
           <div className="lebron-card w-full max-w-2xl bg-white border border-slate-200 shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white font-medium text-base flex items-center justify-center shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white font-medium text-base flex items-center justify-center shadow-sm">
                   {selectedEmployee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-bold text-slate-900">{selectedEmployee.fullName}</h3>
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-semibold">
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200 font-semibold">
                       {selectedEmployee.employeeId}
                     </span>
                   </div>
@@ -314,7 +314,7 @@ export default function PersonnelView() {
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 block font-medium">Valeur des Équipements</span>
-                      <span className="text-sm font-bold text-red-700">{formatCurrency(totalVal)}</span>
+                      <span className="text-sm font-bold text-slate-900">{formatCurrency(totalVal)}</span>
                     </div>
                   </div>
 
@@ -405,7 +405,7 @@ export default function PersonnelView() {
               </button>
               <button
                 onClick={() => setSelectedEmployee(null)}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-xs shadow-xs"
+                className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-xs"
               >
                 Fermer
               </button>

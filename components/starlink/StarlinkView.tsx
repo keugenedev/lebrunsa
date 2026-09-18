@@ -137,9 +137,9 @@ export default function StarlinkView() {
               onClick={() => runSpeedtest(kit)}
               disabled={isTesting}
               title="Lancer un test de ping et débit en direct"
-              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-red-600 transition-colors shadow-2xs"
+              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors shadow-2xs"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-red-600' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-slate-800' : ''}`} />
             </button>
           </div>
         );
@@ -205,7 +205,7 @@ export default function StarlinkView() {
             type="button"
             onClick={() => openQRModal(kit)}
             title="Générer QR Code kit"
-            className="inline-flex items-center justify-center text-gray-500 transition hover:text-red-600 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-qr-code-line text-lg"></i>
           </button>
@@ -213,7 +213,7 @@ export default function StarlinkView() {
             type="button"
             onClick={() => openAddModal('starlink', kit)}
             title="Modifier terminal"
-            className="inline-flex items-center justify-center text-gray-500 transition hover:text-gray-800 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-pencil-line text-lg"></i>
           </button>
@@ -225,7 +225,7 @@ export default function StarlinkView() {
               }
             }}
             title="Supprimer"
-            className="inline-flex items-center justify-center text-red-500 transition hover:text-red-700 cursor-pointer"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
             <i className="ri-delete-bin-line text-lg"></i>
           </button>
@@ -273,15 +273,15 @@ export default function StarlinkView() {
           <>
             <button
               onClick={() => exportCSV('starlink')}
-              className="h-10 flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white hover:bg-gray-50 border border-gray-300 text-xs font-medium text-gray-700 transition shadow-xs cursor-pointer"
+              className="h-10 flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
             >
-              <i className="ri-file-download-line text-base text-gray-500"></i>
+              <i className="ri-file-download-line text-base text-slate-600"></i>
               <span>Export Flotte</span>
             </button>
 
             <button
               onClick={() => openAddModal('starlink')}
-              className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium shadow-xs transition cursor-pointer"
+              className="h-10 flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
             >
               <i className="ri-add-line text-base"></i>
               <span>Ajouter un Kit Starlink</span>
