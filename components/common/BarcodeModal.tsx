@@ -126,7 +126,7 @@ export default function BarcodeModal() {
 
           <button
             onClick={handlePrint}
-            className="flex-1 py-2 px-3 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-medium transition-all shadow-sm hover:shadow-md hover:shadow-red-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-medium transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Imprimer étiquette</span>

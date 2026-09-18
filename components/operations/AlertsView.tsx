@@ -122,7 +122,7 @@ export default function AlertsView() {
                     </span>
                     <h4 className="text-sm font-bold text-slate-900">{alert.title}</h4>
                     {!alert.read && (
-                      <span className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-red-600 text-white">
+                      <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-slate-900 text-white">
                         NOUVEAU
                       </span>
                     )}
@@ -169,7 +169,7 @@ export default function AlertsView() {
                 <button
                   onClick={() => dismissAlert(alert.id)}
                   title="Supprimer cette alerte"
-                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-red-50 text-slate-400 hover:text-red-600"
+                  className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>

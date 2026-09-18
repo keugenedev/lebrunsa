@@ -93,7 +93,7 @@ export default function QuickSearchModal() {
       <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden relative">
         {/* Search Bar Input */}
         <div className="p-4 border-b border-slate-100 flex items-center gap-3 bg-white">
-          <Search className="w-4 h-4 text-red-600 shrink-0" />
+          <Search className="w-4 h-4 text-slate-700 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -125,7 +125,7 @@ export default function QuickSearchModal() {
               onClick={() => setActiveCategoryFilter(f.id)}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 activeCategoryFilter === f.id
-                  ? 'bg-red-600 text-white shadow-2xs'
+                  ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                   : 'text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -153,7 +153,7 @@ export default function QuickSearchModal() {
                   className="p-3 rounded-xl hover:bg-slate-50 flex items-center justify-between gap-3 cursor-pointer transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
@@ -165,7 +165,7 @@ export default function QuickSearchModal() {
                           {item.typeLabel}
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-red-600 transition-colors mt-0.5">
+                      <h4 className="text-xs font-bold text-slate-900 group-hover:text-slate-800 transition-colors mt-0.5">
                         {item.name}
                       </h4>
                       <p className="text-[11px] text-slate-500 mt-0.5">
@@ -175,7 +175,7 @@ export default function QuickSearchModal() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-600 group-hover:translate-x-0.5 transition-all" />
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </div>
               );

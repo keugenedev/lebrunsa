@@ -139,7 +139,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nom@lebrunsa.com"
                   required
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-colors"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 transition-colors"
                 />
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-9 pr-9 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-red-600 focus:ring-1 focus:ring-red-600 transition-colors"
+                  className="w-full pl-9 pr-9 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 transition-colors"
                 />
                 <button
                   type="button"
@@ -187,7 +187,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded-sm border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                  className="w-3.5 h-3.5 rounded-sm border-slate-300 text-slate-900 focus:ring-slate-700 cursor-pointer"
                 />
                 <span>Mémoriser ma session</span>
               </label>
@@ -197,7 +197,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-medium shadow-sm hover:shadow-md hover:shadow-red-600/20 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mt-3.5"
+              className="group relative w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-semibold shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed mt-3.5"
             >
               {isLoading ? (
                 <>

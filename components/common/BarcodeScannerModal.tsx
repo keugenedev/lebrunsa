@@ -193,16 +193,11 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
-              <BarcodeIcon className="w-4 h-4" />
-            </div>
+            <BarcodeIcon className="w-5 h-5 text-slate-700 shrink-0" />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-slate-900">Station de Lecture Code-Barres</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Prêt pour scan
-                </span>
+                <span className="text-xs text-slate-500 font-normal">• Prêt pour scan</span>
               </div>
               <p className="text-[11px] text-slate-500">Scannez une étiquette avec votre douchette ou saisissez un numéro</p>
             </div>
@@ -222,7 +217,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <BarcodeIcon className="w-4 h-4 text-red-600" />
+              <BarcodeIcon className="w-4 h-4 text-slate-400" />
             </div>
             <input
               ref={inputRef}
@@ -231,12 +226,12 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
               onChange={(e) => setScanInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Visez avec le scanner ou tapez un S/N (ex: CNB1K29971, DELL-7090-01) puis Entrée..."
-              className="w-full pl-9 pr-24 py-2.5 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-red-600 focus:ring-1 focus:ring-red-600 font-mono transition-colors"
+              className="w-full pl-9 pr-24 py-2.5 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 font-mono transition-colors"
             />
             <button
               type="button"
               onClick={() => processBarcode(scanInput)}
-              className="absolute inset-y-1 right-1 px-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+              className="absolute inset-y-1 right-1 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
             >
               <Search className="w-3.5 h-3.5" />
               <span>Valider</span>

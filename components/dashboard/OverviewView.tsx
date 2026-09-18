@@ -279,7 +279,7 @@ export default function OverviewView() {
               </div>
               <button
                 onClick={() => setActiveTab('printers')}
-                className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <span>Voir tout</span>
                 <ArrowUpRight className="w-3 h-3" />
@@ -308,7 +308,7 @@ export default function OverviewView() {
           <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
             <button
               onClick={() => setActiveTab('printers')}
-              className="text-xs font-medium text-slate-600 hover:text-red-600 cursor-pointer"
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
               Consulter les {totalPrinters} imprimantes &rarr;
             </button>
@@ -328,7 +328,7 @@ export default function OverviewView() {
               </div>
               <button
                 onClick={() => setActiveTab('personnel')}
-                className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
+                className="text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <span>Voir tout</span>
                 <ArrowUpRight className="w-3 h-3" />
@@ -359,7 +359,7 @@ export default function OverviewView() {
           <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
             <button
               onClick={() => setActiveTab('personnel')}
-              className="text-xs font-medium text-slate-600 hover:text-red-600 cursor-pointer"
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
               Gérer les {totalEmployees} collaborateurs et identifiants &rarr;
             </button>

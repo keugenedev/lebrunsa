@@ -53,11 +53,11 @@ export default function Header() {
           className="flex items-center gap-1.5 text-slate-700 font-semibold cursor-pointer hover:text-slate-900 transition-colors shrink-0" 
           onClick={() => setActiveTab('overview')}
         >
-          <Building2 className="w-3.5 h-3.5 text-red-600 shrink-0" />
+          <Building2 className="w-3.5 h-3.5 text-slate-700 shrink-0" />
           <span className="whitespace-nowrap">Lebrun S.A.</span>
         </div>
         <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-        <span className="text-red-600 font-bold tracking-tight whitespace-nowrap truncate max-w-[180px] sm:max-w-[260px] md:max-w-none">
+        <span className="text-slate-900 font-bold tracking-tight whitespace-nowrap truncate max-w-[180px] sm:max-w-[260px] md:max-w-none">
           {getTabLabel(activeTab)}
         </span>
       </div>

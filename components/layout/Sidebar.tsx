@@ -87,12 +87,12 @@ export default function Sidebar() {
               onClick={() => handleNavClick(item.id)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 group cursor-pointer ${
                 isActive
-                  ? 'bg-red-600 text-white shadow-2xs font-semibold'
+                  ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 font-medium'
               }`}
             >
               <Icon className={`w-4 h-4 transition-colors shrink-0 ${
-                isActive ? 'text-white' : 'text-slate-400 group-hover:text-red-600'
+                isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-800'
               }`} />
               <span className="truncate">{item.label}</span>
             </button>
@@ -104,11 +104,11 @@ export default function Sidebar() {
       <div className="px-3 py-2.5 border-t border-slate-100 bg-slate-50/60">
         <button
           onClick={logout}
-          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer group"
+          className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer group"
           title="Se déconnecter"
         >
           <div className="flex items-center gap-2 truncate">
-            <div className="w-6 h-6 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-[11px] shrink-0">
+            <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-[11px] shrink-0">
               {currentUser?.name ? currentUser.name[0].toUpperCase() : 'A'}
             </div>
             <div className="truncate text-left">
@@ -120,7 +120,7 @@ export default function Sidebar() {
               </p>
             </div>
           </div>
-          <LogOut className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-600 shrink-0" />
+          <LogOut className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-800 shrink-0" />
         </button>
       </div>
     </aside>
