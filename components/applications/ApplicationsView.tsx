@@ -231,73 +231,55 @@ export default function ApplicationsView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleExportCSV}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-            title="Exporter en fichier CSV / Excel"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Exporter CSV</span>
-          </button>
+        <div className="flex items-center gap-2">
           <button
             onClick={() => openApplicationModal()}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Ajouter Accès</span>
           </button>
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/90">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Rechercher un identifiant, nom, application..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
-            value={orgFilter}
-            onChange={(e) => setOrgFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+          <button
+            onClick={handleExportCSV}
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            title="Exporter en fichier Excel / CSV"
           >
-            <option value="all">Toutes les organisations</option>
-            <option value="Lebrun">Lebrun S.A.</option>
-            <option value="Autobiz">Autobiz S.A.</option>
-          </select>
+            <Download className="w-3.5 h-3.5" />
+            <span>Exporter Excel</span>
+          </button>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table with Filters inside */}
       <DataTable
         items={filteredAccounts}
         columns={columns}
         defaultRowsPerPage={15}
-        actionButtons={
-          <>
-            <button
-              onClick={handleExportCSV}
-              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-gray-500" />
-              <span>Export CSV</span>
-            </button>
-            <button
-              onClick={() => openApplicationModal()}
-              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Ajouter un Accès</span>
-            </button>
-          </>
+        customFilters={
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher un identifiant, nom, application..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={orgFilter}
+                onChange={(e) => setOrgFilter(e.target.value)}
+                className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+              >
+                <option value="all">Toutes les organisations</option>
+                <option value="Lebrun">Lebrun S.A.</option>
+                <option value="Autobiz">Autobiz S.A.</option>
+              </select>
+            </div>
+          </div>
         }
       />
     </div>

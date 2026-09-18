@@ -26,6 +26,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   searchFields?: (keyof T | string)[];
   filters?: FilterOption[];
+  customFilters?: React.ReactNode;
   actionButtons?: React.ReactNode;
   defaultRowsPerPage?: number;
   emptyMessage?: string;
@@ -41,6 +42,7 @@ export default function DataTable<T extends { id: string }>({
   searchPlaceholder = 'Rechercher...',
   searchFields,
   filters,
+  customFilters,
   actionButtons,
   defaultRowsPerPage = 10,
   emptyMessage = 'Aucun élément trouvé',
@@ -159,55 +161,59 @@ export default function DataTable<T extends { id: string }>({
         </div>
       )}
 
-      {/* Barre d'outils de filtres responsive */}
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 w-full max-w-full min-w-0">
-        <div className="min-w-0 w-full max-w-full relative">
-          <input
-            value={search}
-            onChange={(event) => handleSearchChange(event.target.value)}
-            placeholder={searchPlaceholder}
-            className="h-9.5 w-full min-w-0 max-w-full truncate rounded-xl border border-slate-300 bg-slate-50/70 pl-9 pr-8 py-2 text-xs text-slate-800 shadow-2xs placeholder:text-slate-400 focus:bg-white focus:border-red-600 focus:outline-hidden focus:ring-1 focus:ring-red-600 transition-colors"
-          />
-          <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
-          {search && (
-            <button
-              type="button"
-              onClick={() => handleSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-            >
-              <i className="ri-close-line text-sm"></i>
-            </button>
-          )}
-        </div>
-
-        {filters && filters.map((filter) => (
-          <div key={filter.key} className="min-w-0 w-full max-w-full">
-            <select
-              value={activeFilters[filter.key] || 'all'}
-              onChange={(event) => handleFilterChange(filter.key, event.target.value)}
-              className="h-9.5 w-full min-w-0 max-w-full truncate rounded-xl border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs text-slate-800 shadow-2xs focus:bg-white focus:border-red-600 focus:outline-hidden focus:ring-1 focus:ring-red-600 cursor-pointer transition-colors"
-            >
-              <option value="all">Toutes options ({filter.label})</option>
-              {filter.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+      {/* Barre d'outils de filtres responsive (personnalisée ou par défaut) */}
+      {customFilters ? (
+        <div className="mb-4">{customFilters}</div>
+      ) : (
+        <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 w-full max-w-full min-w-0">
+          <div className="min-w-0 w-full max-w-full relative">
+            <input
+              value={search}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              placeholder={searchPlaceholder}
+              className="h-9.5 w-full min-w-0 max-w-full truncate rounded-xl border border-slate-300 bg-slate-50/70 pl-9 pr-8 py-2 text-xs text-slate-800 shadow-2xs placeholder:text-slate-400 focus:bg-white focus:border-red-600 focus:outline-hidden focus:ring-1 focus:ring-red-600 transition-colors"
+            />
+            <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+            {search && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <i className="ri-close-line text-sm"></i>
+              </button>
+            )}
           </div>
-        ))}
-      </div>
+
+          {filters && filters.map((filter) => (
+            <div key={filter.key} className="min-w-0 w-full max-w-full">
+              <select
+                value={activeFilters[filter.key] || 'all'}
+                onChange={(event) => handleFilterChange(filter.key, event.target.value)}
+                className="h-9.5 w-full min-w-0 max-w-full truncate rounded-xl border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs text-slate-800 shadow-2xs focus:bg-white focus:border-red-600 focus:outline-hidden focus:ring-1 focus:ring-red-600 cursor-pointer transition-colors"
+              >
+                <option value="all">Toutes options ({filter.label})</option>
+                {filter.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Table responsive */}
       <div className="max-w-full overflow-x-auto rounded-xl border border-slate-200/80">
-        <table className="w-full text-left text-xs border-collapse">
+        <table className="w-full text-left text-xs border-collapse min-w-full">
           <thead className="bg-slate-50/80 border-b border-slate-200">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  style={{ width: col.width }}
-                  className={`py-2 px-3 text-start text-[11px] font-semibold text-slate-500 uppercase tracking-wider ${
+                  style={{ width: col.width, minWidth: col.width }}
+                  className={`py-2 px-3 text-start text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${
                     col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
                   } ${col.sortable ? 'cursor-pointer select-none hover:text-slate-800 transition-colors' : ''}`}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -238,6 +244,7 @@ export default function DataTable<T extends { id: string }>({
                   {columns.map((col) => (
                     <td
                       key={col.key}
+                      style={{ width: col.width, minWidth: col.width }}
                       className={`py-2 px-3 text-xs text-slate-700 ${
                         col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
                       }`}

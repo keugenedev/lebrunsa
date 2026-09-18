@@ -56,28 +56,28 @@ export default function ITEquipmentView() {
     switch (status) {
       case 'in_use':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
             En service
           </span>
         );
       case 'available':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
             En réserve
           </span>
         );
       case 'maintenance':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
             Maintenance
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
             Déclassé
           </span>
         );
@@ -151,7 +151,7 @@ export default function ITEquipmentView() {
         const Icon = getSubCategoryIcon(asset.subCategory);
         return (
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
               <Icon className="w-4 h-4" />
             </div>
             <div>
@@ -217,7 +217,7 @@ export default function ITEquipmentView() {
         <div>
           {asset.assignedTo ? (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-red-50 text-red-700 text-xs font-bold flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
                 {asset.assignedTo[0]}
               </div>
               <div>
@@ -236,6 +236,7 @@ export default function ITEquipmentView() {
       label: 'Statut',
       sortable: true,
       align: 'center',
+      width: '120px',
       render: (asset) => getStatusBadge(asset.status)
     },
     {
@@ -300,19 +301,19 @@ export default function ITEquipmentView() {
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => exportCSV('it')}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-            title="Exporter en fichier CSV / Excel"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Exporter CSV</span>
-          </button>
-          <button
             onClick={() => openAddModal('it')}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Nouveau Poste IT</span>
+          </button>
+          <button
+            onClick={() => exportCSV('it')}
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            title="Exporter en fichier Excel / CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Exporter Excel</span>
           </button>
         </div>
       </div>
@@ -359,80 +360,61 @@ export default function ITEquipmentView() {
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-4 2xl:p-5 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher par désignation, SN, modèle, tag, collaborateur..."
-            className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:border-red-600 focus:ring-1 focus:ring-red-600"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Entreprise */}
-          <select
-            value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-          >
-            <option value="all">Toutes les entreprises</option>
-            <option value="Lebrun">Lebrun S.A.</option>
-            <option value="Autobiz">Autobiz S.A.</option>
-          </select>
-
-          {/* Site */}
-          <select
-            value={siteFilter}
-            onChange={(e) => setSiteFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-          >
-            <option value="all">Tous les sites</option>
-            <option value="Delmas 52">Delmas 52</option>
-            <option value="Aéroport Depot">Aéroport Depot</option>
-          </select>
-
-          {/* Statut */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="in_use">En service</option>
-            <option value="available">En réserve</option>
-            <option value="maintenance">En maintenance</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Main DataTable */}
+      {/* Main DataTable with Filters inside */}
       <DataTable
         items={filteredAssets}
         columns={columns}
         onRowClick={(asset) => setSelectedAssetForView(asset)}
         defaultRowsPerPage={20}
-        actionButtons={
-          <>
-            <button
-              onClick={() => exportCSV('it')}
-              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-gray-500" />
-              <span>Export CSV</span>
-            </button>
+        customFilters={
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher par désignation, SN, modèle, tag, collaborateur..."
+                className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:border-slate-400 focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
 
-            <button
-              onClick={() => openAddModal('it')}
-              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Nouveau Poste IT</span>
-            </button>
-          </>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Entreprise */}
+              <select
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Toutes les entreprises</option>
+                <option value="Lebrun">Lebrun S.A.</option>
+                <option value="Autobiz">Autobiz S.A.</option>
+              </select>
+
+              {/* Site */}
+              <select
+                value={siteFilter}
+                onChange={(e) => setSiteFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Tous les sites</option>
+                <option value="Delmas 52">Delmas 52</option>
+                <option value="Aéroport Depot">Aéroport Depot</option>
+              </select>
+
+              {/* Statut */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="in_use">En service</option>
+                <option value="available">En réserve</option>
+                <option value="maintenance">En maintenance</option>
+              </select>
+            </div>
+          </div>
         }
       />
 

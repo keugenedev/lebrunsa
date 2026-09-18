@@ -130,7 +130,7 @@ export default function PrintersView() {
       render: (p) => (
         <div>
           <div className="font-semibold text-slate-900 text-xs flex items-center gap-1.5">
-            <Printer className="w-3.5 h-3.5 text-red-600 shrink-0" />
+            <Printer className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>{p.name}</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5">
@@ -166,7 +166,7 @@ export default function PrintersView() {
             title="Copier le numéro de série"
           >
             {copiedSerial === p.serialNumber ? (
-              <Check className="w-3 h-3 text-emerald-600" />
+              <Check className="w-3 h-3 text-slate-500" />
             ) : (
               <Copy className="w-3 h-3" />
             )}
@@ -187,12 +187,12 @@ export default function PrintersView() {
             href={`http://${p.ipAddress}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-mono text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded border border-blue-200 transition-colors"
+            className="inline-flex items-center gap-1 font-mono text-xs text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-2 py-0.5 rounded border border-slate-200 transition-colors"
             title="Ouvrir la page de gestion de l'imprimante"
           >
-            <Network className="w-3 h-3 text-blue-500" />
+            <Network className="w-3 h-3 text-slate-400" />
             <span>{p.ipAddress}</span>
-            <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+            <ExternalLink className="w-2.5 h-2.5 text-slate-400 opacity-60" />
           </a>
         );
       }
@@ -211,9 +211,10 @@ export default function PrintersView() {
       key: 'status',
       label: 'État',
       sortable: true,
+      width: '120px',
       render: (p) => (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
           {p.status}
         </span>
       )
@@ -254,7 +255,7 @@ export default function PrintersView() {
               notes: `IP: ${p.ipAddress} • S/N: ${p.serialNumber}`
             })}
             title="Générer étiquette Code-barres (Code 128)"
-            className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             <Barcode className="w-4 h-4" />
           </button>
@@ -262,7 +263,7 @@ export default function PrintersView() {
             type="button"
             onClick={() => handleOpenEdit(p)}
             title="Modifier"
-            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -274,7 +275,7 @@ export default function PrintersView() {
               }
             }}
             title="Supprimer"
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -296,21 +297,21 @@ export default function PrintersView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleExportCSV}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-            title="Exporter en fichier CSV / Excel"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Exporter CSV</span>
-          </button>
+        <div className="flex items-center gap-2">
           <button
             onClick={handleOpenAdd}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Ajouter Imprimante</span>
+          </button>
+          <button
+            onClick={handleExportCSV}
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            title="Exporter en fichier Excel / CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Exporter Excel</span>
           </button>
         </div>
       </div>
@@ -357,83 +358,64 @@ export default function PrintersView() {
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-4 2xl:p-5 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 2xl:w-5 2xl:h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher par nom, modèle, IP, S/N..."
-            className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:border-red-600 focus:ring-1 focus:ring-red-600"
-          />
-        </div>
-
-        {/* Dropdowns */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Company */}
-          <select
-            value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-          >
-            <option value="all">Toutes les entreprises</option>
-            {companies.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-
-          {/* Site */}
-          <select
-            value={siteFilter}
-            onChange={(e) => setSiteFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-          >
-            <option value="all">Tous les sites</option>
-            {sites.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-
-          {/* Type */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-          >
-            <option value="all">Tous les types</option>
-            {types.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Main DataTable */}
+      {/* Main DataTable with Filters inside */}
       <DataTable
         columns={columns}
         items={filteredPrinters}
-        searchPlaceholder="Rechercher par nom, modèle, IP, série..."
         defaultRowsPerPage={20}
-        actionButtons={
-          <>
-            <button
-              onClick={handleExportCSV}
-              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-gray-500" />
-              <span>Export CSV</span>
-            </button>
-            <button
-              onClick={() => openPrinterModal()}
-              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Ajouter Imprimante</span>
-            </button>
-          </>
+        customFilters={
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher par nom, modèle, IP, S/N..."
+                className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:border-slate-400 focus:ring-1 focus:ring-slate-400"
+              />
+            </div>
+
+            {/* Dropdowns */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Company */}
+              <select
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Toutes les entreprises</option>
+                {companies.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+
+              {/* Site */}
+              <select
+                value={siteFilter}
+                onChange={(e) => setSiteFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Tous les sites</option>
+                {sites.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+
+              {/* Type */}
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Tous les types</option>
+                {types.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         }
       />
     </div>

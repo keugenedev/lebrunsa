@@ -93,24 +93,25 @@ export default function StarlinkView() {
       label: 'Statut Réseau',
       sortable: true,
       align: 'center',
+      width: '120px',
       render: (kit) => {
         if (kit.networkStatus === 'online') {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping-slow"></span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
               En ligne
             </span>
           );
         } else if (kit.networkStatus === 'degraded') {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-              <AlertTriangle className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+              <AlertTriangle className="w-3 h-3 text-slate-400 shrink-0" />
               Dégradé
             </span>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
             Hors-ligne
           </span>
         );

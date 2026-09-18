@@ -60,7 +60,7 @@ export default function ElectronicsView() {
         const Icon = getSubcategoryIcon(item.subCategory);
         return (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
               <Icon className="w-4 h-4" />
             </div>
             <div>
@@ -130,18 +130,19 @@ export default function ElectronicsView() {
       label: 'État Réserve',
       sortable: true,
       align: 'center',
+      width: '130px',
       render: (item) => {
         const isLow = item.quantityInStock <= item.minThreshold;
         if (isLow) {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-red-50 text-red-700 border border-red-200">
-              <AlertTriangle className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+              <AlertTriangle className="w-3 h-3 shrink-0" />
               Critique (≤ {item.minThreshold})
             </span>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
             Normal
           </span>
         );
@@ -220,7 +221,7 @@ export default function ElectronicsView() {
         title="Électronique, Capteurs & Matériel IoT"
         subtitle="Gestion des pièces détachées, onduleurs, batteries 48V, bobines de câblage et instrumentation"
         badge={
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-medium border border-emerald-200">
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium border border-slate-200">
             {electronics.length} références en stock
           </span>
         }

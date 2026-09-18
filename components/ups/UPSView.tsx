@@ -92,7 +92,7 @@ export default function UPSView() {
       render: (item) => (
         <div>
           <div className="font-semibold text-slate-900 text-xs flex items-center gap-1.5 whitespace-nowrap">
-            <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <Zap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>{item.name}</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -132,8 +132,8 @@ export default function UPSView() {
       width: '120px',
       align: 'center',
       render: (item) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
           {item.status}
         </span>
       )
@@ -158,7 +158,7 @@ export default function UPSView() {
             type="button"
             onClick={() => openUPSModal(item)}
             title="Modifier cet onduleur"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -170,7 +170,7 @@ export default function UPSView() {
               }
             }}
             title="Supprimer cet onduleur"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -193,21 +193,21 @@ export default function UPSView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleExportCSV}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
-            title="Exporter en fichier CSV / Excel"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Exporter CSV</span>
-          </button>
+        <div className="flex items-center gap-2">
           <button
             onClick={() => openUPSModal()}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Ajouter Onduleur</span>
+          </button>
+          <button
+            onClick={handleExportCSV}
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            title="Exporter en fichier Excel / CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Exporter Excel</span>
           </button>
         </div>
       </div>
@@ -237,54 +237,36 @@ export default function UPSView() {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/90">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Rechercher un UPS, marque, capacité..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
-            value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
-          >
-            <option value="all">Toutes les entreprises</option>
-            <option value="Lebrun">Lebrun S.A.</option>
-            <option value="Autobiz">Autobiz S.A.</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Data Table */}
+      {/* Data Table with Filters inside */}
       <DataTable
         items={filteredUPS}
         columns={columns}
         defaultRowsPerPage={10}
-        actionButtons={
-          <>
-            <button
-              onClick={handleExportCSV}
-              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-gray-500" />
-              <span>Export CSV</span>
-            </button>
-            <button
-              onClick={() => openUPSModal()}
-              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Ajouter un Onduleur</span>
-            </button>
-          </>
+        customFilters={
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher un UPS, marque, capacité..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+              >
+                <option value="all">Toutes les entreprises</option>
+                <option value="Lebrun">Lebrun S.A.</option>
+                <option value="Autobiz">Autobiz S.A.</option>
+              </select>
+            </div>
+          </div>
         }
       />
     </div>

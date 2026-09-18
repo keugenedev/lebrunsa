@@ -110,25 +110,26 @@ export default function MovementsView() {
       label: "Type d'Opération",
       sortable: true,
       align: 'center',
+      width: '140px',
       render: (mov) => {
         if (mov.actionType === 'check_out') {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-orange-50 text-orange-700 border border-orange-200">
-              <ArrowUpRight className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">
+              <ArrowUpRight className="w-3 h-3 shrink-0" />
               Prêt / Sortie
             </span>
           );
         } else if (mov.actionType === 'check_in') {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <ArrowDownLeft className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+              <ArrowDownLeft className="w-3 h-3 shrink-0" />
               Retour Réserve
             </span>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-            <Wrench className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+            <Wrench className="w-3 h-3 shrink-0" />
             Maintenance
           </span>
         );

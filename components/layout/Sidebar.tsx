@@ -85,32 +85,16 @@ export default function Sidebar() {
             <button
               key={item.id}
               onClick={() => handleNavClick(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 group cursor-pointer ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 group cursor-pointer ${
                 isActive
                   ? 'bg-red-600 text-white shadow-2xs font-semibold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 font-medium'
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                <Icon className={`w-4 h-4 transition-colors ${
-                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-red-600'
-                }`} />
-                <span>{item.label}</span>
-              </div>
-
-              {item.count !== undefined ? (
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-white/20 text-white'
-                    : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
-                }`}>
-                  {item.count}
-                </span>
-              ) : (
-                item.id === 'scanner' && (
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-emerald-500'} animate-pulse`} />
-                )
-              )}
+              <Icon className={`w-4 h-4 transition-colors shrink-0 ${
+                isActive ? 'text-white' : 'text-slate-400 group-hover:text-red-600'
+              }`} />
+              <span className="truncate">{item.label}</span>
             </button>
           );
         })}
