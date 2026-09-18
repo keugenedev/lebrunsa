@@ -17,6 +17,10 @@ import BarcodeScannerModal from '@/components/common/BarcodeScannerModal';
 import GlobalBarcodeListener from '@/components/common/GlobalBarcodeListener';
 import AssetModal from '@/components/common/AssetModal';
 import EmployeeModal from '@/components/personnel/EmployeeModal';
+import PrinterModal from '@/components/printers/PrinterModal';
+import NetworkModal from '@/components/network/NetworkModal';
+import UPSModal from '@/components/ups/UPSModal';
+import ApplicationModal from '@/components/applications/ApplicationModal';
 import QuickSearchModal from '@/components/common/QuickSearchModal';
 import LoginPage from '@/components/auth/LoginPage';
 
@@ -93,6 +97,10 @@ function MainContent() {
       <GlobalBarcodeListener />
       <AssetModal />
       <EmployeeModal />
+      <PrinterModal />
+      <NetworkModal />
+      <UPSModal />
+      <ApplicationModal />
       <QuickSearchModal />
     </div>
   );

@@ -184,33 +184,21 @@ export default function PersonnelView() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Banner */}
-      <div className="lebron-card p-5 bg-gradient-to-r from-red-950 via-slate-900 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-md border border-slate-800">
+      {/* Clean Light Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold tracking-widest uppercase text-red-300">
-              LEBRONSA S.A. • RESSOURCES HUMAINES & SALARIÉS
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
-            Répertoire du Personnel & Collaborateurs
+          <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+            Personnel & Collaborateurs
           </h1>
-          <p className="text-xs text-slate-300 mt-1">
-            Suivi nominatif des équipements IT, flottes mobiles et terminaux satellite attribués à chaque salarié.
+          <p className="text-xs text-slate-400 font-normal mt-0.5">
+            Suivi nominatif des équipements IT, flottes mobiles et affectations des salariés de Lebrun S.A.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/15 text-center">
-            <span className="text-[10px] text-slate-300 block uppercase font-medium">Collaborateurs</span>
-            <span className="text-xl font-bold text-white">{employees.length}</span>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/15 text-center">
-            <span className="text-[10px] text-slate-300 block uppercase font-medium">En Mission</span>
-            <span className="text-xl font-bold text-amber-300">
-              {employees.filter(e => e.status === 'on_leave').length}
-            </span>
-          </div>
+          <span className="text-xs text-slate-400 font-normal">
+            Total : <span className="font-medium text-slate-700">{employees.length} collaborateurs</span>
+          </span>
         </div>
       </div>
 

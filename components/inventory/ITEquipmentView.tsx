@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { ITAsset } from '@/types/inventory';
 import DataTable, { Column } from '@/components/common/DataTable';
@@ -18,7 +18,13 @@ import {
   Trash2, 
   Cpu, 
   HardDrive,
-  Eye
+  Eye,
+  Search,
+  Building2,
+  MapPin,
+  CheckCircle2,
+  UserCheck,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function ITEquipmentView() {
@@ -32,6 +38,10 @@ export default function ITEquipmentView() {
   } = useInventory();
 
   const [selectedAssetForView, setSelectedAssetForView] = useState<ITAsset | null>(null);
+  const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [siteFilter, setSiteFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const getSubCategoryIcon = (sub: string) => {
     switch (sub) {
@@ -46,33 +56,80 @@ export default function ITEquipmentView() {
     switch (status) {
       case 'in_use':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             En service
           </span>
         );
       case 'available':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
             En réserve
           </span>
         );
       case 'maintenance':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             Maintenance
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
             Déclassé
           </span>
         );
     }
   };
+
+  // KPIs
+  const stats = useMemo(() => {
+    const total = itAssets.length;
+    const inUse = itAssets.filter(a => a.status === 'in_use').length;
+    const assigned = itAssets.filter(a => a.assignedTo || a.assignedPersonnelId).length;
+    const lebrun = itAssets.filter(a => 
+      (a.company && a.company.toLowerCase().includes('lebrun')) ||
+      (a.assetTag && a.assetTag.includes('LEB')) ||
+      (a.location && a.location.toLowerCase().includes('lebrun'))
+    ).length;
+    const autobiz = itAssets.filter(a => 
+      (a.company && a.company.toLowerCase().includes('auto')) ||
+      (a.assetTag && a.assetTag.includes('AUT')) ||
+      (a.location && a.location.toLowerCase().includes('auto'))
+    ).length;
+    return { total, inUse, assigned, lebrun, autobiz };
+  }, [itAssets]);
+
+  // Filtered Assets
+  const filteredAssets = useMemo(() => {
+    return itAssets.filter(a => {
+      const isLebrun = (a.company && a.company.toLowerCase().includes('lebrun')) || a.assetTag.includes('LEB');
+      const isAutobiz = (a.company && a.company.toLowerCase().includes('auto')) || a.assetTag.includes('AUT');
+      
+      if (companyFilter === 'Lebrun' && !isLebrun) return false;
+      if (companyFilter === 'Autobiz' && !isAutobiz) return false;
+      
+      if (siteFilter !== 'all' && a.location !== siteFilter) return false;
+      if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+      
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const match = 
+          a.name.toLowerCase().includes(q) ||
+          a.brand.toLowerCase().includes(q) ||
+          a.model.toLowerCase().includes(q) ||
+          a.serialNumber.toLowerCase().includes(q) ||
+          a.assetTag.toLowerCase().includes(q) ||
+          (a.assignedTo && a.assignedTo.toLowerCase().includes(q)) ||
+          (a.cpu && a.cpu.toLowerCase().includes(q)) ||
+          (a.location && a.location.toLowerCase().includes(q));
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [itAssets, companyFilter, siteFilter, statusFilter, searchQuery]);
 
   const columns: Column<ITAsset>[] = [
     {
@@ -106,11 +163,28 @@ export default function ITEquipmentView() {
       }
     },
     {
+      key: 'company',
+      label: 'Entreprise & Site',
+      sortable: true,
+      render: (asset) => {
+        const companyName = asset.company || (asset.assetTag.includes('LEB') ? 'Lebrun S.A.' : 'Autobiz');
+        return (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <CompanyLogo company={companyName} className="h-4 max-w-[75px] w-auto object-contain" />
+            <span className="text-[11px] text-slate-500 flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+              <span>{asset.location}</span>
+            </span>
+          </div>
+        );
+      }
+    },
+    {
       key: 'serialNumber',
       label: 'N° de Série (SN)',
       sortable: true,
       render: (asset) => (
-        <span className="font-mono text-xs text-slate-800 select-all font-semibold whitespace-nowrap">
+        <span className="font-mono text-xs text-slate-800 select-all font-bold whitespace-nowrap">
           {asset.serialNumber}
         </span>
       )
@@ -123,7 +197,7 @@ export default function ITEquipmentView() {
           {asset.cpu && (
             <div className="flex items-center gap-1.5 truncate max-w-[220px]" title={asset.cpu}>
               <Cpu className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="font-medium text-slate-800">{asset.cpu}</span>
+              <span className="font-medium text-slate-800 text-[11px]">{asset.cpu}</span>
             </div>
           )}
           {asset.ram && (
@@ -155,16 +229,6 @@ export default function ITEquipmentView() {
             <span className="text-slate-400 italic text-xs">Non assigné (En réserve)</span>
           )}
         </div>
-      )
-    },
-    {
-      key: 'location',
-      label: 'Site',
-      sortable: true,
-      render: (asset) => (
-        <span className="text-xs font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-          {asset.location}
-        </span>
       )
     },
     {
@@ -223,39 +287,140 @@ export default function ITEquipmentView() {
 
   return (
     <div className="space-y-6 pb-16">
-      {/* Table Component with pagination & filters */}
+      {/* Clean Light Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
+        <div>
+          <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+            Postes Informatiques & Stations de Travail
+          </h1>
+          <p className="text-xs text-slate-400 font-normal mt-0.5">
+            Inventaire des postes Dell OptiPlex, accessoires et affectations de Lebrun S.A.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => exportCSV('it')}
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+            title="Exporter en fichier CSV / Excel"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-400" />
+            <span>Exporter CSV</span>
+          </button>
+          <button
+            onClick={() => openAddModal('it')}
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nouveau Poste IT</span>
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 2xl:gap-6">
+        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-normal text-slate-500">Total Postes IT</span>
+            <Laptop className="w-4 h-4 text-slate-400 shrink-0" />
+          </div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.total}</div>
+          <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>{stats.inUse} en service</span>
+          </div>
+        </div>
+
+        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-normal text-slate-500">Postes Affectés</span>
+            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <UserCheck className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            </div>
+          </div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.assigned}</div>
+          <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Salariés identifiés</div>
+        </div>
+
+        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-normal text-slate-500">Parc Lebrun S.A.</span>
+            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Building2 className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            </div>
+          </div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.lebrun}</div>
+          <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Siège Delmas 52</div>
+        </div>
+
+        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-normal text-slate-500">Parc Autobiz</span>
+            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            </div>
+          </div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.autobiz}</div>
+          <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Filiale Autobiz S.A.</div>
+        </div>
+      </div>
+
+      {/* Filter Toolbar */}
+      <div className="p-4 2xl:p-5 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Rechercher par désignation, SN, modèle, tag, collaborateur..."
+            className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:border-red-600 focus:ring-1 focus:ring-red-600"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Entreprise */}
+          <select
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+          >
+            <option value="all">Toutes les entreprises</option>
+            <option value="Lebrun">Lebrun S.A.</option>
+            <option value="Autobiz">Autobiz S.A.</option>
+          </select>
+
+          {/* Site */}
+          <select
+            value={siteFilter}
+            onChange={(e) => setSiteFilter(e.target.value)}
+            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+          >
+            <option value="all">Tous les sites</option>
+            <option value="Delmas 52">Delmas 52</option>
+            <option value="Aéroport Depot">Aéroport Depot</option>
+          </select>
+
+          {/* Statut */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="in_use">En service</option>
+            <option value="available">En réserve</option>
+            <option value="maintenance">En maintenance</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main DataTable */}
       <DataTable
-        title="Parc Postes Informatiques & Workstations Dell"
-        subtitle="Inventaire nominatif des stations de travail Dell OptiPlex, configurations matérielles et écrans de bureau"
-        badge={
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 font-semibold">
-            {itAssets.length} postes certifiés
-          </span>
-        }
-        items={itAssets}
+        items={filteredAssets}
         columns={columns}
         onRowClick={(asset) => setSelectedAssetForView(asset)}
-        searchPlaceholder="Rechercher par désignation, SN, modèle, tag, collaborateur..."
-        searchFields={['name', 'brand', 'model', 'serialNumber', 'assetTag', 'assignedTo', 'location', 'cpu']}
-        filters={[
-          {
-            key: 'location',
-            label: 'Site / Emplacement',
-            options: [
-              { label: 'Delmas 52', value: 'Delmas 52' },
-              { label: 'Aéroport Depot', value: 'Aéroport Depot' }
-            ]
-          },
-          {
-            key: 'status',
-            label: 'Statut',
-            options: [
-              { label: 'En service', value: 'in_use' },
-              { label: 'En réserve', value: 'available' },
-              { label: 'En maintenance', value: 'maintenance' }
-            ]
-          }
-        ]}
+        defaultRowsPerPage={20}
         actionButtons={
           <>
             <button
@@ -271,7 +436,7 @@ export default function ITEquipmentView() {
               className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Ajouter un Poste IT</span>
+              <span>Nouveau Poste IT</span>
             </button>
           </>
         }

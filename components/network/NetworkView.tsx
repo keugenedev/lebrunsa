@@ -12,11 +12,14 @@ import {
   Wifi, 
   MapPin, 
   Activity, 
-  CheckCircle2 
+  CheckCircle2,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 export default function NetworkView() {
-  const { networkAssets } = useInventory();
+  const { networkAssets, openNetworkModal, deleteNetworkAsset } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
@@ -147,36 +150,68 @@ export default function NetworkView() {
           {item.observations}
         </span>
       )
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      align: 'right',
+      width: '90px',
+      render: (item) => (
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => openNetworkModal(item)}
+            title="Modifier cet équipement"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`Supprimer l'équipement réseau ${item.model} (${item.assetTag}) ?`)) {
+                deleteNetworkAsset(item.id);
+              }
+            }}
+            title="Supprimer cet équipement"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )
     }
   ];
 
   return (
     <div className="space-y-6 pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+      {/* Clean Light Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Network className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-base font-bold text-slate-900 tracking-tight">
-                Réseau
-              </h1>
-              <p className="text-xs text-slate-500">
-                Infrastructure switches TP-Link PoE et points d'accès Wi-Fi du site Delmas 52
-              </p>
-            </div>
-          </div>
+          <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+            Réseau
+          </h1>
+          <p className="text-xs text-slate-400 font-normal mt-0.5">
+            Infrastructure switches TP-Link PoE et bornes Wi-Fi de Lebrun S.A.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+            title="Exporter en fichier CSV / Excel"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Exporter CSV</span>
+          </button>
+          <button
+            onClick={() => openNetworkModal()}
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Ajouter Équipement</span>
           </button>
         </div>
       </div>
@@ -184,23 +219,23 @@ export default function NetworkView() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Équipements</div>
+          <div className="text-xs font-normal text-slate-500">Total Équipements</div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-slate-900">{stats.total}</span>
+            <span className="text-2xl font-normal text-slate-800 font-sans">{stats.total}</span>
             <span className="text-xs text-slate-500">unités actives</span>
           </div>
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Switches PoE</div>
+          <div className="text-xs font-normal text-slate-500">Switches PoE</div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-blue-600">{stats.switches}</span>
+            <span className="text-2xl font-normal text-slate-800 font-sans">{stats.switches}</span>
             <span className="text-xs text-slate-500">TP-Link Gigabit</span>
           </div>
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Points d'accès Wi-Fi</div>
+          <div className="text-xs font-normal text-slate-500">Points d'accès Wi-Fi</div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-emerald-600">{stats.wifi}</span>
+            <span className="text-2xl font-normal text-slate-800 font-sans">{stats.wifi}</span>
             <span className="text-xs text-slate-500">Bornes actives</span>
           </div>
         </div>
@@ -237,6 +272,24 @@ export default function NetworkView() {
         items={filteredNetwork}
         columns={columns}
         defaultRowsPerPage={10}
+        actionButtons={
+          <>
+            <button
+              onClick={handleExportCSV}
+              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-gray-500" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => openNetworkModal()}
+              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Ajouter un Équipement</span>
+            </button>
+          </>
+        }
       />
     </div>
   );

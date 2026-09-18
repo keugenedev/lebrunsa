@@ -36,8 +36,8 @@ export default function Sidebar() {
     count?: number;
     icon: React.ComponentType<{ className?: string }>;
   }[] = [
-    { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard },
-    { id: 'printers', label: 'Parc Imprimantes', count: printers.length, icon: Printer },
+    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'printers', label: 'Imprimantes', count: printers.length, icon: Printer },
     { id: 'it', label: 'Postes IT & Matériel', count: itAssets.length, icon: Laptop },
     { id: 'network', label: 'Réseau', count: networkAssets?.length || 5, icon: Network },
     { id: 'ups', label: 'Onduleurs UPS', count: upsAssets?.length || 7, icon: Zap },

@@ -45,7 +45,7 @@ export default function QuickSearchModal() {
       subtitle: `${p.company} • ${p.site} • IP: ${p.ipAddress}`,
       tag: p.serialNumber,
       category: 'printers',
-      typeLabel: 'Imprimante HP Réseau',
+      typeLabel: 'Imprimante Réseau',
       icon: Printer,
       tab: 'printers' as const,
       data: p
@@ -99,7 +99,7 @@ export default function QuickSearchModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher imprimante HP, IP, poste Dell, numéro de série, collaborateur..."
+            placeholder="Rechercher imprimante, IP, poste Dell, numéro de série, collaborateur..."
             className="flex-1 bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden font-medium"
           />
 
@@ -116,7 +116,7 @@ export default function QuickSearchModal() {
           <span className="text-slate-400 text-[11px] font-semibold mr-1">Filtrer par :</span>
           {[
             { id: 'all', label: 'Tous les actifs' },
-            { id: 'printers', label: 'Imprimantes HP' },
+            { id: 'printers', label: 'Imprimantes' },
             { id: 'it', label: 'Postes Dell' },
             { id: 'personnel', label: 'Personnel' }
           ].map(f => (

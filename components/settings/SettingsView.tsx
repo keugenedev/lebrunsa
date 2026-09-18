@@ -43,12 +43,12 @@ export default function SettingsView() {
 
   return (
     <div className="space-y-8 pb-16">
-      <div>
-        <h1 className="text-2xl 2xl:text-3xl font-extrabold tracking-tight text-slate-900">
-          Configuration & Sauvegardes Lebrun S.A.
+      <div className="pt-1 font-sans">
+        <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+          Configuration & Sauvegardes
         </h1>
-        <p className="text-xs 2xl:text-sm text-slate-500 mt-1">
-          Gérez les exports de données tabulaires, les sauvegardes certifiées et la persistance locale et Supabase du système.
+        <p className="text-xs text-slate-400 font-normal mt-0.5">
+          Gérez les exports de données, les sauvegardes certifiées et la persistance du système de Lebrun S.A.
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export default function SettingsView() {
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
               <span className="text-slate-500">Réseau & Parc :</span>
-              <span className="font-semibold text-slate-900">16 Imprimantes HP & 6 Stations Dell OptiPlex</span>
+              <span className="font-semibold text-slate-900">16 Imprimantes & 6 Stations Dell OptiPlex</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
               <span className="text-slate-500">Gestion Technique :</span>
@@ -104,7 +104,7 @@ export default function SettingsView() {
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
                 <FileSpreadsheet className="w-4 h-4 text-red-600" />
-                <span>CSV Imprimantes HP</span>
+                <span>CSV Imprimantes</span>
               </button>
 
               <button

@@ -15,11 +15,14 @@ import {
   Search, 
   ShieldCheck, 
   User, 
-  Building 
+  Building,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 export default function ApplicationsView() {
-  const { applicationAccounts } = useInventory();
+  const { applicationAccounts, openApplicationModal, deleteApplicationAccount } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [orgFilter, setOrgFilter] = useState('all');
@@ -181,36 +184,68 @@ export default function ApplicationsView() {
           </div>
         );
       }
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      align: 'right',
+      width: '90px',
+      render: (acc) => (
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => openApplicationModal(acc)}
+            title="Modifier cet accès"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition cursor-pointer"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`Supprimer le compte applicatif pour ${acc.firstName} ${acc.lastName} (${acc.username}) ?`)) {
+                deleteApplicationAccount(acc.id);
+              }
+            }}
+            title="Supprimer cet accès"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )
     }
   ];
 
   return (
     <div className="space-y-6 pb-12">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+      {/* Clean Light Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <KeyRound className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-base font-bold text-slate-900 tracking-tight">
-                Applications
-              </h1>
-              <p className="text-xs text-slate-500">
-                Identifiants, mots de passe et habilitations logicielles des collaborateurs
-              </p>
-            </div>
-          </div>
+          <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+            Applications
+          </h1>
+          <p className="text-xs text-slate-400 font-normal mt-0.5">
+            Identifiants, accès et habilitations logicielles des collaborateurs de Lebrun S.A.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+            title="Exporter en fichier CSV / Excel"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Exporter CSV</span>
+          </button>
+          <button
+            onClick={() => openApplicationModal()}
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Ajouter Accès</span>
           </button>
         </div>
       </div>
@@ -246,6 +281,24 @@ export default function ApplicationsView() {
         items={filteredAccounts}
         columns={columns}
         defaultRowsPerPage={15}
+        actionButtons={
+          <>
+            <button
+              onClick={handleExportCSV}
+              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-gray-500" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => openApplicationModal()}
+              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Ajouter un Accès</span>
+            </button>
+          </>
+        }
       />
     </div>
   );

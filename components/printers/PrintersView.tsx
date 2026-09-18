@@ -28,10 +28,9 @@ import {
 export default function PrintersView() {
   const { 
     printers, 
-    addPrinter, 
-    updatePrinter, 
     deletePrinter, 
-    openQRModal 
+    openQRModal,
+    openPrinterModal
   } = useInventory();
 
   const [companyFilter, setCompanyFilter] = useState<string>('all');
@@ -39,25 +38,7 @@ export default function PrintersView() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
-  // Modals state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPrinter, setEditingPrinter] = useState<PrinterAsset | null>(null);
   const [copiedSerial, setCopiedSerial] = useState<string | null>(null);
-
-  // Form state
-  const [formData, setFormData] = useState({
-    company: 'Lebrun S.A.',
-    site: 'Delmas 52',
-    name: '',
-    brand: 'Hp',
-    model: '',
-    serialNumber: '',
-    ipAddress: '',
-    type: 'Multifonction',
-    status: 'Fonctionnel' as 'Fonctionnel' | 'Maintenance' | 'En panne',
-    observations: 'Good'
-  });
-
   const companies = ['Lebrun S.A.', 'Autobiz', 'Caribe Motors', 'Leader Foods', 'Tirezone'];
   const sites = ['Delmas 52', 'Aéroport Depot'];
   const types = ['Multifonction', 'Laser', 'Laser (Cheque)'];
@@ -98,56 +79,11 @@ export default function PrintersView() {
   };
 
   const handleOpenAdd = () => {
-    setEditingPrinter(null);
-    setFormData({
-      company: 'Lebrun S.A.',
-      site: 'Delmas 52',
-      name: '',
-      brand: 'Hp',
-      model: '',
-      serialNumber: '',
-      ipAddress: '',
-      type: 'Multifonction',
-      status: 'Fonctionnel',
-      observations: 'Good'
-    });
-    setIsModalOpen(true);
+    openPrinterModal();
   };
 
   const handleOpenEdit = (p: PrinterAsset) => {
-    setEditingPrinter(p);
-    setFormData({
-      company: p.company,
-      site: p.site,
-      name: p.name,
-      brand: p.brand,
-      model: p.model,
-      serialNumber: p.serialNumber,
-      ipAddress: p.ipAddress,
-      type: p.type,
-      status: p.status,
-      observations: p.observations
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim() || !formData.model.trim()) return;
-
-    if (editingPrinter) {
-      updatePrinter(editingPrinter.id, formData);
-    } else {
-      const code = formData.company.startsWith('Lebrun') ? 'LEB' : formData.company.startsWith('Auto') ? 'AUT' : formData.company.startsWith('Caribe') ? 'CAR' : 'LFD';
-      const count = printers.filter(p => p.company === formData.company).length + 1;
-      const tag = `PRN-${code}-${count.toString().padStart(3, '0')}`;
-
-      addPrinter({
-        ...formData,
-        assetTag: tag
-      });
-    }
-    setIsModalOpen(false);
+    openPrinterModal(p);
   };
 
   const handleExportCSV = () => {
@@ -349,38 +285,31 @@ export default function PrintersView() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Banner */}
-      <div className="p-6 2xl:p-8 rounded-2xl 2xl:rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-sm border border-slate-800">
+      {/* Clean Light Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] 2xl:text-xs font-bold tracking-widest uppercase bg-red-600/30 text-red-400 px-2.5 py-0.5 rounded-md border border-red-500/30">
-              PARC IMPRIMANTES & MULTIFONCTIONS
-            </span>
-            <span className="text-slate-500">•</span>
-            <span className="text-xs 2xl:text-sm text-slate-300">Delmas 52 & Aéroport Depot</span>
-          </div>
-          <h1 className="text-2xl 2xl:text-3xl font-extrabold tracking-tight text-white mt-2">
-            Gestion du Parc Imprimantes HP & Copieurs
+          <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+            Imprimantes
           </h1>
-          <p className="text-xs 2xl:text-sm text-slate-300 mt-1 max-w-3xl leading-relaxed">
-            Suivi centralisé des 16 imprimantes réseau HP, multifonctions laser, matricielles de chèques et adresses IP du groupe Lebrun S.A.
+          <p className="text-xs text-slate-400 font-normal mt-0.5">
+            Suivi centralisé du parc d'imprimantes et multifonctions réseau
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="h-11 2xl:h-13 flex items-center gap-2 px-4 2xl:px-5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs 2xl:text-sm font-semibold text-white transition-colors cursor-pointer"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white border border-slate-200 text-xs font-normal text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
             title="Exporter en fichier CSV / Excel"
           >
-            <Download className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Exporter CSV</span>
           </button>
           <button
             onClick={handleOpenAdd}
-            className="h-11 2xl:h-13 flex items-center gap-2 px-4.5 2xl:px-6 rounded-xl bg-red-600 hover:bg-red-700 text-xs 2xl:text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer active:scale-95"
+            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-red-600 hover:bg-red-700 text-xs font-normal text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
-            <Plus className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Ajouter Imprimante</span>
           </button>
         </div>
@@ -390,13 +319,11 @@ export default function PrintersView() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 2xl:gap-6">
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs 2xl:text-sm font-semibold text-slate-500">Total Imprimantes</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-              <Printer className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-normal text-slate-500">Total Imprimantes</span>
+            <Printer className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl 2xl:text-3xl font-extrabold text-slate-900 mt-2">{stats.total}</div>
-          <div className="text-[11px] 2xl:text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.total}</div>
+          <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>100% Fonctionnelles</span>
           </div>
@@ -404,34 +331,28 @@ export default function PrintersView() {
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs 2xl:text-sm font-semibold text-slate-500">Multifonctions</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Layers className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-normal text-slate-500">Multifonctions</span>
+            <Layers className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl 2xl:text-3xl font-extrabold text-slate-900 mt-2">{stats.multi}</div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.multi}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Scanner & Impression</div>
         </div>
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs 2xl:text-sm font-semibold text-slate-500">Lasers & Chèques</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Printer className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-normal text-slate-500">Lasers & Chèques</span>
+            <Printer className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl 2xl:text-3xl font-extrabold text-slate-900 mt-2">{stats.laser}</div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.laser}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Impression N&B / Chèques</div>
         </div>
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs 2xl:text-sm font-semibold text-slate-500">Connectées Réseau</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Network className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-normal text-slate-500">Connectées Réseau</span>
+            <Network className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl 2xl:text-3xl font-extrabold text-slate-900 mt-2">{stats.network}</div>
+          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.network}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Avec adresse IP active</div>
         </div>
       </div>
@@ -496,162 +417,25 @@ export default function PrintersView() {
         items={filteredPrinters}
         searchPlaceholder="Rechercher par nom, modèle, IP, série..."
         defaultRowsPerPage={20}
+        actionButtons={
+          <>
+            <button
+              onClick={handleExportCSV}
+              className="h-9.5 flex items-center gap-2 px-3.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-300 text-xs font-semibold text-gray-700 transition shadow-2xs cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-gray-500" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => openPrinterModal()}
+              className="h-9.5 flex items-center gap-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Ajouter Imprimante</span>
+            </button>
+          </>
+        }
       />
-
-      {/* Add / Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden my-auto">
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="text-sm font-bold">
-                {editingPrinter ? "Modifier l'Imprimante" : "Nouvelle Imprimante"}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">Entreprise</label>
-                  <select
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                  >
-                    {companies.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">Site / Adresse</label>
-                  <select
-                    value={formData.site}
-                    onChange={(e) => setFormData({ ...formData, site: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                  >
-                    {sites.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-700 mb-1">Nom de l&apos;imprimante</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="ex: Hp Laser jet pro, Hp Cheque..."
-                  required
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">Marque</label>
-                  <input
-                    type="text"
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">Modèle</label>
-                  <input
-                    type="text"
-                    value={formData.model}
-                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                    placeholder="ex: 4103dw, MFP M479dw..."
-                    required
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">N° de Série</label>
-                  <input
-                    type="text"
-                    value={formData.serialNumber}
-                    onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-                    placeholder="ex: THBTT5R0"
-                    required
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">Adresse IP</label>
-                  <input
-                    type="text"
-                    value={formData.ipAddress}
-                    onChange={(e) => setFormData({ ...formData, ipAddress: e.target.value })}
-                    placeholder="ex: 192.168.1.175 ou N/A"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                  >
-                    {types.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-700 mb-1">État</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                  >
-                    <option value="Fonctionnel">Fonctionnel</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="En panne">En panne</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-700 mb-1">Observations</label>
-                <input
-                  type="text"
-                  value={formData.observations}
-                  onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium shadow-xs"
-                >
-                  {editingPrinter ? "Enregistrer les modifications" : "Ajouter l'imprimante"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

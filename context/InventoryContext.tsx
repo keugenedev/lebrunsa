@@ -93,6 +93,39 @@ interface InventoryContextType {
   upsAssets: UPSAsset[];
   applicationAccounts: ApplicationAccount[];
 
+  // Modals & Actions Network
+  isNetworkModalOpen: boolean;
+  editingNetworkAsset: NetworkAsset | null;
+  openNetworkModal: (asset?: NetworkAsset) => void;
+  closeNetworkModal: () => void;
+  addNetworkAsset: (asset: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateNetworkAsset: (id: string, updates: Partial<NetworkAsset>) => void;
+  deleteNetworkAsset: (id: string) => void;
+
+  // Modals & Actions UPS
+  isUPSModalOpen: boolean;
+  editingUPSAsset: UPSAsset | null;
+  openUPSModal: (asset?: UPSAsset) => void;
+  closeUPSModal: () => void;
+  addUPSAsset: (asset: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateUPSAsset: (id: string, updates: Partial<UPSAsset>) => void;
+  deleteUPSAsset: (id: string) => void;
+
+  // Modals & Actions Applications
+  isApplicationModalOpen: boolean;
+  editingApplicationAccount: ApplicationAccount | null;
+  openApplicationModal: (account?: ApplicationAccount) => void;
+  closeApplicationModal: () => void;
+  addApplicationAccount: (account: Omit<ApplicationAccount, 'id'>) => void;
+  updateApplicationAccount: (id: string, updates: Partial<ApplicationAccount>) => void;
+  deleteApplicationAccount: (id: string) => void;
+
+  // Modals & Actions Printers
+  isPrinterModalOpen: boolean;
+  editingPrinter: PrinterAsset | null;
+  openPrinterModal: (printer?: PrinterAsset) => void;
+  closePrinterModal: () => void;
+
   // Actions Printers
   addPrinter: (printer: Omit<PrinterAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updatePrinter: (id: string, updates: Partial<PrinterAsset>) => void;
@@ -168,6 +201,54 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+
+  // Network Modal
+  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const [editingNetworkAsset, setEditingNetworkAsset] = useState<NetworkAsset | null>(null);
+  const openNetworkModal = (asset?: NetworkAsset) => {
+    setEditingNetworkAsset(asset || null);
+    setIsNetworkModalOpen(true);
+  };
+  const closeNetworkModal = () => {
+    setIsNetworkModalOpen(false);
+    setEditingNetworkAsset(null);
+  };
+
+  // UPS Modal
+  const [isUPSModalOpen, setIsUPSModalOpen] = useState(false);
+  const [editingUPSAsset, setEditingUPSAsset] = useState<UPSAsset | null>(null);
+  const openUPSModal = (asset?: UPSAsset) => {
+    setEditingUPSAsset(asset || null);
+    setIsUPSModalOpen(true);
+  };
+  const closeUPSModal = () => {
+    setIsUPSModalOpen(false);
+    setEditingUPSAsset(null);
+  };
+
+  // Application Modal
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [editingApplicationAccount, setEditingApplicationAccount] = useState<ApplicationAccount | null>(null);
+  const openApplicationModal = (account?: ApplicationAccount) => {
+    setEditingApplicationAccount(account || null);
+    setIsApplicationModalOpen(true);
+  };
+  const closeApplicationModal = () => {
+    setIsApplicationModalOpen(false);
+    setEditingApplicationAccount(null);
+  };
+
+  // Printer Modal
+  const [isPrinterModalOpen, setIsPrinterModalOpen] = useState(false);
+  const [editingPrinter, setEditingPrinter] = useState<PrinterAsset | null>(null);
+  const openPrinterModal = (printer?: PrinterAsset) => {
+    setEditingPrinter(printer || null);
+    setIsPrinterModalOpen(true);
+  };
+  const closePrinterModal = () => {
+    setIsPrinterModalOpen(false);
+    setEditingPrinter(null);
+  };
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -404,6 +485,24 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [alerts]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_network', JSON.stringify(networkAssets));
+    }
+  }, [networkAssets]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_ups', JSON.stringify(upsAssets));
+    }
+  }, [upsAssets]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_applications', JSON.stringify(applicationAccounts));
+    }
+  }, [applicationAccounts]);
+
   // Chargement et synchronisation avec Supabase
   useEffect(() => {
     async function loadFromSupabase() {
@@ -415,7 +514,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             assetTag: `PRN-${row.entreprise?.startsWith('Auto') ? 'AUT' : row.entreprise?.startsWith('Caribe') ? 'CAR' : row.entreprise?.startsWith('Leader') ? 'LFD' : 'LEB'}-${(row.printer_id || 1).toString().padStart(3, '0')}`,
             company: row.entreprise || 'Lebrun S.A.',
             site: row.site || 'Delmas 52',
-            name: row.nom_imprimante || 'Imprimante HP',
+            name: row.nom_imprimante || 'Imprimante',
             brand: row.marque || 'Hp',
             model: row.modele || '',
             serialNumber: row.numero_serie || 'N/A',
@@ -462,6 +561,94 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
             return list;
           });
+        }
+
+        // Load Network Equipment from Supabase
+        const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*');
+        if (!netErr && dbNet && dbNet.length > 0) {
+          const mappedNet: NetworkAsset[] = dbNet.map((row: any, idx: number) => ({
+            id: row.id ? row.id.toString() : `net-${idx + 1}`,
+            assetTag: `NET-${row.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(row.id || idx + 1).toString().padStart(3, '0')}`,
+            company: row.entreprise || 'Lebrun S.A.',
+            site: row.site || 'Delmas 52',
+            deviceType: row.type_equipement || 'Switch Gigabit',
+            brand: row.marque || 'TP-Link',
+            model: row.modele || '',
+            hostname: row.hostname || '',
+            serialNumber: row.numero_serie || 'N/A',
+            ipAddress: row.adresse_ip || 'N/A',
+            macAddress: row.adresse_mac || 'N/A',
+            status: row.etat || 'En fonctionnement',
+            observations: row.observations || '',
+            createdAt: row.created_at || new Date().toISOString(),
+            updatedAt: row.created_at || new Date().toISOString()
+          }));
+          setNetworkAssets(mappedNet);
+        }
+
+        // Load UPS from Supabase
+        const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*');
+        if (!upsErr && dbUps && dbUps.length > 0) {
+          const mappedUps: UPSAsset[] = dbUps.map((row: any, idx: number) => ({
+            id: row.id ? row.id.toString() : `ups-${idx + 1}`,
+            assetTag: `UPS-${row.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(row.id || idx + 1).toString().padStart(3, '0')}`,
+            company: row.entreprise || 'Lebrun S.A.',
+            site: row.site || 'Delmas 52',
+            name: row.nom || `UPS ${idx + 1}`,
+            brand: row.marque || 'Forza',
+            model: row.modele || '',
+            capacity: row.capacite || '',
+            reference: row.reference || row.modele || '',
+            status: row.etat || 'En fonctionnement',
+            observations: row.observations || '',
+            createdAt: row.created_at || new Date().toISOString(),
+            updatedAt: row.created_at || new Date().toISOString()
+          }));
+          setUpsAssets(mappedUps);
+        }
+
+        // Load User Applications from Supabase
+        const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*');
+        if (!appsErr && dbApps && dbApps.length > 0) {
+          const mappedApps: ApplicationAccount[] = dbApps.map((row: any, idx: number) => ({
+            id: row.id ? row.id.toString() : `app-${idx + 1}`,
+            username: row.username || `user${idx + 1}`,
+            lastName: row.nom || '',
+            firstName: row.prenom || '',
+            password: row.password || 'N/A',
+            applications: row.applications || 'Microsoft GP',
+            organization: row.organisation || 'Lebrun S.A.'
+          }));
+          setApplicationAccounts(mappedApps);
+        }
+
+        // Load IT Equipment from Supabase
+        const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
+        if (!itErr && dbIT && dbIT.length > 0) {
+          const mappedIT: ITAsset[] = dbIT.map((row: any, idx: number) => ({
+            id: row.id ? row.id.toString() : `it-${idx + 1}`,
+            category: 'it' as const,
+            subCategory: 'desktop' as const,
+            assetTag: row.asset_tag || `AST-PC-LEB${(idx + 1).toString().padStart(2, '0')}`,
+            name: row.nom || `Poste Desktop ${row.modele || ''}`,
+            brand: row.marque || 'Dell',
+            model: row.modele || 'OptiPlex Workstation',
+            serialNumber: row.numero_serie || 'N/A',
+            cpu: row.cpu || 'Intel Core i5',
+            ram: row.ram || '8 GB RAM',
+            storage: row.stockage || '500 GB SSD',
+            assignedTo: row.assigne_a || undefined,
+            assignedDepartment: row.departement || undefined,
+            location: row.site || 'Delmas 52',
+            status: row.statut || 'in_use',
+            notes: row.notes || '',
+            purchaseDate: new Date().toISOString().slice(0, 10),
+            warrantyExpiry: new Date(Date.now() + 365*24*3600*1000*3).toISOString().slice(0, 10),
+            purchaseCost: 900,
+            createdAt: row.created_at || new Date().toISOString(),
+            updatedAt: row.created_at || new Date().toISOString()
+          }));
+          setItAssets(mappedIT);
         }
       } catch (err) {
         console.error('Erreur synchronisation Supabase:', err);
@@ -528,20 +715,56 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Employee Actions
-  const addEmployee = (emp: Omit<Employee, 'id'>) => {
+  const addEmployee = async (emp: Omit<Employee, 'id'>) => {
     const newEmp: Employee = {
       ...emp,
       id: `emp-${Date.now()}`
     };
     setEmployees(prev => [newEmp, ...prev]);
+
+    try {
+      await supabase.from('users').insert({
+        username: emp.accounts?.appUsername || emp.employeeId.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        email: emp.email,
+        nom: emp.lastName,
+        prenom: emp.firstName,
+        entreprise: emp.company,
+        site: emp.site
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addEmployee error:', err);
+    }
   };
 
-  const updateEmployee = (id: string, updates: Partial<Employee>) => {
+  const updateEmployee = async (id: string, updates: Partial<Employee>) => {
     setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.lastName !== undefined) payload.nom = updates.lastName;
+      if (updates.firstName !== undefined) payload.prenom = updates.firstName;
+      if (updates.email !== undefined) payload.email = updates.email;
+      if (updates.company !== undefined) payload.entreprise = updates.company;
+      if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.email) {
+        await supabase.from('users').update(payload).eq('email', updates.email);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateEmployee error:', err);
+    }
   };
 
-  const deleteEmployee = (id: string) => {
+  const deleteEmployee = async (id: string) => {
+    const target = employees.find(e => e.id === id);
     setEmployees(prev => prev.filter(e => e.id !== id));
+
+    try {
+      if (target?.email) {
+        await supabase.from('users').delete().eq('email', target.email);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deleteEmployee error:', err);
+    }
   };
 
   const getEmployeeAssignedAssets = (empIdOrName: string) => {
@@ -558,7 +781,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // IT Actions
-  const addITAsset = (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addITAsset = async (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
     const newAsset: ITAsset = {
       ...asset,
@@ -580,14 +803,253 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       performedBy: 'Gestionnaire Matériel Lebronsa',
       notes: `Ajout au catalogue : ${newAsset.assetTag}`
     });
+
+    try {
+      await supabase.from('it_equipment').insert({
+        asset_tag: newAsset.assetTag,
+        nom: newAsset.name,
+        marque: newAsset.brand,
+        modele: newAsset.model,
+        numero_serie: newAsset.serialNumber,
+        cpu: newAsset.cpu,
+        ram: newAsset.ram,
+        stockage: newAsset.storage,
+        assigne_a: newAsset.assignedTo,
+        departement: newAsset.assignedDepartment,
+        site: newAsset.location,
+        statut: newAsset.status,
+        notes: newAsset.notes
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addITAsset error:', err);
+    }
   };
 
-  const updateITAsset = (id: string, updates: Partial<ITAsset>) => {
+  const updateITAsset = async (id: string, updates: Partial<ITAsset>) => {
     setItAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.assetTag !== undefined) payload.asset_tag = updates.assetTag;
+      if (updates.name !== undefined) payload.nom = updates.name;
+      if (updates.brand !== undefined) payload.marque = updates.brand;
+      if (updates.model !== undefined) payload.modele = updates.model;
+      if (updates.serialNumber !== undefined) payload.numero_serie = updates.serialNumber;
+      if (updates.cpu !== undefined) payload.cpu = updates.cpu;
+      if (updates.ram !== undefined) payload.ram = updates.ram;
+      if (updates.storage !== undefined) payload.stockage = updates.storage;
+      if (updates.assignedTo !== undefined) payload.assigne_a = updates.assignedTo;
+      if (updates.assignedDepartment !== undefined) payload.departement = updates.assignedDepartment;
+      if (updates.location !== undefined) payload.site = updates.location;
+      if (updates.status !== undefined) payload.statut = updates.status;
+      if (updates.notes !== undefined) payload.notes = updates.notes;
+
+      if (updates.serialNumber) {
+        await supabase.from('it_equipment').update(payload).eq('numero_serie', updates.serialNumber);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateITAsset error:', err);
+    }
   };
 
-  const deleteITAsset = (id: string) => {
+  const deleteITAsset = async (id: string) => {
+    const target = itAssets.find(item => item.id === id);
     setItAssets(prev => prev.filter(item => item.id !== id));
+
+    try {
+      if (target?.serialNumber) {
+        await supabase.from('it_equipment').delete().eq('numero_serie', target.serialNumber);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deleteITAsset error:', err);
+    }
+  };
+
+  // Network Actions
+  const addNetworkAsset = async (asset: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newNet: NetworkAsset = {
+      ...asset,
+      id: `net-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now
+    };
+    setNetworkAssets(prev => [newNet, ...prev]);
+
+    try {
+      await supabase.from('network_equipment').insert({
+        entreprise: asset.company,
+        site: asset.site,
+        type_equipement: asset.deviceType,
+        marque: asset.brand,
+        modele: asset.model,
+        hostname: asset.hostname,
+        numero_serie: asset.serialNumber,
+        adresse_ip: asset.ipAddress,
+        adresse_mac: asset.macAddress,
+        etat: asset.status,
+        observations: asset.observations
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addNetworkAsset error:', err);
+    }
+  };
+
+  const updateNetworkAsset = async (id: string, updates: Partial<NetworkAsset>) => {
+    setNetworkAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.company !== undefined) payload.entreprise = updates.company;
+      if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.deviceType !== undefined) payload.type_equipement = updates.deviceType;
+      if (updates.brand !== undefined) payload.marque = updates.brand;
+      if (updates.model !== undefined) payload.modele = updates.model;
+      if (updates.hostname !== undefined) payload.hostname = updates.hostname;
+      if (updates.serialNumber !== undefined) payload.numero_serie = updates.serialNumber;
+      if (updates.ipAddress !== undefined) payload.adresse_ip = updates.ipAddress;
+      if (updates.macAddress !== undefined) payload.adresse_mac = updates.macAddress;
+      if (updates.status !== undefined) payload.etat = updates.status;
+      if (updates.observations !== undefined) payload.observations = updates.observations;
+
+      if (updates.serialNumber) {
+        await supabase.from('network_equipment').update(payload).eq('numero_serie', updates.serialNumber);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateNetworkAsset error:', err);
+    }
+  };
+
+  const deleteNetworkAsset = async (id: string) => {
+    const target = networkAssets.find(n => n.id === id);
+    setNetworkAssets(prev => prev.filter(item => item.id !== id));
+
+    try {
+      if (target?.serialNumber) {
+        await supabase.from('network_equipment').delete().eq('numero_serie', target.serialNumber);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deleteNetworkAsset error:', err);
+    }
+  };
+
+  // UPS Actions
+  const addUPSAsset = async (asset: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newUPS: UPSAsset = {
+      ...asset,
+      id: `ups-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now
+    };
+    setUpsAssets(prev => [newUPS, ...prev]);
+
+    try {
+      await supabase.from('ups').insert({
+        entreprise: asset.company,
+        site: asset.site,
+        nom: asset.name,
+        marque: asset.brand,
+        modele: asset.model,
+        capacite: asset.capacity,
+        reference: asset.reference,
+        etat: asset.status,
+        observations: asset.observations
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addUPSAsset error:', err);
+    }
+  };
+
+  const updateUPSAsset = async (id: string, updates: Partial<UPSAsset>) => {
+    setUpsAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.company !== undefined) payload.entreprise = updates.company;
+      if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.name !== undefined) payload.nom = updates.name;
+      if (updates.brand !== undefined) payload.marque = updates.brand;
+      if (updates.model !== undefined) payload.modele = updates.model;
+      if (updates.capacity !== undefined) payload.capacite = updates.capacity;
+      if (updates.reference !== undefined) payload.reference = updates.reference;
+      if (updates.status !== undefined) payload.etat = updates.status;
+      if (updates.observations !== undefined) payload.observations = updates.observations;
+
+      if (updates.name) {
+        await supabase.from('ups').update(payload).eq('nom', updates.name);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateUPSAsset error:', err);
+    }
+  };
+
+  const deleteUPSAsset = async (id: string) => {
+    const target = upsAssets.find(u => u.id === id);
+    setUpsAssets(prev => prev.filter(item => item.id !== id));
+
+    try {
+      if (target?.name) {
+        await supabase.from('ups').delete().eq('nom', target.name);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deleteUPSAsset error:', err);
+    }
+  };
+
+  // Application Accounts Actions
+  const addApplicationAccount = async (account: Omit<ApplicationAccount, 'id'>) => {
+    const newAcc: ApplicationAccount = {
+      ...account,
+      id: `app-${Date.now()}`
+    };
+    setApplicationAccounts(prev => [newAcc, ...prev]);
+
+    try {
+      await supabase.from('user_applications').insert({
+        username: account.username,
+        nom: account.lastName,
+        prenom: account.firstName,
+        password: account.password,
+        applications: account.applications,
+        organisation: account.organization
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addApplicationAccount error:', err);
+    }
+  };
+
+  const updateApplicationAccount = async (id: string, updates: Partial<ApplicationAccount>) => {
+    setApplicationAccounts(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.username !== undefined) payload.username = updates.username;
+      if (updates.lastName !== undefined) payload.nom = updates.lastName;
+      if (updates.firstName !== undefined) payload.prenom = updates.firstName;
+      if (updates.password !== undefined) payload.password = updates.password;
+      if (updates.applications !== undefined) payload.applications = updates.applications;
+      if (updates.organization !== undefined) payload.organisation = updates.organization;
+
+      if (updates.username) {
+        await supabase.from('user_applications').update(payload).eq('username', updates.username);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateApplicationAccount error:', err);
+    }
+  };
+
+  const deleteApplicationAccount = async (id: string) => {
+    const target = applicationAccounts.find(a => a.id === id);
+    setApplicationAccounts(prev => prev.filter(item => item.id !== id));
+
+    try {
+      if (target?.username) {
+        await supabase.from('user_applications').delete().eq('username', target.username);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deleteApplicationAccount error:', err);
+    }
   };
 
   // Actions Printers
@@ -896,6 +1358,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         closeEmployeeModal,
         isSpotlightOpen,
         setIsSpotlightOpen,
+        isNetworkModalOpen,
+        editingNetworkAsset,
+        openNetworkModal,
+        closeNetworkModal,
+        addNetworkAsset,
+        updateNetworkAsset,
+        deleteNetworkAsset,
+        isUPSModalOpen,
+        editingUPSAsset,
+        openUPSModal,
+        closeUPSModal,
+        addUPSAsset,
+        updateUPSAsset,
+        deleteUPSAsset,
+        isApplicationModalOpen,
+        editingApplicationAccount,
+        openApplicationModal,
+        closeApplicationModal,
+        addApplicationAccount,
+        updateApplicationAccount,
+        deleteApplicationAccount,
+        isPrinterModalOpen,
+        editingPrinter,
+        openPrinterModal,
+        closePrinterModal,
         addITAsset,
         updateITAsset,
         deleteITAsset,
