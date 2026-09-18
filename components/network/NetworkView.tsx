@@ -15,14 +15,17 @@ import {
   CheckCircle2,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-react';
+import NetworkDetailsModal from './NetworkDetailsModal';
 
 export default function NetworkView() {
   const { networkAssets, openNetworkModal, deleteNetworkAsset } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
+  const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<NetworkAsset | null>(null);
 
   const filteredNetwork = useMemo(() => {
     return networkAssets.filter(item => {
@@ -78,7 +81,7 @@ export default function NetworkView() {
       key: 'assetTag',
       label: 'Tag / Code',
       sortable: true,
-      width: '110px',
+      width: '100px',
       render: (item) => (
         <span className="font-mono text-xs font-bold text-slate-900 whitespace-nowrap select-all tracking-tight">
           {item.assetTag}
@@ -109,6 +112,7 @@ export default function NetworkView() {
       key: 'company',
       label: 'Entreprise & Site',
       sortable: true,
+      width: '140px',
       render: (item) => (
         <div className="flex items-center gap-2 whitespace-nowrap">
           <CompanyLogo company={item.company} className="h-4 max-w-[80px] w-auto object-contain" />
@@ -123,6 +127,7 @@ export default function NetworkView() {
       key: 'serialNumber',
       label: 'N° de Série',
       sortable: true,
+      width: '130px',
       render: (item) => (
         <span className="font-mono text-[11px] text-slate-700 select-all whitespace-nowrap">
           {item.serialNumber}
@@ -143,21 +148,20 @@ export default function NetworkView() {
       )
     },
     {
-      key: 'observations',
-      label: 'Spécifications / Observations',
-      render: (item) => (
-        <span className="text-xs text-slate-600 truncate max-w-sm block" title={item.observations}>
-          {item.observations}
-        </span>
-      )
-    },
-    {
       key: 'actions',
       label: 'Actions',
       align: 'right',
-      width: '90px',
+      width: '95px',
       render: (item) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setSelectedAssetForDetails(item)}
+            title="Consulter tous les détails remplis"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
           <button
             type="button"
             onClick={() => openNetworkModal(item)}
@@ -174,7 +178,7 @@ export default function NetworkView() {
               }
             }}
             title="Supprimer cet équipement"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -246,6 +250,7 @@ export default function NetworkView() {
         items={filteredNetwork}
         columns={columns}
         defaultRowsPerPage={10}
+        onRowClick={(item) => setSelectedAssetForDetails(item)}
         customFilters={
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
@@ -273,6 +278,15 @@ export default function NetworkView() {
           </div>
         }
       />
+
+      {/* Modal de consultation des détails complets remplis */}
+      {selectedAssetForDetails && (
+        <NetworkDetailsModal
+          asset={selectedAssetForDetails}
+          onClose={() => setSelectedAssetForDetails(null)}
+          onOpenEdit={(asset) => openNetworkModal(asset)}
+        />
+      )}
     </div>
   );
 }

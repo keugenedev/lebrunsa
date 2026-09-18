@@ -124,17 +124,17 @@ export default function WorkstationDetailsModal({
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-medium">Nom Machine (PC)</span>
                 <span className="font-mono font-bold text-slate-900 text-xs select-all">
-                  {ws?.pcName || asset.model}
+                  {asset.name || ws?.pcName || asset.model}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-medium">Service Tag / N° Série</span>
                 <div className="flex items-center gap-1">
                   <span className="font-mono font-bold text-slate-900 text-xs select-all">
-                    {ws?.pcSerial || asset.serialNumber}
+                    {asset.serialNumber || ws?.pcSerial}
                   </span>
                   <button
-                    onClick={() => handleCopy('sn', ws?.pcSerial || asset.serialNumber)}
+                    onClick={() => handleCopy('sn', asset.serialNumber || ws?.pcSerial || '')}
                     className="text-black hover:text-slate-600 p-0.5 cursor-pointer"
                     title="Copier le numéro de série"
                   >
@@ -145,7 +145,7 @@ export default function WorkstationDetailsModal({
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-medium">Format & Marque</span>
                 <span className="text-slate-800 font-semibold">
-                  {ws?.type || 'Desktop'} • Dell
+                  {asset.subCategory === 'laptop' ? 'PC Portable' : 'Desktop'} • {asset.brand || 'Dell'}
                 </span>
               </div>
             </div>
@@ -153,9 +153,18 @@ export default function WorkstationDetailsModal({
             <div className="pt-2 border-t border-slate-200/80">
               <span className="text-[10px] text-slate-400 block uppercase font-medium">Spécifications Matérielles & OS</span>
               <p className="font-medium text-slate-800 mt-0.5 text-xs">
-                {ws?.pcSpecs || defaultSpecs}
+                {[asset.cpu, asset.ram, asset.storage].filter(Boolean).join(' • ') || ws?.pcSpecs || defaultSpecs}
               </p>
             </div>
+
+            {asset.notes && (
+              <div className="pt-2 border-t border-slate-200/80">
+                <span className="text-[10px] text-slate-400 block uppercase font-medium">Notes & Observations</span>
+                <p className="font-medium text-slate-800 mt-0.5 text-xs bg-white p-2 rounded-lg border border-slate-200/70">
+                  {asset.notes}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Section 2: Écran & Moniteur */}

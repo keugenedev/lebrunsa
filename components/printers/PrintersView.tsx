@@ -22,8 +22,10 @@ import {
   Network, 
   CheckCircle2, 
   X,
-  Layers
+  Layers,
+  Eye
 } from 'lucide-react';
+import PrinterDetailsModal from './PrinterDetailsModal';
 
 export default function PrintersView() {
   const { 
@@ -32,6 +34,8 @@ export default function PrintersView() {
     openQRModal,
     openPrinterModal
   } = useInventory();
+
+  const [selectedPrinterForDetails, setSelectedPrinterForDetails] = useState<PrinterAsset | null>(null);
 
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
@@ -220,20 +224,19 @@ export default function PrintersView() {
       )
     },
     {
-      key: 'observations',
-      label: 'Observations',
-      render: (p) => (
-        <span className="text-xs text-slate-600">
-          {p.observations || 'Good'}
-        </span>
-      )
-    },
-    {
       key: 'actions',
       label: 'Actions',
       align: 'right',
       render: (p) => (
-        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setSelectedPrinterForDetails(p)}
+            title="Consulter tous les détails"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
           <button
             type="button"
             onClick={() => openQRModal({
@@ -363,6 +366,7 @@ export default function PrintersView() {
         columns={columns}
         items={filteredPrinters}
         defaultRowsPerPage={20}
+        onRowClick={(p) => setSelectedPrinterForDetails(p)}
         customFilters={
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             {/* Search */}
@@ -418,6 +422,15 @@ export default function PrintersView() {
           </div>
         }
       />
+
+      {/* Modal de consultation des détails complets remplis */}
+      {selectedPrinterForDetails && (
+        <PrinterDetailsModal
+          printer={selectedPrinterForDetails}
+          onClose={() => setSelectedPrinterForDetails(null)}
+          onOpenEdit={(printer) => handleOpenEdit(printer)}
+        />
+      )}
     </div>
   );
 }

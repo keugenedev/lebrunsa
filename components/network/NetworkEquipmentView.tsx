@@ -190,15 +190,6 @@ export default function NetworkEquipmentView() {
           {item.status}
         </span>
       )
-    },
-    {
-      key: 'observations',
-      label: 'Spécifications / Observations',
-      render: (item) => (
-        <span className="text-xs text-slate-600 truncate max-w-xs block" title={item.observations}>
-          {item.observations}
-        </span>
-      )
     }
   ];
 
@@ -270,15 +261,6 @@ export default function NetworkEquipmentView() {
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           {item.status}
-        </span>
-      )
-    },
-    {
-      key: 'observations',
-      label: 'Caractéristiques & Notes',
-      render: (item) => (
-        <span className="text-xs text-slate-600 truncate max-w-sm block" title={item.observations}>
-          {item.observations}
         </span>
       )
     }

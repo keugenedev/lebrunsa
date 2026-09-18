@@ -14,14 +14,17 @@ import {
   BatteryCharging,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-react';
+import UPSDetailsModal from './UPSDetailsModal';
 
 export default function UPSView() {
   const { upsAssets, openUPSModal, deleteUPSAsset } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
+  const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<UPSAsset | null>(null);
 
   const filteredUPS = useMemo(() => {
     return upsAssets.filter(item => {
@@ -139,21 +142,20 @@ export default function UPSView() {
       )
     },
     {
-      key: 'observations',
-      label: 'Caractéristiques & Notes',
-      render: (item) => (
-        <span className="text-xs text-slate-600 truncate max-w-sm block" title={item.observations}>
-          {item.observations}
-        </span>
-      )
-    },
-    {
       key: 'actions',
       label: 'Actions',
       align: 'right',
-      width: '90px',
+      width: '95px',
       render: (item) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setSelectedAssetForDetails(item)}
+            title="Consulter tous les détails remplis"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
           <button
             type="button"
             onClick={() => openUPSModal(item)}
@@ -170,7 +172,7 @@ export default function UPSView() {
               }
             }}
             title="Supprimer cet onduleur"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -242,6 +244,7 @@ export default function UPSView() {
         items={filteredUPS}
         columns={columns}
         defaultRowsPerPage={10}
+        onRowClick={(item) => setSelectedAssetForDetails(item)}
         customFilters={
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
@@ -269,6 +272,15 @@ export default function UPSView() {
           </div>
         }
       />
+
+      {/* Modal de consultation des détails complets remplis */}
+      {selectedAssetForDetails && (
+        <UPSDetailsModal
+          asset={selectedAssetForDetails}
+          onClose={() => setSelectedAssetForDetails(null)}
+          onOpenEdit={(asset) => openUPSModal(asset)}
+        />
+      )}
     </div>
   );
 }
