@@ -319,10 +319,10 @@ export default function PrintersView() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 2xl:gap-6">
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Total Imprimantes</span>
+            <span className="text-xs font-medium text-slate-600">Total Imprimantes</span>
             <Printer className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.total}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.total}</div>
           <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>100% Fonctionnelles</span>
@@ -331,28 +331,28 @@ export default function PrintersView() {
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Multifonctions</span>
+            <span className="text-xs font-medium text-slate-600">Multifonctions</span>
             <Layers className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.multi}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.multi}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Scanner & Impression</div>
         </div>
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Lasers & Chèques</span>
+            <span className="text-xs font-medium text-slate-600">Lasers & Chèques</span>
             <Printer className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.laser}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.laser}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Impression N&B / Chèques</div>
         </div>
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Connectées Réseau</span>
+            <span className="text-xs font-medium text-slate-600">Connectées Réseau</span>
             <Network className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.network}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.network}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Avec adresse IP active</div>
         </div>
       </div>

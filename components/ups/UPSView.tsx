@@ -215,23 +215,23 @@ export default function UPSView() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="text-xs font-normal text-slate-500">Total Onduleurs</div>
+          <div className="text-xs font-medium text-slate-600">Total Onduleurs</div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-normal text-slate-800 font-sans">{stats.total}</span>
+            <span className="text-2xl font-semibold text-slate-900 font-sans">{stats.total}</span>
             <span className="text-xs text-slate-500">unités actives</span>
           </div>
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="text-xs font-normal text-slate-500">Onduleurs Forza</div>
+          <div className="text-xs font-medium text-slate-600">Onduleurs Forza</div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-normal text-slate-800 font-sans">{stats.forza}</span>
+            <span className="text-2xl font-semibold text-slate-900 font-sans">{stats.forza}</span>
             <span className="text-xs text-slate-500">NT-1011D & NT-751D</span>
           </div>
         </div>
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
-          <div className="text-xs font-normal text-slate-500">Onduleurs APC</div>
+          <div className="text-xs font-medium text-slate-600">Onduleurs APC</div>
           <div className="mt-1.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-normal text-slate-800 font-sans">{stats.apc}</span>
+            <span className="text-2xl font-semibold text-slate-900 font-sans">{stats.apc}</span>
             <span className="text-xs text-slate-500">Back-UPS 1000</span>
           </div>
         </div>

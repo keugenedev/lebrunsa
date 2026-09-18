@@ -321,10 +321,10 @@ export default function ITEquipmentView() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 2xl:gap-6">
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Total Postes IT</span>
+            <span className="text-xs font-medium text-slate-600">Total Postes IT</span>
             <Laptop className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.total}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.total}</div>
           <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{stats.inUse} en service</span>
@@ -333,34 +333,28 @@ export default function ITEquipmentView() {
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Postes Affectés</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <UserCheck className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-medium text-slate-600">Postes Affectés</span>
+            <UserCheck className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.assigned}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.assigned}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Salariés identifiés</div>
         </div>
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Parc Lebrun S.A.</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Building2 className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-medium text-slate-600">Parc Lebrun S.A.</span>
+            <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.lebrun}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.lebrun}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Siège Delmas 52</div>
         </div>
 
         <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-normal text-slate-500">Parc Autobiz</span>
-            <div className="w-9 h-9 2xl:w-11 2xl:h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 2xl:w-5 2xl:h-5" />
-            </div>
+            <span className="text-xs font-medium text-slate-600">Parc Autobiz</span>
+            <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
-          <div className="text-2xl font-normal text-slate-800 mt-2 font-sans">{stats.autobiz}</div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.autobiz}</div>
           <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Filiale Autobiz S.A.</div>
         </div>
       </div>
