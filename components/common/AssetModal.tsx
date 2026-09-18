@@ -61,6 +61,7 @@ export default function AssetModal() {
   const [mouseDetails, setMouseDetails] = useState('Souris Bureau (Cable)');
   const [mouseObs, setMouseObs] = useState('Good');
   const [keyboardModel, setKeyboardModel] = useState('Clavier Dell cable');
+  const [keyboardDetails, setKeyboardDetails] = useState('Clavier Alpha numerique');
   const [keyboardObs, setKeyboardObs] = useState('Good');
   const [generalObs, setGeneralObs] = useState('Good');
 
@@ -94,11 +95,12 @@ export default function AssetModal() {
         setMonitorModel(ws.monitorModel || '');
         setMonitorSerial(ws.monitorSerial || '');
         setMonitorObs(ws.monitorObs || 'Good');
-        setMouseBrand(ws.mouse || 'Dell');
+        setMouseBrand(ws.mouse || (it as any).mouse || (it as any).souris || 'Dell');
         setMouseDetails(ws.mouseDetails || 'Souris Bureau (Cable)');
-        setMouseObs(ws.mouseObs || 'Good');
-        setKeyboardModel(ws.keyboard || 'Clavier Dell cable');
-        setKeyboardObs(ws.keyboardObs || 'Good');
+        setMouseObs(ws.mouseObs || (it as any).mouseObs || 'Good');
+        setKeyboardModel(ws.keyboard || (it as any).keyboard || (it as any).clavier || 'Clavier Dell cable');
+        setKeyboardDetails(ws.keyboardDetails || 'Clavier Alpha numerique');
+        setKeyboardObs(ws.keyboardObs || (it as any).keyboardObs || 'Good');
         setGeneralObs(ws.observations || it.notes || 'Good');
       } else {
         // Fallback from notes if notes has screen info
@@ -107,11 +109,12 @@ export default function AssetModal() {
         setMonitorModel(monMatch ? monMatch[1].trim() : '');
         setMonitorSerial(snMatch ? snMatch[1].trim() : '');
         setMonitorObs('Good');
-        setMouseBrand('Dell');
+        setMouseBrand((it as any).mouse || (it as any).souris || 'Dell');
         setMouseDetails('Souris Bureau (Cable)');
-        setMouseObs('Good');
-        setKeyboardModel('Clavier Dell cable');
-        setKeyboardObs('Good');
+        setMouseObs((it as any).mouseObs || 'Good');
+        setKeyboardModel((it as any).keyboard || (it as any).clavier || 'Clavier Dell cable');
+        setKeyboardDetails('Clavier Alpha numerique');
+        setKeyboardObs((it as any).keyboardObs || 'Good');
         setGeneralObs(it.notes || 'Good');
       }
     } else {
@@ -136,10 +139,11 @@ export default function AssetModal() {
       setMonitorModel('');
       setMonitorSerial('');
       setMonitorObs('Good');
-      setMouseBrand('');
+      setMouseBrand('Dell');
       setMouseDetails('Souris Bureau (Cable)');
       setMouseObs('Good');
-      setKeyboardModel('');
+      setKeyboardModel('Clavier Dell cable');
+      setKeyboardDetails('Clavier Alpha numerique');
       setKeyboardObs('Good');
       setGeneralObs('');
     }
@@ -152,28 +156,32 @@ export default function AssetModal() {
     const assignedEmp = employees.find(emp => emp.id === assignedPersonnelId);
     const resolvedCompany = company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
 
+    const hasDefectivePeripheral = keyboardObs === 'Défectueux' || mouseObs === 'Défectueux' || monitorObs === 'Défectueux';
+
     // Workstation details object
     const workstationObj: WorkstationDetails = {
       type: subCategory === 'laptop' ? 'Laptop' : 'Desktop',
       pcName: name,
       pcSerial: serialNumber,
-      pcSpecs: `${os} ${cpu} ${storage} ${ram}`,
+      pcSpecs: `${os} ${cpu} ${storage} ${ram}`.trim(),
       monitorModel: monitorModel || 'Dell standard',
       monitorSerial: monitorSerial || 'N/A',
       monitorObs: monitorObs || 'Good',
       keyboard: keyboardModel || 'Clavier Dell cable',
-      keyboardDetails: 'Clavier Alpha numerique',
+      keyboardDetails: keyboardDetails || 'Clavier Alpha numerique',
       keyboardObs: keyboardObs || 'Good',
       mouse: mouseBrand || 'Dell',
       mouseDetails: mouseDetails || 'Souris Bureau (Cable)',
       mouseObs: mouseObs || 'Good',
-      generalState: status === 'in_use' ? 'Good' : 'Maintenance',
+      generalState: hasDefectivePeripheral ? 'Maintenance' : (status === 'in_use' ? 'Good' : 'Maintenance'),
       observations: generalObs || 'Good'
     };
 
     const notesSummary = [
-      `${os} ${cpu} ${storage} ${ram}`,
+      `${os} ${cpu} ${storage} ${ram}`.trim(),
       monitorModel ? `Écran ${monitorModel}${monitorSerial ? ` (SN: ${monitorSerial})` : ''}` : '',
+      keyboardObs && keyboardObs !== 'Good' ? `Clavier: ${keyboardObs}` : '',
+      mouseObs && mouseObs !== 'Good' ? `Souris: ${mouseObs}` : '',
       generalObs && generalObs !== 'Good' ? generalObs : ''
     ].filter(Boolean).join(' • ');
 
@@ -182,7 +190,7 @@ export default function AssetModal() {
       category: 'it' as const,
       company: resolvedCompany,
       assetTag,
-      status: assignedEmp ? 'in_use' : status,
+      status: (hasDefectivePeripheral && status === 'maintenance') ? 'maintenance' : (assignedEmp ? 'in_use' : status),
       location,
       notes: notesSummary,
       os,
@@ -194,6 +202,12 @@ export default function AssetModal() {
       ram,
       storage,
       workstation: workstationObj,
+      keyboard: keyboardModel,
+      clavier: keyboardModel,
+      keyboardObs: keyboardObs,
+      mouse: mouseBrand,
+      souris: mouseBrand,
+      mouseObs: mouseObs,
       assignedPersonnelId: assignedEmp ? assignedEmp.id : undefined,
       assignedTo: assignedEmp ? assignedEmp.fullName : undefined,
       assignedDepartment: assignedEmp ? assignedEmp.department : undefined,
@@ -537,48 +551,161 @@ export default function AssetModal() {
               </div>
             </div>
 
-            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 pt-2 border-t border-slate-200/80">
-              <Mouse className="w-3.5 h-3.5 text-slate-700" />
-              <span>Souris & Clavier</span>
+            {/* Clavier Associé */}
+            <div className="pt-3 border-t border-slate-200/80">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Keyboard className="w-3.5 h-3.5 text-slate-700" />
+                  <span>Clavier Associé</span>
+                </div>
+                {keyboardObs === 'Défectueux' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                    Clavier Défectueux
+                  </span>
+                )}
+                {keyboardObs === 'Need' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                    Clavier Manquant (Need)
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Modèle / Marque Clavier</label>
+                  <input
+                    type="text"
+                    list="keyboard-options"
+                    value={keyboardModel}
+                    onChange={(e) => setKeyboardModel(e.target.value)}
+                    placeholder="Choisir ou saisir clavier"
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                  />
+                  <datalist id="keyboard-options">
+                    <option value="Clavier Dell câble" />
+                    <option value="Clavier Dell USB" />
+                    <option value="Clavier HP USB" />
+                    <option value="Clavier Logitech Sans-Fil" />
+                    <option value="Clavier Logitech K120" />
+                    <option value="Clavier Intégré (Laptop)" />
+                    <option value="Sans clavier" />
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Format & Connectique</label>
+                  <select
+                    value={keyboardDetails}
+                    onChange={(e) => setKeyboardDetails(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="Clavier Alpha numerique">Alpha-numérique standard (USB)</option>
+                    <option value="Clavier Sans-Fil / Bluetooth">Sans-Fil (Bluetooth / Wireless)</option>
+                    <option value="Clavier Intégré Laptop">Intégré (PC Portable)</option>
+                    <option value="N/A">Pas de clavier</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                    État du Clavier <span className="text-slate-400 font-normal">(Défectueux / Opérationnel)</span>
+                  </label>
+                  <select
+                    value={keyboardObs}
+                    onChange={(e) => setKeyboardObs(e.target.value)}
+                    className={`w-full h-10 px-3 py-2 rounded-xl border font-semibold focus:outline-none cursor-pointer transition-colors ${
+                      keyboardObs === 'Défectueux'
+                        ? 'bg-red-50 border-red-300 text-red-700'
+                        : keyboardObs === 'Need'
+                        ? 'bg-amber-50 border-amber-300 text-amber-800'
+                        : 'bg-white border-slate-200 text-slate-900'
+                    }`}
+                  >
+                    <option value="Good">Good (Opérationnel)</option>
+                    <option value="Défectueux">Défectueux (Touche(s) HS / Problème)</option>
+                    <option value="À remplacer">À remplacer prochainement</option>
+                    <option value="Need">Need (Clavier manquant)</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Type de Souris</label>
-                <select
-                  value={mouseDetails}
-                  onChange={(e) => setMouseDetails(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-                >
-                  <option value="Souris Bureau (Cable)">Souris Dell (Câble)</option>
-                  <option value="Bleutooth (Wirless)">Souris Sans-Fil (Bluetooth)</option>
-                  <option value="N/A">Pas de souris</option>
-                  <option value="Need">Need (Souris manquante)</option>
-                </select>
+            {/* Souris & Pointage */}
+            <div className="pt-3 border-t border-slate-200/80">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Mouse className="w-3.5 h-3.5 text-slate-700" />
+                  <span>Souris & Dispositif de Pointage</span>
+                </div>
+                {mouseObs === 'Défectueux' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                    Souris Défectueuse
+                  </span>
+                )}
+                {mouseObs === 'Need' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                    Souris Manquante (Need)
+                  </span>
+                )}
               </div>
 
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Clavier Associé</label>
-                <input
-                  type="text"
-                  value={keyboardModel}
-                  onChange={(e) => setKeyboardModel(e.target.value)}
-                  placeholder="Clavier Dell câble"
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Modèle / Marque Souris</label>
+                  <input
+                    type="text"
+                    list="mouse-options"
+                    value={mouseBrand}
+                    onChange={(e) => setMouseBrand(e.target.value)}
+                    placeholder="Choisir ou saisir souris"
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                  />
+                  <datalist id="mouse-options">
+                    <option value="Dell" />
+                    <option value="Souris Dell optique USB" />
+                    <option value="HP USB" />
+                    <option value="Logitech Sans-Fil" />
+                    <option value="Logitech M185" />
+                    <option value="Touchpad Intégré" />
+                    <option value="Sans souris" />
+                  </datalist>
+                </div>
 
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">État des Périphériques</label>
-                <select
-                  value={mouseObs}
-                  onChange={(e) => setMouseObs(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-                >
-                  <option value="Good">Good (Tout fonctionne)</option>
-                  <option value="Partiel">À remplacer prochainement</option>
-                  <option value="Need">Need (Périphériques manquants)</option>
-                </select>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Connectique & Type</label>
+                  <select
+                    value={mouseDetails}
+                    onChange={(e) => setMouseDetails(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="Souris Bureau (Cable)">Souris Bureau (Câble USB)</option>
+                    <option value="Bleutooth (Wirless)">Souris Sans-Fil (Bluetooth / Wireless)</option>
+                    <option value="Touchpad (Laptop)">Pavé tactile (Laptop Touchpad)</option>
+                    <option value="N/A">Pas de souris</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                    État de la Souris <span className="text-slate-400 font-normal">(Défectueuse / Opérationnelle)</span>
+                  </label>
+                  <select
+                    value={mouseObs}
+                    onChange={(e) => setMouseObs(e.target.value)}
+                    className={`w-full h-10 px-3 py-2 rounded-xl border font-semibold focus:outline-none cursor-pointer transition-colors ${
+                      mouseObs === 'Défectueux'
+                        ? 'bg-red-50 border-red-300 text-red-700'
+                        : mouseObs === 'Need'
+                        ? 'bg-amber-50 border-amber-300 text-amber-800'
+                        : 'bg-white border-slate-200 text-slate-900'
+                    }`}
+                  >
+                    <option value="Good">Good (Opérationnelle)</option>
+                    <option value="Défectueux">Défectueux (Clic / Molette HS)</option>
+                    <option value="À remplacer">À remplacer prochainement</option>
+                    <option value="Need">Need (Souris manquante)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

@@ -24,7 +24,8 @@ import {
   X, 
   ShieldCheck, 
   Briefcase,
-  Layers
+  Layers,
+  KeyRound
 } from 'lucide-react';
 
 export default function PersonnelView() {
@@ -66,11 +67,17 @@ export default function PersonnelView() {
       sortable: true,
       render: (emp) => (
         <div>
-          <div className="font-medium text-slate-800">{emp.jobTitle}</div>
-          <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-            <Building className="w-3 h-3 text-slate-400" />
-            <span>{emp.department}</span>
-          </div>
+          {emp.jobTitle ? (
+            <div className="font-medium text-slate-800">{emp.jobTitle}</div>
+          ) : (
+            <div className="text-slate-400 italic text-xs font-normal">Non renseigné</div>
+          )}
+          {emp.department && (
+            <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+              <Building className="w-3 h-3 text-slate-400 shrink-0" />
+              <span>{emp.department}</span>
+            </div>
+          )}
         </div>
       )
     },
@@ -270,7 +277,8 @@ export default function PersonnelView() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {selectedEmployee.jobTitle} • {selectedEmployee.department}
+                    {selectedEmployee.jobTitle || 'Poste non renseigné'}
+                    {selectedEmployee.department ? ` • ${selectedEmployee.department}` : ''}
                   </p>
                 </div>
               </div>
@@ -346,6 +354,57 @@ export default function PersonnelView() {
                     {selectedEmployee.workstation.observations || selectedEmployee.workstation.obs || selectedEmployee.workstation.notes}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Comptes, Sessions Windows & Accès Applicatifs */}
+            {selectedEmployee.accounts && (
+              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <KeyRound className="w-4 h-4 text-slate-700" />
+                    <span>Session Windows & Accès Applicatif GP</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {selectedEmployee.accounts.organization || selectedEmployee.company}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {/* Session Windows */}
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="text-[10px] text-slate-400 font-medium uppercase flex items-center gap-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/logos/Windows.png" alt="Windows" className="w-3 h-3 object-contain" />
+                      <span>Session Windows (Poste PC)</span>
+                    </div>
+                    <div className="font-semibold text-slate-900 mt-1 font-mono">
+                      User : {selectedEmployee.accounts.windowsUsername || 'N/A'}
+                    </div>
+                    <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                      MDP : {selectedEmployee.accounts.windowsPassword || 'N/A'}
+                    </div>
+                  </div>
+
+                  {/* Accès Applicatif */}
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="text-[10px] text-slate-400 font-medium uppercase flex items-center gap-1.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {selectedEmployee.accounts.applications?.toLowerCase().includes('dealer') ? (
+                        <img src="/logos/dealerpro.png" alt="DealerPro" className="h-3.5 w-auto object-contain max-w-[65px]" />
+                      ) : (
+                        <img src="/logos/gp.png" alt="Microsoft GP" className="h-3.5 w-auto object-contain max-w-[60px]" />
+                      )}
+                      <span>Accès Logiciel ({selectedEmployee.accounts.applications || 'Microsoft GP'})</span>
+                    </div>
+                    <div className="font-semibold text-slate-900 mt-1 font-mono">
+                      ID : @{selectedEmployee.accounts.appUsername || 'N/A'}
+                    </div>
+                    <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                      MDP : {selectedEmployee.accounts.appPassword || 'N/A'}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

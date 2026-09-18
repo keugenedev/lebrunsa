@@ -311,25 +311,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // One-time purge of legacy fake mock data from browser localStorage
-  if (typeof window !== 'undefined') {
-    const isCleaned = localStorage.getItem('lebron_purged_fake_v9');
-    if (!isCleaned) {
-      localStorage.removeItem('lebron_inv_plans');
-      localStorage.removeItem('lebron_inv_starlink');
-      localStorage.removeItem('lebron_inv_electronics');
-      localStorage.removeItem('lebron_inv_movements');
-      localStorage.removeItem('lebron_inv_alerts');
-      localStorage.removeItem('lebron_inv_employees');
-      localStorage.removeItem('lebron_inv_it');
-      localStorage.removeItem('lebron_inv_printers');
-      localStorage.removeItem('lebron_inv_network');
-      localStorage.removeItem('lebron_inv_ups');
-      localStorage.removeItem('lebron_inv_applications');
-      localStorage.setItem('lebron_purged_fake_v9', 'true');
-    }
-  }
-
   // Entities state with lazy localStorage initialization
   const [employees, setEmployees] = useState<Employee[]>(() => {
     if (typeof window !== 'undefined') {
@@ -337,8 +318,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length >= INITIAL_EMPLOYEES.length) {
-            return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Respect and preserve all user-entered job positions (jobTitle), departments, workstations, etc.
+            const missing = INITIAL_EMPLOYEES.filter(initEmp => !parsed.some((p: any) => p.id === initEmp.id || p.employeeId === initEmp.employeeId));
+            return [...parsed, ...missing];
           }
         } catch (e) { console.error(e); }
       }
@@ -358,11 +341,33 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               const company = item.company || initMatch?.company || (item.assetTag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
               const os = item.os || initMatch?.os || (item.notes?.includes('10') ? 'Windows 10 Pro' : 'Windows 11 Pro');
               const workstation = item.workstation || initMatch?.workstation;
+              const isUserAsset = item.assignedPersonnelId === 'emp-14' || item.assignedTo?.toLowerCase().includes('kensly');
+              const assignedDepartment = isUserAsset 
+                ? (item.assignedDepartment || 'Informatique & Systèmes (IT)') 
+                : '';
+              const keyboard = item.keyboard || item.clavier || workstation?.keyboard;
+              const keyboardObs = item.keyboardObs || workstation?.keyboardObs || 'Good';
+              const mouse = item.mouse || item.souris || workstation?.mouse;
+              const mouseObs = item.mouseObs || workstation?.mouseObs || 'Good';
+
               return {
                 ...item,
                 company,
                 os,
-                workstation
+                workstation: workstation ? {
+                  ...workstation,
+                  keyboard: keyboard || workstation.keyboard,
+                  keyboardObs: keyboardObs || workstation.keyboardObs,
+                  mouse: mouse || workstation.mouse,
+                  mouseObs: mouseObs || workstation.mouseObs
+                } : workstation,
+                keyboard,
+                clavier: keyboard,
+                keyboardObs,
+                mouse,
+                souris: mouse,
+                mouseObs,
+                assignedDepartment
               };
             });
           }
@@ -446,7 +451,30 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('lebron_inv_applications');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Enrich with employee link & windows session data if missing
+            const enriched = parsed.map((app: ApplicationAccount) => {
+              const initMatch = INITIAL_APPLICATIONS.find(i => i.id === app.id || i.username === app.username);
+              const empMatch = INITIAL_EMPLOYEES.find(e => 
+                (app.employeeId && (e.id === app.employeeId || e.employeeId === app.employeeId)) ||
+                (e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === app.username.toLowerCase()) ||
+                (e.lastName.toLowerCase() === app.lastName.toLowerCase())
+              );
+              return {
+                ...app,
+                employeeId: app.employeeId || initMatch?.employeeId || empMatch?.id,
+                windowsUsername: app.windowsUsername !== undefined ? app.windowsUsername : (initMatch?.windowsUsername || empMatch?.accounts?.windowsUsername || ''),
+                windowsPassword: app.windowsPassword !== undefined ? app.windowsPassword : (initMatch?.windowsPassword || empMatch?.accounts?.windowsPassword || '')
+              };
+            });
+            const missing = INITIAL_APPLICATIONS.filter(initApp => !enriched.some(e => e.id === initApp.id || e.username.toLowerCase() === initApp.username.toLowerCase()));
+            const merged = [...enriched, ...missing];
+            localStorage.setItem('lebron_inv_applications', JSON.stringify(merged));
+            return merged;
+          }
+        } catch (e) { console.error(e); }
       }
     }
     return INITIAL_APPLICATIONS;
@@ -763,30 +791,67 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         // Load IT Equipment from Supabase
         const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
         if (!itErr && dbIT && dbIT.length > 0) {
-          const mappedIT: ITAsset[] = dbIT.map((row: any, idx: number) => ({
-            id: row.id ? row.id.toString() : `it-${idx + 1}`,
-            category: 'it' as const,
-            company: row.company || (row.asset_tag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.'),
-            subCategory: 'desktop' as const,
-            assetTag: row.asset_tag || `AST-PC-LEB${(idx + 1).toString().padStart(2, '0')}`,
-            name: row.nom || `Poste Desktop ${row.modele || ''}`,
-            brand: row.marque || 'Dell',
-            model: row.modele || 'OptiPlex Workstation',
-            serialNumber: row.numero_serie || 'N/A',
-            cpu: row.cpu || 'Intel Core i5',
-            ram: row.ram || '8 GB RAM',
-            storage: row.stockage || '500 GB SSD',
-            assignedTo: row.assigne_a || undefined,
-            assignedDepartment: row.departement || undefined,
-            location: row.site || 'Delmas 52',
-            status: row.statut || 'in_use',
-            notes: row.notes || '',
-            purchaseDate: new Date().toISOString().slice(0, 10),
-            warrantyExpiry: new Date(Date.now() + 365*24*3600*1000*3).toISOString().slice(0, 10),
-            purchaseCost: 900,
-            createdAt: row.created_at || new Date().toISOString(),
-            updatedAt: row.created_at || new Date().toISOString()
-          }));
+          const mappedIT: ITAsset[] = dbIT.map((row: any, idx: number) => {
+            const kbRaw = row.clavier || '';
+            const isKbDefect = kbRaw.toLowerCase().includes('defect') || kbRaw.toLowerCase().includes('défect') || (row.observations && (row.observations.toLowerCase().includes('clavier: défect') || row.observations.toLowerCase().includes('clavier: defect')));
+            const isKbNeed = kbRaw.toLowerCase().includes('need') || (row.observations && row.observations.toLowerCase().includes('clavier: need'));
+            const kbClean = kbRaw.replace(/\[.*?\]/g, '').trim() || 'Clavier Dell cable';
+            const kbObs = isKbDefect ? 'Défectueux' : isKbNeed ? 'Need' : 'Good';
+
+            const mouseRaw = row.souris || '';
+            const isMouseDefect = mouseRaw.toLowerCase().includes('defect') || mouseRaw.toLowerCase().includes('défect') || (row.observations && (row.observations.toLowerCase().includes('souris: défect') || row.observations.toLowerCase().includes('souris: defect')));
+            const isMouseNeed = mouseRaw.toLowerCase().includes('need') || (row.observations && row.observations.toLowerCase().includes('souris: need'));
+            const mouseClean = mouseRaw.replace(/\[.*?\]/g, '').trim() || 'Dell';
+            const mObs = isMouseDefect ? 'Défectueux' : isMouseNeed ? 'Need' : 'Good';
+
+            return {
+              id: row.equipment_id ? row.equipment_id.toString() : (row.id ? row.id.toString() : `it-${idx + 1}`),
+              category: 'it' as const,
+              company: row.entreprise || row.company || (row.asset_tag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.'),
+              subCategory: 'desktop' as const,
+              assetTag: row.asset_tag || `AST-PC-LEB${(idx + 1).toString().padStart(2, '0')}`,
+              name: row.nom || `Poste Desktop ${row.modele || ''}`,
+              brand: row.marque || 'Dell',
+              model: row.modele || 'OptiPlex Workstation',
+              serialNumber: row.numero_serie || 'N/A',
+              cpu: row.cpu || 'Intel Core i5',
+              ram: row.ram || '8 GB RAM',
+              storage: row.stockage || '500 GB SSD',
+              assignedTo: row.assigne_a || undefined,
+              assignedDepartment: row.departement || undefined,
+              location: row.site || 'Delmas 52',
+              status: row.statut || (isKbDefect || isMouseDefect ? 'maintenance' : 'in_use'),
+              notes: row.observations || row.notes || '',
+              keyboard: kbClean,
+              clavier: kbClean,
+              keyboardObs: kbObs,
+              mouse: mouseClean,
+              souris: mouseClean,
+              mouseObs: mObs,
+              workstation: {
+                type: 'Desktop',
+                pcName: row.nom || 'Poste Desktop',
+                pcSerial: row.numero_serie || 'N/A',
+                pcSpecs: `${row.cpu || 'Intel Core i5'} ${row.ram || '8 GB RAM'}`,
+                monitorModel: row.ecran || 'Dell standard',
+                monitorSerial: 'N/A',
+                monitorObs: 'Good',
+                keyboard: kbClean,
+                keyboardDetails: 'Clavier Alpha numerique',
+                keyboardObs: kbObs,
+                mouse: mouseClean,
+                mouseDetails: 'Souris Bureau (Cable)',
+                mouseObs: mObs,
+                generalState: (isKbDefect || isMouseDefect) ? 'Maintenance' : 'Good',
+                observations: row.observations || 'Good'
+              },
+              purchaseDate: new Date().toISOString().slice(0, 10),
+              warrantyExpiry: new Date(Date.now() + 365*24*3600*1000*3).toISOString().slice(0, 10),
+              purchaseCost: 900,
+              createdAt: row.created_at || new Date().toISOString(),
+              updatedAt: row.created_at || new Date().toISOString()
+            };
+          });
           setItAssets(mappedIT);
         }
       } catch (err) {
@@ -929,6 +994,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         }
         return kit;
       }));
+
+      // Synchronize in real-time with application accounts
+      setApplicationAccounts(prev => prev.map(acc => {
+        const isLinked = (acc.employeeId && (acc.employeeId === id || acc.employeeId === oldEmployeeId)) ||
+                         (oldFullName && `${acc.firstName} ${acc.lastName}`.toLowerCase() === oldFullName.toLowerCase());
+        if (isLinked) {
+          const nameParts = updates.fullName ? updates.fullName.trim().split(' ') : [];
+          const newFirstName = updates.firstName !== undefined ? updates.firstName : (nameParts.length > 1 ? nameParts[0] : undefined);
+          const newLastName = updates.lastName !== undefined ? updates.lastName : (nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined);
+
+          return {
+            ...acc,
+            employeeId: id,
+            firstName: newFirstName !== undefined ? newFirstName : acc.firstName,
+            lastName: newLastName !== undefined ? newLastName : acc.lastName,
+            organization: updates.company !== undefined ? updates.company : acc.organization,
+            windowsUsername: updates.accounts?.windowsUsername !== undefined ? updates.accounts.windowsUsername : acc.windowsUsername,
+            windowsPassword: updates.accounts?.windowsPassword !== undefined ? updates.accounts.windowsPassword : acc.windowsPassword,
+            username: updates.accounts?.appUsername !== undefined ? updates.accounts.appUsername : acc.username,
+            password: updates.accounts?.appPassword !== undefined ? updates.accounts.appPassword : acc.password,
+            applications: updates.accounts?.applications !== undefined ? updates.accounts.applications : acc.applications
+          };
+        }
+        return acc;
+      }));
     }
 
     try {
@@ -1039,21 +1129,49 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       notes: `Ajout au catalogue : ${newAsset.assetTag}`
     });
 
+    // Connect and synchronize in real-time with employee workstation
+    if (newAsset.assignedPersonnelId || newAsset.assignedTo) {
+      setEmployees(prev => prev.map(emp => {
+        const isTarget = (newAsset.assignedPersonnelId && (emp.id === newAsset.assignedPersonnelId || emp.employeeId === newAsset.assignedPersonnelId)) ||
+                         (newAsset.assignedTo && emp.fullName.toLowerCase() === newAsset.assignedTo.toLowerCase());
+        if (isTarget) {
+          return {
+            ...emp,
+            workstation: newAsset.workstation || emp.workstation
+          };
+        }
+        return emp;
+      }));
+    }
+
     try {
+      const kbStr = newAsset.workstation?.keyboard || newAsset.keyboard || '';
+      const kbObsStr = newAsset.workstation?.keyboardObs || newAsset.keyboardObs || 'Good';
+      const kbCombined = kbObsStr !== 'Good' ? `${kbStr} [${kbObsStr}]` : kbStr;
+
+      const mStr = newAsset.workstation?.mouse || newAsset.mouse || '';
+      const mObsStr = newAsset.workstation?.mouseObs || newAsset.mouseObs || 'Good';
+      const mCombined = mObsStr !== 'Good' ? `${mStr} [${mObsStr}]` : mStr;
+
+      const monStr = newAsset.workstation?.monitorModel || '';
+      const monObsStr = newAsset.workstation?.monitorObs || 'Good';
+      const monCombined = monObsStr !== 'Good' ? `${monStr} [${monObsStr}]` : monStr;
+
+      const obsCombined = [
+        kbObsStr !== 'Good' ? `Clavier: ${kbObsStr}` : '',
+        mObsStr !== 'Good' ? `Souris: ${mObsStr}` : '',
+        monObsStr !== 'Good' ? `Écran: ${monObsStr}` : '',
+        newAsset.notes
+      ].filter(Boolean).join(' • ');
+
       await supabase.from('it_equipment').insert({
-        asset_tag: newAsset.assetTag,
+        entreprise: newAsset.company || 'Lebrun S.A.',
+        site: newAsset.location || 'Delmas 52',
         nom: newAsset.name,
-        marque: newAsset.brand,
-        modele: newAsset.model,
-        numero_serie: newAsset.serialNumber,
-        cpu: newAsset.cpu,
-        ram: newAsset.ram,
-        stockage: newAsset.storage,
-        assigne_a: newAsset.assignedTo,
-        departement: newAsset.assignedDepartment,
-        site: newAsset.location,
-        statut: newAsset.status,
-        notes: newAsset.notes
+        clavier: kbCombined,
+        souris: mCombined,
+        ecran: monCombined,
+        observations: obsCombined || 'Good'
       });
     } catch (err) {
       console.warn('Sync Supabase addITAsset error:', err);
@@ -1069,24 +1187,52 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       type: 'info'
     });
 
+    if (updates.workstation || updates.assignedPersonnelId || updates.assignedTo) {
+      setEmployees(prev => prev.map(emp => {
+        const isTarget = (updates.assignedPersonnelId && (emp.id === updates.assignedPersonnelId || emp.employeeId === updates.assignedPersonnelId)) ||
+                         (updates.assignedTo && emp.fullName.toLowerCase() === updates.assignedTo.toLowerCase());
+        if (isTarget && updates.workstation) {
+          return {
+            ...emp,
+            workstation: updates.workstation
+          };
+        }
+        return emp;
+      }));
+    }
+
     try {
       const payload: Record<string, any> = {};
-      if (updates.assetTag !== undefined) payload.asset_tag = updates.assetTag;
       if (updates.name !== undefined) payload.nom = updates.name;
-      if (updates.brand !== undefined) payload.marque = updates.brand;
-      if (updates.model !== undefined) payload.modele = updates.model;
-      if (updates.serialNumber !== undefined) payload.numero_serie = updates.serialNumber;
-      if (updates.cpu !== undefined) payload.cpu = updates.cpu;
-      if (updates.ram !== undefined) payload.ram = updates.ram;
-      if (updates.storage !== undefined) payload.stockage = updates.storage;
-      if (updates.assignedTo !== undefined) payload.assigne_a = updates.assignedTo;
-      if (updates.assignedDepartment !== undefined) payload.departement = updates.assignedDepartment;
+      if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.location !== undefined) payload.site = updates.location;
-      if (updates.status !== undefined) payload.statut = updates.status;
-      if (updates.notes !== undefined) payload.notes = updates.notes;
+      
+      const kb = updates.workstation?.keyboard || updates.keyboard;
+      const kbObs = updates.workstation?.keyboardObs || updates.keyboardObs;
+      if (kb) {
+        payload.clavier = kbObs && kbObs !== 'Good' ? `${kb} [${kbObs}]` : kb;
+      }
 
-      if (updates.serialNumber) {
-        await supabase.from('it_equipment').update(payload).eq('numero_serie', updates.serialNumber);
+      const m = updates.workstation?.mouse || updates.mouse;
+      const mObs = updates.workstation?.mouseObs || updates.mouseObs;
+      if (m) {
+        payload.souris = mObs && mObs !== 'Good' ? `${m} [${mObs}]` : m;
+      }
+
+      if (updates.workstation?.monitorModel) {
+        payload.ecran = updates.workstation.monitorModel;
+      }
+
+      if (updates.notes !== undefined || kbObs || mObs) {
+        payload.observations = [
+          kbObs && kbObs !== 'Good' ? `Clavier: ${kbObs}` : '',
+          mObs && mObs !== 'Good' ? `Souris: ${mObs}` : '',
+          updates.notes
+        ].filter(Boolean).join(' • ');
+      }
+
+      if (updates.name) {
+        await supabase.from('it_equipment').update(payload).eq('nom', updates.name);
       }
     } catch (err) {
       console.warn('Sync Supabase updateITAsset error:', err);
@@ -1258,6 +1404,33 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     };
     setApplicationAccounts(prev => [newAcc, ...prev]);
 
+    // Sync to employee accounts in real time
+    if (account.employeeId) {
+      setEmployees(prev => prev.map(emp => {
+        if (emp.id === account.employeeId || emp.employeeId === account.employeeId) {
+          return {
+            ...emp,
+            accounts: {
+              ...(emp.accounts || {}),
+              windowsUsername: account.windowsUsername !== undefined ? account.windowsUsername : (emp.accounts?.windowsUsername || ''),
+              windowsPassword: account.windowsPassword !== undefined ? account.windowsPassword : (emp.accounts?.windowsPassword || ''),
+              appUsername: account.username || emp.accounts?.appUsername || '',
+              appPassword: account.password !== undefined ? account.password : (emp.accounts?.appPassword || ''),
+              applications: account.applications || emp.accounts?.applications || 'Microsoft GP',
+              organization: account.organization || emp.accounts?.organization || emp.company
+            }
+          };
+        }
+        return emp;
+      }));
+    }
+
+    showToast({
+      title: 'Accès & Session Enregistrés',
+      message: `Compte ${newAcc.username} rattaché au personnel avec succès.`,
+      type: 'success'
+    });
+
     try {
       await supabase.from('user_applications').insert({
         username: account.username,
@@ -1274,6 +1447,35 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const updateApplicationAccount = async (id: string, updates: Partial<ApplicationAccount>) => {
     setApplicationAccounts(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+
+    const target = applicationAccounts.find(item => item.id === id);
+    const empId = updates.employeeId || target?.employeeId;
+
+    if (empId) {
+      setEmployees(prev => prev.map(emp => {
+        if (emp.id === empId || emp.employeeId === empId) {
+          return {
+            ...emp,
+            accounts: {
+              ...(emp.accounts || {}),
+              windowsUsername: updates.windowsUsername !== undefined ? updates.windowsUsername : (emp.accounts?.windowsUsername || ''),
+              windowsPassword: updates.windowsPassword !== undefined ? updates.windowsPassword : (emp.accounts?.windowsPassword || ''),
+              appUsername: updates.username !== undefined ? updates.username : (emp.accounts?.appUsername || ''),
+              appPassword: updates.password !== undefined ? updates.password : (emp.accounts?.appPassword || ''),
+              applications: updates.applications !== undefined ? updates.applications : (emp.accounts?.applications || 'Microsoft GP'),
+              organization: updates.organization !== undefined ? updates.organization : (emp.accounts?.organization || emp.company)
+            }
+          };
+        }
+        return emp;
+      }));
+    }
+
+    showToast({
+      title: 'Accès & Session Mis à Jour',
+      message: 'Les modifications de session et logiciel ont été enregistrées.',
+      type: 'info'
+    });
 
     try {
       const payload: Record<string, any> = {};
@@ -1295,6 +1497,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const deleteApplicationAccount = async (id: string) => {
     const target = applicationAccounts.find(a => a.id === id);
     setApplicationAccounts(prev => prev.filter(item => item.id !== id));
+
+    showToast({
+      title: 'Accès Supprimé',
+      message: 'Le compte a été retiré de la liste.',
+      type: 'warning'
+    });
 
     try {
       if (target?.username) {

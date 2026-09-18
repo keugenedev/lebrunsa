@@ -280,6 +280,7 @@ export default function PrinterModal() {
                   <option value="Multifonction">Multifonction</option>
                   <option value="Laser">Laser</option>
                   <option value="Laser (Cheque)">Laser (Cheque)</option>
+                  <option value="Étiquette">Étiquette</option>
                   <option value="Matricielle">Matricielle</option>
                   <option value="Jet d'encre">Jet d'encre</option>
                 </select>

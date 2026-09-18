@@ -261,31 +261,67 @@ export default function ITEquipmentView() {
       render: (asset) => {
         const ws = asset.workstation;
         const monitor = ws?.monitorModel || (asset.notes?.includes('Écran') ? asset.notes.split('•').find(s => s.includes('Écran'))?.replace(/Écran/i, '').trim() : null);
-        const mouse = ws?.mouseDetails || ws?.mouse || 'Dell';
-        const keyboard = ws?.keyboard || 'Dell';
+        const mouse = ws?.mouse || (asset as any).mouse || (asset as any).souris || 'Dell';
+        const mouseObs = ws?.mouseObs || (asset as any).mouseObs;
+        const keyboard = ws?.keyboard || (asset as any).keyboard || (asset as any).clavier || 'Dell';
+        const keyboardObs = ws?.keyboardObs || (asset as any).keyboardObs;
         const obs = ws?.observations || (asset.notes?.includes('Windows lent') ? 'Windows lent' : null);
+
+        const isKbDefective = keyboardObs?.toLowerCase().includes('defect') ||
+                              keyboardObs?.toLowerCase().includes('défect') ||
+                              keyboardObs?.toLowerCase().includes('remplacer') ||
+                              keyboardObs?.toLowerCase().includes('hs');
+
+        const isMouseDefective = mouseObs?.toLowerCase().includes('defect') ||
+                                 mouseObs?.toLowerCase().includes('défect') ||
+                                 mouseObs?.toLowerCase().includes('remplacer') ||
+                                 mouseObs?.toLowerCase().includes('hs');
 
         const hasMouse = mouse && mouse !== 'N/A' && !mouse.toLowerCase().includes('need') && !mouse.toLowerCase().includes('none');
         const hasKeyboard = keyboard && keyboard !== 'N/A' && !keyboard.toLowerCase().includes('need') && !keyboard.toLowerCase().includes('none');
 
         return (
-          <div className="text-xs space-y-1 max-w-[240px]">
+          <div className="text-xs space-y-1.5 max-w-[240px]">
             {monitor && monitor !== 'Sans écran' && (
               <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs truncate" title={ws?.monitorSerial ? `S/N: ${ws.monitorSerial}` : monitor}>
                 <Monitor className="w-3.5 h-3.5 text-slate-700 shrink-0" />
                 <span className="truncate">{monitor}</span>
               </div>
             )}
-            <div className="flex items-center gap-2.5 pt-0.5 text-slate-600">
-              {hasMouse && (
-                <span title={`Souris: ${mouse}`} className="inline-flex">
-                  <Mouse className="w-4 h-4 text-slate-600 shrink-0" />
-                </span>
-              )}
+            <div className="flex flex-col gap-1 pt-0.5 text-slate-600">
               {hasKeyboard && (
-                <span title={`Clavier: ${keyboard}`} className="inline-flex">
-                  <Keyboard className="w-4 h-4 text-slate-600 shrink-0" />
-                </span>
+                <div className="flex items-center gap-1.5 truncate" title={`Clavier: ${keyboard} (${keyboardObs || 'Good'})`}>
+                  <Keyboard className={`w-3.5 h-3.5 ${isKbDefective ? 'text-red-500' : 'text-slate-500'} shrink-0`} />
+                  <span className={`text-[11px] truncate ${isKbDefective ? 'text-red-600 font-bold' : 'text-slate-700 font-medium'}`}>
+                    {keyboard}
+                  </span>
+                  {isKbDefective ? (
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-700 text-[9px] font-bold shrink-0">
+                      HS / Défectueux
+                    </span>
+                  ) : keyboardObs === 'Need' ? (
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-bold shrink-0">
+                      Need
+                    </span>
+                  ) : null}
+                </div>
+              )}
+              {hasMouse && (
+                <div className="flex items-center gap-1.5 truncate" title={`Souris: ${mouse} (${mouseObs || 'Good'})`}>
+                  <Mouse className={`w-3.5 h-3.5 ${isMouseDefective ? 'text-red-500' : 'text-slate-500'} shrink-0`} />
+                  <span className={`text-[11px] truncate ${isMouseDefective ? 'text-red-600 font-bold' : 'text-slate-700 font-medium'}`}>
+                    {mouse}
+                  </span>
+                  {isMouseDefective ? (
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-700 text-[9px] font-bold shrink-0">
+                      HS / Défectueuse
+                    </span>
+                  ) : mouseObs === 'Need' ? (
+                    <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[9px] font-bold shrink-0">
+                      Need
+                    </span>
+                  ) : null}
+                </div>
               )}
             </div>
             {obs && obs !== 'Good' && (

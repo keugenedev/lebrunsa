@@ -245,34 +245,32 @@ export default function EmployeeModal() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
-                  Département <span className="text-red-500">*</span>
+                  Département
                 </label>
                 <select
-                  required
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
                 >
-                  <option value="">Sélectionner un département...</option>
-                  <option value="Administration / IT">Administration / IT</option>
+                  <option value="">Non renseigné / En attente...</option>
+                  <option value="Informatique & Systèmes (IT)">Informatique & Systèmes (IT)</option>
+                  <option value="Administration & Direction">Administration & Direction</option>
                   <option value="Opérations Commerciales">Opérations Commerciales</option>
                   <option value="Recouvrement & Finances">Recouvrement & Finances</option>
                   <option value="Ventes & Commercial">Ventes & Commercial</option>
-                  <option value="Direction & Opérations">Direction & Opérations</option>
-                  <option value="Administration Générale">Administration Générale</option>
+                  <option value="Logistique & Stocks">Logistique & Stocks</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
-                  Poste / Fonction <span className="text-red-500">*</span>
+                  Poste / Fonction
                 </label>
                 <input
                   type="text"
-                  required
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
-                  placeholder="ex: Responsable Administratif & IT"
+                  placeholder="ex: Poste à renseigner..."
                   className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-slate-400"
                 />
               </div>

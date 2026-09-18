@@ -55,6 +55,14 @@ export interface ITAsset extends BaseAsset {
   workstation?: WorkstationDetails;
   company?: string;
   os?: string; // 'Windows 11 Pro' | 'Windows 10 Pro' | 'Windows 11 Home'
+  keyboard?: string;
+  clavier?: string;
+  keyboardObs?: string;
+  mouse?: string;
+  souris?: string;
+  mouseObs?: string;
+  screen?: string;
+  ecran?: string;
 }
 
 export interface PrinterAsset {
@@ -67,7 +75,7 @@ export interface PrinterAsset {
   model: string;
   serialNumber: string;
   ipAddress: string;
-  type: 'Multifonction' | 'Laser' | 'Laser (Cheque)' | string;
+  type: 'Multifonction' | 'Laser' | 'Laser (Cheque)' | 'Étiquette' | 'Matricielle' | 'Jet d\'encre' | string;
   status: 'Fonctionnel' | 'Maintenance' | 'En panne';
   observations: string;
   createdAt: string;
@@ -110,12 +118,15 @@ export interface UPSAsset {
 
 export interface ApplicationAccount {
   id: string;
-  username: string;
+  username: string; // Identifiant applicatif (ex: rmdguerrier, autobiz1, keugene)
   lastName: string;
   firstName: string;
-  password?: string;
-  applications: string;
-  organization: string;
+  password?: string; // Mot de passe applicatif GP
+  applications: string; // Applications autorisées (ex: Microsoft GP)
+  organization: string; // Organisation / Entité (ex: Lebrun S.A., Autobiz S.A.)
+  employeeId?: string; // ID du collaborateur dans le Personnel (ex: emp-1)
+  windowsUsername?: string; // Identifiant de connexion session Windows (ex: ALEXIS, Admin)
+  windowsPassword?: string; // Mot de passe de connexion session Windows (ex: 198936)
 }
 
 export interface TelecomPlan extends BaseAsset {

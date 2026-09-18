@@ -221,20 +221,36 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
                 </div>
               </div>
 
-              {/* Microsoft GP Application */}
+              {/* Application Logiciel Métier (Microsoft GP ou DealerPro) */}
               <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
                 <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
-                  <span>{acc?.applications || 'Microsoft GP'}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 font-semibold font-mono">
-                    ERP Métier
+                  <div className="flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {acc?.applications?.toLowerCase().includes('dealer') ? (
+                      <img src="/logos/dealerpro.png" alt="DealerPro" className="h-4 w-auto object-contain max-w-[75px]" />
+                    ) : (
+                      <img src="/logos/gp.png" alt="Microsoft GP" className="h-4 w-auto object-contain max-w-[75px]" />
+                    )}
+                    <span>{acc?.applications || 'Microsoft GP'}</span>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold font-mono ${
+                    acc?.applications?.toLowerCase().includes('dealer')
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {acc?.applications?.toLowerCase().includes('dealer') ? 'DMS Automobile' : 'ERP Métier'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">Compte GP :</span>
-                  <span className="font-mono font-bold text-slate-900">{acc?.appUsername || 'N/A'}</span>
+                  <span className="text-slate-500">
+                    Compte {acc?.applications?.toLowerCase().includes('dealer') ? 'DealerPro' : 'GP'} :
+                  </span>
+                  <span className="font-mono font-bold text-slate-900">{acc?.appUsername ? `@${acc.appUsername}` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">Mot de passe GP :</span>
+                  <span className="text-slate-500">
+                    Mot de passe {acc?.applications?.toLowerCase().includes('dealer') ? 'DealerPro' : 'GP'} :
+                  </span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono font-semibold text-slate-900">
                       {showPasswords ? (acc?.appPassword || '1234') : '••••••••'}

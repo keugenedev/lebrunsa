@@ -57,10 +57,20 @@ export default function WorkstationDetailsModal({
 
   const isScreenDefective = ws?.monitorObs?.toLowerCase().includes('trace') || 
                             ws?.monitorObs?.toLowerCase().includes('defect') ||
+                            ws?.monitorObs?.toLowerCase().includes('défect') ||
                             ws?.monitorObs?.toLowerCase().includes('deffect');
 
-  const isKeyboardMissing = ws?.keyboard?.toLowerCase() === 'need';
-  const isMouseMissing = ws?.mouse?.toLowerCase() === 'need';
+  const isKeyboardMissing = ws?.keyboard?.toLowerCase() === 'need' || ws?.keyboardObs?.toLowerCase() === 'need';
+  const isKeyboardDefective = ws?.keyboardObs?.toLowerCase().includes('defect') ||
+                              ws?.keyboardObs?.toLowerCase().includes('défect') ||
+                              ws?.keyboardObs?.toLowerCase().includes('remplacer') ||
+                              ws?.keyboardObs?.toLowerCase().includes('hs');
+
+  const isMouseMissing = ws?.mouse?.toLowerCase() === 'need' || ws?.mouseObs?.toLowerCase() === 'need';
+  const isMouseDefective = ws?.mouseObs?.toLowerCase().includes('defect') ||
+                           ws?.mouseObs?.toLowerCase().includes('défect') ||
+                           ws?.mouseObs?.toLowerCase().includes('remplacer') ||
+                           ws?.mouseObs?.toLowerCase().includes('hs');
 
   const defaultSpecs = [asset.cpu || 'Intel Core', asset.ram || '8 GB RAM', asset.storage || '500 GB SSD'].join(' • ');
 
@@ -243,8 +253,13 @@ export default function WorkstationDetailsModal({
                   <Keyboard className="w-4 h-4 text-black shrink-0" />
                   <span>Clavier</span>
                 </div>
-                {isKeyboardMissing ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-900">
+                {isKeyboardDefective ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                    <AlertTriangle className="w-3 h-3 text-red-600 shrink-0" />
+                    {ws?.keyboardObs || 'Défectueux'}
+                  </span>
+                ) : isKeyboardMissing ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                     Manquant (Need)
                   </span>
                 ) : (
@@ -277,8 +292,13 @@ export default function WorkstationDetailsModal({
                   <Mouse className="w-4 h-4 text-black shrink-0" />
                   <span>Souris</span>
                 </div>
-                {isMouseMissing ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-900">
+                {isMouseDefective ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                    <AlertTriangle className="w-3 h-3 text-red-600 shrink-0" />
+                    {ws?.mouseObs || 'Défectueuse'}
+                  </span>
+                ) : isMouseMissing ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                     Manquant (Need)
                   </span>
                 ) : (
