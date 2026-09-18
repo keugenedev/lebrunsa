@@ -44,7 +44,7 @@ export default function PrintersView() {
   
   const [copiedSerial, setCopiedSerial] = useState<string | null>(null);
   const companies = ['Lebrun S.A.', 'Autobiz', 'Caribe Motors', 'Leader Foods', 'Tirezone'];
-  const sites = ['Delmas 52', 'Aéroport Depot'];
+  const sites = ['Delmas 52', 'Pétion-Ville', 'Delmas 60', 'Canapé-Vert'];
   const types = ['Multifonction', 'Laser', 'Laser (Cheque)'];
 
   const filteredPrinters = useMemo(() => {
@@ -218,7 +218,7 @@ export default function PrintersView() {
       width: '120px',
       render: (p) => (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status?.toLowerCase().includes('opér') || p.status?.toLowerCase().includes('en service') ? 'bg-emerald-500' : p.status?.toLowerCase().includes('maint') || p.status?.toLowerCase().includes('panne') || p.status?.toLowerCase().includes('hors') ? 'bg-red-500' : 'bg-slate-400'}`}></span>
           {p.status}
         </span>
       )

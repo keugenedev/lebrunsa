@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
-import { AssetStatus, ITAsset } from '@/types/inventory';
+import { AssetStatus, ITAsset, WorkstationDetails } from '@/types/inventory';
 import { 
   X, 
   Plus, 
@@ -10,7 +10,12 @@ import {
   HardDrive, 
   Cpu, 
   User, 
-  Building 
+  Building,
+  Monitor,
+  Mouse,
+  Keyboard,
+  Radio,
+  Sparkles
 } from 'lucide-react';
 
 export default function AssetModal() {
@@ -26,57 +31,117 @@ export default function AssetModal() {
   // IT Specific fields
   const [name, setName] = useState('');
   const [assetTag, setAssetTag] = useState('');
-  const [location, setLocation] = useState('Delmas 52');
+  const [location, setLocation] = useState('');
+  const [company, setCompany] = useState('Lebrun S.A.');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<AssetStatus>('in_use');
   const [assignedPersonnelId, setAssignedPersonnelId] = useState('');
 
-  const [brand, setBrand] = useState('Dell');
-  const [model, setModel] = useState('OptiPlex Workstation');
+  // Machine specs
+  const [brand, setBrand] = useState('');
+  const [model, setModel] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
   const [subCategory, setSubCategory] = useState<'desktop' | 'laptop' | 'monitor'>('desktop');
-  const [cpu, setCpu] = useState('Intel Core i5 @ 3.30 GHz');
-  const [ram, setRam] = useState('8 GB RAM');
-  const [storage, setStorage] = useState('500 GB SSD');
-  const [purchaseCost, setPurchaseCost] = useState('900');
-  const [warrantyExpiry, setWarrantyExpiry] = useState('2026-12-31');
+  const [cpu, setCpu] = useState('');
+  const [ram, setRam] = useState('');
+  const [storage, setStorage] = useState('');
+  const [purchaseCost, setPurchaseCost] = useState('');
+  const [warrantyExpiry, setWarrantyExpiry] = useState('');
+
+  // OS / Windows Edition
+  const [os, setOs] = useState('');
+
+  // Peripherals: Screen / Monitor
+  const [monitorModel, setMonitorModel] = useState('');
+  const [monitorSerial, setMonitorSerial] = useState('');
+  const [monitorObs, setMonitorObs] = useState('Good');
+
+  // Peripherals: Mouse & Keyboard
+  const [mouseBrand, setMouseBrand] = useState('Dell');
+  const [mouseDetails, setMouseDetails] = useState('Souris Bureau (Cable)');
+  const [mouseObs, setMouseObs] = useState('Good');
+  const [keyboardModel, setKeyboardModel] = useState('Clavier Dell cable');
+  const [keyboardObs, setKeyboardObs] = useState('Good');
+  const [generalObs, setGeneralObs] = useState('Good');
 
   useEffect(() => {
     if (editingAsset && editingAsset.category === 'it') {
       const it = editingAsset as ITAsset;
       setName(it.name);
       setAssetTag(it.assetTag);
-      setLocation(it.location || 'Delmas 52');
+      setLocation(it.location || '');
+      setCompany((it as any).company || (it.assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.'));
       setStatus(it.status);
       setNotes(it.notes || '');
       setAssignedPersonnelId(it.assignedPersonnelId || '');
 
-      setBrand(it.brand || 'Dell');
-      setModel(it.model || 'OptiPlex Workstation');
+      setBrand(it.brand || '');
+      setModel(it.model || '');
       setSerialNumber(it.serialNumber || '');
       setSubCategory((it.subCategory as any) || 'desktop');
       setCpu(it.cpu || '');
       setRam(it.ram || '');
       setStorage(it.storage || '');
-      setPurchaseCost(it.purchaseCost ? it.purchaseCost.toString() : '900');
-      setWarrantyExpiry(it.warrantyExpiry || '2026-12-31');
+      setPurchaseCost(it.purchaseCost ? it.purchaseCost.toString() : '');
+      setWarrantyExpiry(it.warrantyExpiry || '');
+
+      // OS resolution
+      setOs(it.os || '');
+
+      // Workstation details resolution
+      const ws = it.workstation;
+      if (ws) {
+        setMonitorModel(ws.monitorModel || '');
+        setMonitorSerial(ws.monitorSerial || '');
+        setMonitorObs(ws.monitorObs || 'Good');
+        setMouseBrand(ws.mouse || 'Dell');
+        setMouseDetails(ws.mouseDetails || 'Souris Bureau (Cable)');
+        setMouseObs(ws.mouseObs || 'Good');
+        setKeyboardModel(ws.keyboard || 'Clavier Dell cable');
+        setKeyboardObs(ws.keyboardObs || 'Good');
+        setGeneralObs(ws.observations || it.notes || 'Good');
+      } else {
+        // Fallback from notes if notes has screen info
+        const snMatch = it.notes?.match(/\(SN:\s*([^\)]+)\)/i);
+        const monMatch = it.notes?.match(/Écran\s+([^\(•]+)/i);
+        setMonitorModel(monMatch ? monMatch[1].trim() : '');
+        setMonitorSerial(snMatch ? snMatch[1].trim() : '');
+        setMonitorObs('Good');
+        setMouseBrand('Dell');
+        setMouseDetails('Souris Bureau (Cable)');
+        setMouseObs('Good');
+        setKeyboardModel('Clavier Dell cable');
+        setKeyboardObs('Good');
+        setGeneralObs(it.notes || 'Good');
+      }
     } else {
       const rand = Math.floor(Math.random() * 900 + 100);
       setAssetTag(`AST-PC-LEB${rand}`);
-      setName('Poste Desktop Dell');
-      setLocation('Delmas 52');
+      setName('');
+      setLocation('');
+      setCompany('Lebrun S.A.');
       setStatus('in_use');
-      setNotes('Windows 11 Pro • Écran Dell');
+      setNotes('');
       setAssignedPersonnelId('');
-      setBrand('Dell');
-      setModel('OptiPlex Workstation');
+      setBrand('');
+      setModel('');
       setSerialNumber('');
       setSubCategory('desktop');
-      setCpu('Intel Core i5 @ 3.30 GHz');
-      setRam('8 GB RAM');
-      setStorage('500 GB SSD');
-      setPurchaseCost('900');
-      setWarrantyExpiry('2026-12-31');
+      setCpu('');
+      setRam('');
+      setStorage('');
+      setPurchaseCost('');
+      setWarrantyExpiry('');
+      setOs('');
+      setMonitorModel('');
+      setMonitorSerial('');
+      setMonitorObs('Good');
+      setMouseBrand('');
+      setMouseDetails('Souris Bureau (Cable)');
+      setMouseObs('Good');
+      setKeyboardModel('');
+      setKeyboardObs('Good');
+      setGeneralObs('');
     }
   }, [editingAsset, isAddModalOpen]);
 
@@ -85,14 +150,42 @@ export default function AssetModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const assignedEmp = employees.find(emp => emp.id === assignedPersonnelId);
+    const resolvedCompany = company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
+
+    // Workstation details object
+    const workstationObj: WorkstationDetails = {
+      type: subCategory === 'laptop' ? 'Laptop' : 'Desktop',
+      pcName: name,
+      pcSerial: serialNumber,
+      pcSpecs: `${os} ${cpu} ${storage} ${ram}`,
+      monitorModel: monitorModel || 'Dell standard',
+      monitorSerial: monitorSerial || 'N/A',
+      monitorObs: monitorObs || 'Good',
+      keyboard: keyboardModel || 'Clavier Dell cable',
+      keyboardDetails: 'Clavier Alpha numerique',
+      keyboardObs: keyboardObs || 'Good',
+      mouse: mouseBrand || 'Dell',
+      mouseDetails: mouseDetails || 'Souris Bureau (Cable)',
+      mouseObs: mouseObs || 'Good',
+      generalState: status === 'in_use' ? 'Good' : 'Maintenance',
+      observations: generalObs || 'Good'
+    };
+
+    const notesSummary = [
+      `${os} ${cpu} ${storage} ${ram}`,
+      monitorModel ? `Écran ${monitorModel}${monitorSerial ? ` (SN: ${monitorSerial})` : ''}` : '',
+      generalObs && generalObs !== 'Good' ? generalObs : ''
+    ].filter(Boolean).join(' • ');
 
     const payload: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'> = {
       name,
       category: 'it' as const,
+      company: resolvedCompany,
       assetTag,
       status: assignedEmp ? 'in_use' : status,
       location,
-      notes,
+      notes: notesSummary,
+      os,
       brand: brand || 'Dell',
       model: model || 'OptiPlex Workstation',
       serialNumber: serialNumber || `SN-${Date.now().toString().slice(-6)}`,
@@ -100,6 +193,7 @@ export default function AssetModal() {
       cpu,
       ram,
       storage,
+      workstation: workstationObj,
       assignedPersonnelId: assignedEmp ? assignedEmp.id : undefined,
       assignedTo: assignedEmp ? assignedEmp.fullName : undefined,
       assignedDepartment: assignedEmp ? assignedEmp.department : undefined,
@@ -120,11 +214,11 @@ export default function AssetModal() {
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-      <div className="w-full max-w-xl bg-white border border-slate-200/90 shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto rounded-2xl">
+      <div className="w-full max-w-3xl lg:max-w-4xl bg-white border border-slate-200 shadow-2xl p-6 relative max-h-[92vh] overflow-y-auto rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
               <Plus className="w-4 h-4" />
             </div>
             <div>
@@ -132,7 +226,7 @@ export default function AssetModal() {
                 {editingAsset ? 'Modifier le Poste / Matériel IT' : 'Ajouter un Poste de Travail IT'}
               </h3>
               <p className="text-[11px] text-slate-500">
-                Stations Dell OptiPlex, configuration CPU/RAM/SSD et affectation collaborateur
+                Stations Dell OptiPlex, configuration CPU/RAM/SSD, Windows OS et périphériques associés
               </p>
             </div>
           </div>
@@ -144,115 +238,359 @@ export default function AssetModal() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-3.5 text-xs">
-          {/* Row 1: Name & Tag */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Désignation du Poste *</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="ex: Poste Desktop LEBHWP6KH2"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
-              />
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
+          {/* Section 1: Identification */}
+          <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Laptop className="w-3.5 h-3.5 text-slate-700" />
+              <span>Identification & Société</span>
             </div>
 
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Code Asset Tag *</label>
-              <input
-                type="text"
-                required
-                value={assetTag}
-                onChange={(e) => setAssetTag(e.target.value)}
-                placeholder="AST-PC-LEB01"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-red-700 font-mono font-bold focus:bg-white focus:outline-none"
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Désignation du Poste <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="ex: Poste Desktop Dell"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+              </div>
 
-          {/* Row 2: Brand, Model, Serial */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Marque</label>
-              <input
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                placeholder="Dell"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900"
-              />
-            </div>
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Code Asset Tag <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={assetTag}
+                  onChange={(e) => setAssetTag(e.target.value)}
+                  placeholder="AST-PC-LEB01"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono font-bold focus:outline-none focus:border-slate-400"
+                />
+              </div>
 
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Modèle</label>
-              <input
-                type="text"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                placeholder="OptiPlex Workstation"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900"
-              />
-            </div>
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Société Titulaire <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer"
+                >
+                  <option value="Lebrun S.A.">Lebrun S.A.</option>
+                  <option value="Autobiz">Autobiz</option>
+                  <option value="Caribe Motors">Caribe Motors</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">N° de Série (SN) *</label>
-              <input
-                type="text"
-                required
-                value={serialNumber}
-                onChange={(e) => setSerialNumber(e.target.value)}
-                placeholder="HWP6KH2"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold"
-              />
-            </div>
-          </div>
-
-          {/* Row 3: CPU, RAM, Storage */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Processeur (CPU)</label>
-              <input
-                type="text"
-                value={cpu}
-                onChange={(e) => setCpu(e.target.value)}
-                placeholder="Intel Core i5 @ 3.30 GHz"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Mémoire RAM</label>
-              <input
-                type="text"
-                value={ram}
-                onChange={(e) => setRam(e.target.value)}
-                placeholder="8 GB RAM / 16 GB RAM"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Stockage SSD</label>
-              <input
-                type="text"
-                value={storage}
-                onChange={(e) => setStorage(e.target.value)}
-                placeholder="500 GB SSD"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900"
-              />
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Emplacement / Site <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  list="location-list"
+                  required
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Choisir ou saisir site (Delmas 52, Pétion-Ville...)"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="location-list">
+                  <option value="Delmas 52" />
+                  <option value="Pétion-Ville" />
+                  <option value="Delmas 60" />
+                  <option value="Canapé-Vert" />
+                </datalist>
+              </div>
             </div>
           </div>
 
-          {/* Row 4: Assignment, Site & Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {/* Section 2: Machine & Windows OS */}
+          <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-slate-700" />
+              <span>Matériel, Processeur & Système d'Exploitation</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Marque</label>
+                <input
+                  type="text"
+                  list="brand-options"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="Choisir ou saisir (Dell, Apple...)"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="brand-options">
+                  <option value="Dell" />
+                  <option value="Apple" />
+                  <option value="HP" />
+                  <option value="Lenovo" />
+                  <option value="Asus" />
+                  <option value="Acer" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Modèle</label>
+                <input
+                  type="text"
+                  list="model-options"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  placeholder="Choisir ou saisir modèle"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="model-options">
+                  <option value="OptiPlex 3080" />
+                  <option value="OptiPlex 7070" />
+                  <option value="OptiPlex 5060" />
+                  <option value="Latitude 5420" />
+                  <option value="MacBook Pro 14" />
+                  <option value="MacBook Air M2" />
+                  <option value="Mac mini M2" />
+                  <option value="HP ProDesk 400" />
+                  <option value="ThinkCentre M70" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  N° Série (SN) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={serialNumber}
+                  onChange={(e) => setSerialNumber(e.target.value)}
+                  placeholder="ex: HWP6KH2"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono font-bold focus:outline-none focus:border-slate-400"
+                />
+              </div>
+
+              {/* Version / OS Selector (Label on one line, Windows + macOS + Linux + custom) */}
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Version / OS <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="os-options"
+                  value={os}
+                  onChange={(e) => setOs(e.target.value)}
+                  placeholder="Choisir ou saisir OS (Windows 11, macOS...)"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-bold focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="os-options">
+                  <option value="Windows 11 Pro" />
+                  <option value="Windows 10 Pro" />
+                  <option value="Windows 11 Home" />
+                  <option value="Windows 10 Home" />
+                  <option value="Windows 11 Enterprise" />
+                  <option value="Windows Server 2022" />
+                  <option value="macOS Sequoia" />
+                  <option value="macOS Sonoma" />
+                  <option value="macOS Ventura" />
+                  <option value="macOS Monterey" />
+                  <option value="Ubuntu Linux" />
+                </datalist>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Processeur (CPU)</label>
+                <input
+                  type="text"
+                  list="cpu-options"
+                  value={cpu}
+                  onChange={(e) => setCpu(e.target.value)}
+                  placeholder="Choisir ou saisir CPU"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="cpu-options">
+                  <option value="Intel Core i7 @ 3.60 GHz" />
+                  <option value="Intel Core i5 @ 3.30 GHz" />
+                  <option value="Intel Core i5 @ 2.40 GHz" />
+                  <option value="Intel Core i3 @ 3.10 GHz" />
+                  <option value="Intel Core i9" />
+                  <option value="Intel Xeon" />
+                  <option value="Apple M3 Max" />
+                  <option value="Apple M3" />
+                  <option value="Apple M2" />
+                  <option value="Apple M1" />
+                  <option value="AMD Ryzen 7" />
+                  <option value="AMD Ryzen 5" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Mémoire RAM</label>
+                <input
+                  type="text"
+                  list="ram-options"
+                  value={ram}
+                  onChange={(e) => setRam(e.target.value)}
+                  placeholder="Choisir ou saisir RAM"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="ram-options">
+                  <option value="4 GB RAM" />
+                  <option value="8 GB RAM" />
+                  <option value="16 GB RAM" />
+                  <option value="32 GB RAM" />
+                  <option value="64 GB RAM" />
+                  <option value="128 GB RAM" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Stockage SSD / Disque</label>
+                <input
+                  type="text"
+                  list="storage-options"
+                  value={storage}
+                  onChange={(e) => setStorage(e.target.value)}
+                  placeholder="Choisir ou saisir Stockage"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="storage-options">
+                  <option value="128 GB SSD" />
+                  <option value="256 GB SSD" />
+                  <option value="500 GB SSD" />
+                  <option value="512 GB SSD" />
+                  <option value="1 TB SSD" />
+                  <option value="2 TB SSD" />
+                  <option value="500 GB HDD" />
+                  <option value="1 TB HDD" />
+                </datalist>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Périphériques Associés (Écran, Souris, Clavier) */}
+          <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Monitor className="w-3.5 h-3.5 text-slate-700" />
+              <span>Écran & Moniteur Associé</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Modèle / Taille Écran</label>
+                <input
+                  type="text"
+                  list="monitor-options"
+                  value={monitorModel}
+                  onChange={(e) => setMonitorModel(e.target.value)}
+                  placeholder="Choisir ou saisir écran"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <datalist id="monitor-options">
+                  <option value='Dell 20"' />
+                  <option value='Dell 22"' />
+                  <option value='Dell 24"' />
+                  <option value='Dell 27"' />
+                  <option value='HP 24"' />
+                  <option value='Lenovo 24"' />
+                  <option value="Écran Intégré (Laptop)" />
+                  <option value="Sans écran" />
+                </datalist>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">N° de Série Écran (SN)</label>
+                <input
+                  type="text"
+                  value={monitorSerial}
+                  onChange={(e) => setMonitorSerial(e.target.value)}
+                  placeholder="CN-0HN22V-..."
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">État de l'Écran</label>
+                <select
+                  value={monitorObs}
+                  onChange={(e) => setMonitorObs(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                >
+                  <option value="Good">Good (Opérationnel)</option>
+                  <option value="Trace dans l'écran">Trace dans l'écran (Défaut léger)</option>
+                  <option value="Défectueux">Défectueux</option>
+                  <option value="Need">Need (Écran manquant)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 pt-2 border-t border-slate-200/80">
+              <Mouse className="w-3.5 h-3.5 text-slate-700" />
+              <span>Souris & Clavier</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Type de Souris</label>
+                <select
+                  value={mouseDetails}
+                  onChange={(e) => setMouseDetails(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                >
+                  <option value="Souris Bureau (Cable)">Souris Dell (Câble)</option>
+                  <option value="Bleutooth (Wirless)">Souris Sans-Fil (Bluetooth)</option>
+                  <option value="N/A">Pas de souris</option>
+                  <option value="Need">Need (Souris manquante)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Clavier Associé</label>
+                <input
+                  type="text"
+                  value={keyboardModel}
+                  onChange={(e) => setKeyboardModel(e.target.value)}
+                  placeholder="Clavier Dell câble"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">État des Périphériques</label>
+                <select
+                  value={mouseObs}
+                  onChange={(e) => setMouseObs(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                >
+                  <option value="Good">Good (Tout fonctionne)</option>
+                  <option value="Partiel">À remplacer prochainement</option>
+                  <option value="Need">Need (Périphériques manquants)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Affectation & Statut */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-end">
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">Collaborateur Assigné</label>
+              <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Collaborateur Assigné</label>
               <select
                 value={assignedPersonnelId}
                 onChange={(e) => setAssignedPersonnelId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium"
+                className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="">Non assigné (En réserve)</option>
                 {employees.map(emp => (
@@ -264,23 +602,26 @@ export default function AssetModal() {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">Site d&apos;affectation</label>
+              <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Site d'affectation</label>
               <select
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium"
+                className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
               >
+                <option value="">Sélectionner un site...</option>
                 <option value="Delmas 52">Delmas 52</option>
-                <option value="Aéroport Depot">Aéroport Depot</option>
+                <option value="Pétion-Ville">Pétion-Ville</option>
+                <option value="Delmas 60">Delmas 60</option>
+                <option value="Canapé-Vert">Canapé-Vert</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">Statut du Matériel</label>
+              <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Statut du Matériel</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium"
+                className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="in_use">En service</option>
                 <option value="available">En réserve</option>
@@ -289,14 +630,14 @@ export default function AssetModal() {
             </div>
           </div>
 
-          {/* Row 5: Notes & Screen */}
+          {/* Section 5: Observations & Remarques Générales */}
           <div>
-            <label className="block text-slate-700 font-semibold mb-1">Observations & Écran Associé</label>
-            <textarea
-              rows={2}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Windows 10 Pro • Écran Dell 22 pouces..."
+            <label className="block text-slate-700 font-semibold mb-1">Observations & Remarques Générales</label>
+            <input
+              type="text"
+              value={generalObs}
+              onChange={(e) => setGeneralObs(e.target.value)}
+              placeholder="ex: Windows lent, Double écran 27+22, Tout est opérationnel..."
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none"
             />
           </div>

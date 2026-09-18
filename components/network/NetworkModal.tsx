@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { NetworkAsset } from '@/types/inventory';
-import { X, Network, Wifi, Server, ShieldCheck, Tag, MapPin } from 'lucide-react';
+import { X, Network, Wifi, Server, ShieldCheck, Tag, MapPin, Building, Plus } from 'lucide-react';
 
 export default function NetworkModal() {
   const {
@@ -16,7 +16,7 @@ export default function NetworkModal() {
   } = useInventory();
 
   const [company, setCompany] = useState('Lebrun S.A.');
-  const [site, setSite] = useState('Delmas 52');
+  const [site, setSite] = useState('');
   const [deviceType, setDeviceType] = useState('Switch Gigabit rackable');
   const [brand, setBrand] = useState('TP-Link');
   const [model, setModel] = useState('');
@@ -31,7 +31,7 @@ export default function NetworkModal() {
   useEffect(() => {
     if (editingNetworkAsset) {
       setCompany(editingNetworkAsset.company || 'Lebrun S.A.');
-      setSite(editingNetworkAsset.site || 'Delmas 52');
+      setSite(editingNetworkAsset.site || '');
       setDeviceType(editingNetworkAsset.deviceType || 'Switch Gigabit rackable');
       setBrand(editingNetworkAsset.brand || 'TP-Link');
       setModel(editingNetworkAsset.model || '');
@@ -47,7 +47,7 @@ export default function NetworkModal() {
       const count = networkAssets.length + 1;
       setAssetTag(`NET-${code}-${count.toString().padStart(3, '0')}`);
       setCompany('Lebrun S.A.');
-      setSite('Delmas 52');
+      setSite('');
       setDeviceType('Switch Gigabit rackable');
       setBrand('TP-Link');
       setModel('');
@@ -58,7 +58,7 @@ export default function NetworkModal() {
       setStatus('En fonctionnement');
       setObservations('');
     }
-  }, [editingNetworkAsset, isNetworkModalOpen, networkAssets.length]);
+  }, [editingNetworkAsset, isNetworkModalOpen, networkAssets.length, company]);
 
   if (!isNetworkModalOpen) return null;
 
@@ -92,208 +92,247 @@ export default function NetworkModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+      <div className="w-full max-w-2xl bg-white border border-slate-200 shadow-2xl p-6 relative max-h-[92vh] overflow-y-auto rounded-2xl">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
               <Network className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-tight">
+              <h3 className="text-sm font-bold text-slate-900">
                 {editingNetworkAsset ? "Modifier l'Équipement Réseau" : "Nouvel Équipement Réseau"}
               </h3>
-              <p className="text-[11px] text-slate-400">
-                Infrastructure switches TP-Link, PoE et bornes Wi-Fi Lebrun S.A.
+              <p className="text-[11px] text-slate-500">
+                Infrastructure switches TP-Link, PoE, routeurs et bornes réseau Lebrun S.A.
               </p>
             </div>
           </div>
           <button
             onClick={closeNetworkModal}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {/* Tag / Code */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Tag / Code d'Inventaire</label>
-              <input
-                type="text"
-                value={assetTag}
-                onChange={(e) => setAssetTag(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono font-bold text-slate-900"
-                placeholder="NET-LEB-001"
-              />
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
+          {/* Section 1: Identification & Société */}
+          <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Building className="w-3.5 h-3.5 text-slate-700" />
+              <span>Identification & Société</span>
             </div>
 
-            {/* Type d'équipement */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Type d'Équipement</label>
-              <select
-                value={deviceType}
-                onChange={(e) => setDeviceType(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-800 cursor-pointer"
-              >
-                <option value="Switch Gigabit rackable">Switch Gigabit rackable</option>
-                <option value="Switch Ethernet">Switch Ethernet</option>
-                <option value="Point d'accès / équipement Wi‑Fi">Point d'accès / équipement Wi‑Fi</option>
-                <option value="Routeur / Passerelle Réseau">Routeur / Passerelle Réseau</option>
-                <option value="Injecteur / Splitter PoE">Injecteur / Splitter PoE</option>
-              </select>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Code Asset Tag <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={assetTag}
+                  onChange={(e) => setAssetTag(e.target.value)}
+                  required
+                  placeholder="NET-LEB-001"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono font-bold focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
 
-            {/* Entreprise */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Entreprise</label>
-              <select
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-800 cursor-pointer"
-              >
-                <option value="Lebrun S.A.">Lebrun S.A.</option>
-                <option value="Autobiz">Autobiz</option>
-                <option value="Caribe Motors">Caribe Motors</option>
-                <option value="Leader Foods">Leader Foods</option>
-                <option value="Tirezone">Tirezone</option>
-              </select>
-            </div>
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Société Titulaire <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                >
+                  <option value="Lebrun S.A.">Lebrun S.A.</option>
+                  <option value="Autobiz">Autobiz</option>
+                  <option value="Caribe Motors">Caribe Motors</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                </select>
+              </div>
 
-            {/* Site */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Site / Emplacement</label>
-              <select
-                value={site}
-                onChange={(e) => setSite(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-800 cursor-pointer"
-              >
-                <option value="Delmas 52">Delmas 52</option>
-                <option value="Aéroport Depot">Aéroport Depot</option>
-                <option value="Tabarre">Tabarre</option>
-              </select>
-            </div>
-
-            {/* Marque */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Marque</label>
-              <input
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600"
-                placeholder="TP-Link, Cisco..."
-              />
-            </div>
-
-            {/* Modèle */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Modèle</label>
-              <input
-                type="text"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-semibold text-slate-900"
-                placeholder="TL-SG1218MP..."
-              />
-            </div>
-
-            {/* Hostname */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Nom d'hôte / Hostname</label>
-              <input
-                type="text"
-                value={hostname}
-                onChange={(e) => setHostname(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono"
-                placeholder="Switch-Rack-18P"
-              />
-            </div>
-
-            {/* N° de Série */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Numéro de Série (S/N)</label>
-              <input
-                type="text"
-                value={serialNumber}
-                onChange={(e) => setSerialNumber(e.target.value)}
-                required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono select-all"
-                placeholder="TL-SG1218MP-SN01"
-              />
-            </div>
-
-            {/* Adresse IP */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Adresse IP</label>
-              <input
-                type="text"
-                value={ipAddress}
-                onChange={(e) => setIpAddress(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono"
-                placeholder="192.168.1.250"
-              />
-            </div>
-
-            {/* Adresse MAC */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">Adresse MAC</label>
-              <input
-                type="text"
-                value={macAddress}
-                onChange={(e) => setMacAddress(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono uppercase"
-                placeholder="00:31:92:AB:CD:EF"
-              />
-            </div>
-
-            {/* Statut */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-700 mb-1">État / Statut</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-800 cursor-pointer"
-              >
-                <option value="En fonctionnement">En fonctionnement</option>
-                <option value="En réserve">En réserve</option>
-                <option value="En maintenance">En maintenance</option>
-                <option value="Défectueux">Défectueux</option>
-              </select>
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Emplacement / Site <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={site}
+                  required
+                  onChange={(e) => setSite(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                >
+                  <option value="">Sélectionner un site...</option>
+                  <option value="Delmas 52">Delmas 52</option>
+                  <option value="Pétion-Ville">Pétion-Ville</option>
+                  <option value="Delmas 60">Delmas 60</option>
+                  <option value="Canapé-Vert">Canapé-Vert</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Observations */}
+          {/* Section 2: Matériel & Configuration Réseau */}
+          <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Server className="w-3.5 h-3.5 text-slate-700" />
+              <span>Matériel & Configuration Réseau</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Type d'Équipement <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={deviceType}
+                  onChange={(e) => setDeviceType(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                >
+                  <option value="Switch Gigabit rackable">Switch Gigabit rackable</option>
+                  <option value="Routeur d'entreprise">Routeur d'entreprise</option>
+                  <option value="Point d'Accès Wi-Fi (AP)">Point d'Accès Wi-Fi (AP)</option>
+                  <option value="Injecteur PoE">Injecteur PoE</option>
+                  <option value="Pare-feu / Firewall">Pare-feu / Firewall</option>
+                  <option value="Baie de brassage">Baie de brassage</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Marque <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  required
+                  placeholder="TP-Link, Cisco, Ubiquiti..."
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Modèle <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  required
+                  placeholder="ex: TL-SG1218MP..."
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Nom d'hôte / Hostname
+                </label>
+                <input
+                  type="text"
+                  value={hostname}
+                  onChange={(e) => setHostname(e.target.value)}
+                  placeholder="Switch-Rack-18P"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  N° de Série (S/N) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={serialNumber}
+                  onChange={(e) => setSerialNumber(e.target.value)}
+                  required
+                  placeholder="ex: TL-SG1218MP-SN01"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono select-all focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Adresse IP
+                </label>
+                <input
+                  type="text"
+                  value={ipAddress}
+                  onChange={(e) => setIpAddress(e.target.value)}
+                  placeholder="ex: 192.168.1.250"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  Adresse MAC
+                </label>
+                <input
+                  type="text"
+                  value={macAddress}
+                  onChange={(e) => setMacAddress(e.target.value)}
+                  placeholder="00:31:92:AB:CD:EF"
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono uppercase focus:outline-none focus:border-slate-400 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+                  État / Statut
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                >
+                  <option value="En fonctionnement">En fonctionnement (Actif)</option>
+                  <option value="En réserve">En réserve (Disponible)</option>
+                  <option value="En maintenance">En maintenance</option>
+                  <option value="Défectueux">Défectueux</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Observations */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-700 mb-1">Spécifications & Observations</label>
-            <textarea
-              rows={2}
+            <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
+              Spécifications & Observations
+            </label>
+            <input
+              type="text"
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 resize-none text-slate-800"
-              placeholder="Ex: 18 ports Gigabit, dont 16 ports PoE+, version 5.6..."
+              placeholder="ex: 18 ports Gigabit, dont 16 ports PoE+, version 5.6..."
+              className="w-full h-10 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400 text-xs"
             />
           </div>
 
           {/* Footer actions */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
               onClick={closeNetworkModal}
-              className="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors cursor-pointer text-xs"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer text-xs"
             >
               {editingNetworkAsset ? "Enregistrer les modifications" : "Ajouter au Parc Réseau"}
             </button>

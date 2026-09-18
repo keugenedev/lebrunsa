@@ -1,4 +1,4 @@
-import { ITAsset, TelecomPlan, StarlinkKit, ElectronicComponent, StockMovement, AlertItem, Employee, PrinterAsset, NetworkAsset, UPSAsset, ApplicationAccount } from '@/types/inventory';
+import { ITAsset, WifiNetwork, TelecomPlan, StarlinkKit, ElectronicComponent, StockMovement, AlertItem, Employee, PrinterAsset, NetworkAsset, UPSAsset, ApplicationAccount } from '@/types/inventory';
 
 export const INITIAL_PRINTERS: PrinterAsset[] = [
   {
@@ -1265,7 +1265,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 10 Pro Intel Core I5 @ 3.30 GHz 500 Gb SSD 8 Gb Ram • Écran Dell 22\" (SN: CN-0HN22V-FCC00-22SA48B-A16)"
+    "notes": "Windows 10 Pro Intel Core I5 @ 3.30 GHz 500 Gb SSD 8 Gb Ram • Écran Dell 22\" (SN: CN-0HN22V-FCC00-22SA48B-A16)",
+    "os": "Windows 10 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEBHWP6KH2",
+      "pcSerial": "HWP6KH2",
+      "pcSpecs": "Windows 10 Pro Intel Core I5 @ 3.30 GHz 500 Gb SSD 8 Gb Ram",
+      "monitorModel": "Dell 22\"",
+      "monitorSerial": "CN-0HN22V-FCC00-22SA48B-A16",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell cable",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-aut-2",
@@ -1291,7 +1309,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I3 @3.70 GHz 500 Gb SSD 16 Gb Ram • Écran Dell 23\" (SN: CN-0X5V51-TV200-08P-0J5I-A06)"
+    "notes": "Windows 11 Pro Intel Core I3 @3.70 GHz 500 Gb SSD 16 Gb Ram • Écran Dell 23\" (SN: CN-0X5V51-TV200-08P-0J5I-A06)",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "AUTDR4G9N2",
+      "pcSerial": "DR4G9N2",
+      "pcSpecs": "Windows 11 Pro Intel Core I3 @3.70 GHz 500 Gb SSD 16 Gb Ram",
+      "monitorModel": "Dell 23\"",
+      "monitorSerial": "CN-0X5V51-TV200-08P-0J5I-A06",
+      "monitorObs": "Trace dans l'ecran (deffecteux)",
+      "keyboard": "Clavier Dell Wirless",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-aut-3",
@@ -1317,7 +1353,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I3 @3.70GHz 500 Gb SSD 8 Gb Ram • Écran Dell 24\" (SN: IN-0464TR-B8TFC-58E-0D0X-A01)"
+    "notes": "Windows 11 Pro Intel Core I3 @3.70GHz 500 Gb SSD 8 Gb Ram • Écran Dell 24\" (SN: IN-0464TR-B8TFC-58E-0D0X-A01)",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "AUTJKZKDH2",
+      "pcSerial": "JKZKDH2",
+      "pcSpecs": "Windows 11 Pro Intel Core I3 @3.70GHz 500 Gb SSD 8 Gb Ram",
+      "monitorModel": "Dell 24\"",
+      "monitorSerial": "IN-0464TR-B8TFC-58E-0D0X-A01",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell cable",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-4",
@@ -1343,7 +1397,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I3 @3.60 GHz 500 Gb SSD 8 Gb Ram • Écran Dell 22\" (SN: CN-0F1XP0-FCC00-32A-AUB4B-A08)"
+    "notes": "Windows 11 Pro Intel Core I3 @3.60 GHz 500 Gb SSD 8 Gb Ram • Écran Dell 22\" (SN: CN-0F1XP0-FCC00-32A-AUB4B-A08)",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEB36LF4Z2",
+      "pcSerial": "36LF4Z2",
+      "pcSpecs": "Windows 11 Pro Intel Core I3 @3.60 GHz 500 Gb SSD 8 Gb Ram",
+      "monitorModel": "Dell 22\"",
+      "monitorSerial": "CN-0F1XP0-FCC00-32A-AUB4B-A08",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Logitech",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Logitech",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-5",
@@ -1369,7 +1441,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Window 10 Pro Intel Core I3 @3.30 GHz 500 Gb SSD 12 Gb Ram • Écran Dell 27\" (SN: CN-0W45GN-TV200-210-11JV-A01)"
+    "notes": "Window 10 Pro Intel Core I3 @3.30 GHz 500 Gb SSD 12 Gb Ram • Écran Dell 27\" (SN: CN-0W45GN-TV200-210-11JV-A01)",
+    "os": "Windows 10 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "GMMSRW1",
+      "pcSerial": "LEBGMMSRW1",
+      "pcSpecs": "Window 10 Pro Intel Core I3 @3.30 GHz 500 Gb SSD 12 Gb Ram",
+      "monitorModel": "Dell 27\"",
+      "monitorSerial": "CN-0W45GN-TV200-210-11JV-A01",
+      "monitorObs": "Trace dans l'ecran (deffecteux)",
+      "keyboard": "Clavier Logitech",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Logitech",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-6",
@@ -1395,7 +1485,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I5 @3.20 GHz 500 Gb SSD 8 Gb Ram • Écran Dell 24\" (SN: IN-0464TR-B8TFC-592-1T4X-A01)"
+    "notes": "Windows 11 Pro Intel Core I5 @3.20 GHz 500 Gb SSD 8 Gb Ram • Écran Dell 24\" (SN: IN-0464TR-B8TFC-592-1T4X-A01)",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEB31PY0T2",
+      "pcSerial": "31PY0T2",
+      "pcSpecs": "Windows 11 Pro Intel Core I5 @3.20 GHz 500 Gb SSD 8 Gb Ram",
+      "monitorModel": "Dell 24\"",
+      "monitorSerial": "IN-0464TR-B8TFC-592-1T4X-A01",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell Wirless",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-7",
@@ -1421,7 +1529,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 10 Pro Intel Core I5 @3.20GHz 500 Gb SSD 8 Gb Ram • Écran Hp 27\" (SN: 3CM9380NB3)"
+    "notes": "Windows 10 Pro Intel Core I5 @3.20GHz 500 Gb SSD 8 Gb Ram • Écran Hp 27\" (SN: 3CM9380NB3)",
+    "os": "Windows 10 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEB1FC7XK2",
+      "pcSerial": "FC7XK2",
+      "pcSpecs": "Windows 10 Pro Intel Core I5 @3.20GHz 500 Gb SSD 8 Gb Ram",
+      "monitorModel": "Hp 27\"",
+      "monitorSerial": "3CM9380NB3",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell Cable",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-8",
@@ -1447,7 +1573,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 10 Pro Intel Core I3 @3.70GHz 112 Gb SSD 8 Gb Ram • Écran Dell 24\" (SN: VN-0WRR7P-WS700-55L-AKNW-A01)"
+    "notes": "Windows 10 Pro Intel Core I3 @3.70GHz 112 Gb SSD 8 Gb Ram • Écran Dell 24\" (SN: VN-0WRR7P-WS700-55L-AKNW-A01)",
+    "os": "Windows 10 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEBHQW4HH2",
+      "pcSerial": "HQW4HH2",
+      "pcSpecs": "Windows 10 Pro Intel Core I3 @3.70GHz 112 Gb SSD 8 Gb Ram",
+      "monitorModel": "Dell 24\"",
+      "monitorSerial": "VN-0WRR7P-WS700-55L-AKNW-A01",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Logitech Wirless",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Logitech",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-9",
@@ -1473,7 +1617,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I5 @2.80GHz 500 Gb SSD 24 Gb Ram • Écran Dell 24\" (SN: CN-0RYFW1-BOZOO-618-07RE-A00)"
+    "notes": "Windows 11 Pro Intel Core I5 @2.80GHz 500 Gb SSD 24 Gb Ram • Écran Dell 24\" (SN: CN-0RYFW1-BOZOO-618-07RE-A00)",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEBJ33DH63",
+      "pcSerial": "J33DH63",
+      "pcSpecs": "Windows 11 Pro Intel Core I5 @2.80GHz 500 Gb SSD 24 Gb Ram",
+      "monitorModel": "Dell 24\"",
+      "monitorSerial": "CN-0RYFW1-BOZOO-618-07RE-A00",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell cable",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-aut-10",
@@ -1499,7 +1661,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I3 500 Gb SSD 8 Gb Ram • Écran Dell 21.5\" (SN: CN-0XFB3-FCC00-13A-CICL-A09) • Windows lent"
+    "notes": "Windows 11 Pro Intel Core I3 500 Gb SSD 8 Gb Ram • Écran Dell 21.5\" (SN: CN-0XFB3-FCC00-13A-CICL-A09) • Windows lent",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "AUT59PYQD2",
+      "pcSerial": "59PYQD2",
+      "pcSpecs": "Windows 11 Pro Intel Core I3 500 Gb SSD 8 Gb Ram",
+      "monitorModel": "Dell 21.5\"",
+      "monitorSerial": "CN-0XFB3-FCC00-13A-CICL-A09",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Logitech Wirless",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Logitech",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Windows lent"
+    }
   },
   {
     "id": "it-aut-11",
@@ -1525,7 +1705,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Home Intel Core I7 , 1700Mhz 1 TB SSD 16 Gb Ram Laptop (Dell inspiron 15) • Écran Dell 27\" (monitor) (SN: CN-01YCHF-WSL00-315-701B-A02)"
+    "notes": "Windows 11 Home Intel Core I7 , 1700Mhz 1 TB SSD 16 Gb Ram Laptop (Dell inspiron 15) • Écran Dell 27\" (monitor) (SN: CN-01YCHF-WSL00-315-701B-A02)",
+    "os": "Windows 11 Home",
+    "workstation": {
+      "type": "Laptop",
+      "pcName": "AUTFXMQTW3",
+      "pcSerial": "FXMQTW3",
+      "pcSpecs": "Windows 11 Home Intel Core I7 , 1700Mhz 1 TB SSD 16 Gb Ram Laptop (Dell inspiron 15)",
+      "monitorModel": "Dell 27\" (monitor)",
+      "monitorSerial": "CN-01YCHF-WSL00-315-701B-A02",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Logitech Wirless",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Logitech",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-12",
@@ -1551,7 +1749,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Home Intel Core I3 , 1200Mhz 250 Gb SSD 8 Gb Ram • Écran Need (SN: N/A)"
+    "notes": "Windows 11 Home Intel Core I3 , 1200Mhz 250 Gb SSD 8 Gb Ram • Écran Need (SN: N/A)",
+    "os": "Windows 11 Home",
+    "workstation": {
+      "type": "Laptop",
+      "pcName": "LEB1H85350LG1",
+      "pcSerial": "1H85350LG1",
+      "pcSpecs": "Windows 11 Home Intel Core I3 , 1200Mhz 250 Gb SSD 8 Gb Ram",
+      "monitorModel": "Need",
+      "monitorSerial": "N/A",
+      "monitorObs": "N/A",
+      "keyboard": "Need",
+      "keyboardDetails": "N/A",
+      "keyboardObs": "N/A",
+      "mouse": "Need",
+      "mouseDetails": "N/A",
+      "mouseObs": "N/A",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-13",
@@ -1577,7 +1793,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 10 Pro Intel Core I7 , 1TB 16 Gb Ram • Écran Dell 24\" (SN: CN-054RRN-FCC00-24J-A7TX-A02)"
+    "notes": "Windows 10 Pro Intel Core I7 , 1TB 16 Gb Ram • Écran Dell 24\" (SN: CN-054RRN-FCC00-24J-A7TX-A02)",
+    "os": "Windows 10 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEB99RSMN2",
+      "pcSerial": "99RSMN2",
+      "pcSpecs": "Windows 10 Pro Intel Core I7 , 1TB 16 Gb Ram",
+      "monitorModel": "Dell 24\"",
+      "monitorSerial": "CN-054RRN-FCC00-24J-A7TX-A02",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell cable",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-14",
@@ -1603,7 +1837,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Home Intel Core I5 16 Gb Ram 500 SSD (Victus gaming HP) • Écran Dell 27\" + Dell 22\" (SN: TH-0CTCNG-TVH00-5AF-25LV-A00 / CN-0HN22V-72872-668-CD4B-A00)"
+    "notes": "Windows 11 Home Intel Core I5 16 Gb Ram 500 SSD (Victus gaming HP) • Écran Dell 27\" + Dell 22\" (SN: TH-0CTCNG-TVH00-5AF-25LV-A00 / CN-0HN22V-72872-668-CD4B-A00)",
+    "os": "Windows 11 Home",
+    "workstation": {
+      "type": "Laptop",
+      "pcName": "LEB1H8531195N",
+      "pcSerial": "1H8531195N",
+      "pcSpecs": "Windows 11 Home Intel Core I5 16 Gb Ram 500 SSD (Victus gaming HP)",
+      "monitorModel": "Dell 27\" + Dell 22\"",
+      "monitorSerial": "TH-0CTCNG-TVH00-5AF-25LV-A00 / CN-0HN22V-72872-668-CD4B-A00",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Intégré & Sans-fil",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Logitech",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-leb-15",
@@ -1629,7 +1881,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 11 Pro Intel Core I7 @3.00 GHz 1TB SSD 32 Gb Ram • Écran Dell 27\" (SN: 3CM92505QF)"
+    "notes": "Windows 11 Pro Intel Core I7 @3.00 GHz 1TB SSD 32 Gb Ram • Écran Dell 27\" (SN: 3CM92505QF)",
+    "os": "Windows 11 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "LEBJKLHZ23",
+      "pcSerial": "JKLHZ23",
+      "pcSpecs": "Windows 11 Pro Intel Core I7 @3.00 GHz 1TB SSD 32 Gb Ram",
+      "monitorModel": "Dell 27\"",
+      "monitorSerial": "3CM92505QF",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell Wirless",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Bleutooth (Wirless)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   },
   {
     "id": "it-aut-16",
@@ -1655,7 +1925,25 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "location": "Delmas 52",
     "createdAt": "2024-01-15T09:00:00Z",
     "updatedAt": "2026-09-17T12:00:00Z",
-    "notes": "Windows 10 Pro Intel Core I7 @3.40Ghz  1TB SSD 16 Gb ram • Écran Dell 27\" (SN: CN-0W45GN-TV200-1A2-OQNV-A00)"
+    "notes": "Windows 10 Pro Intel Core I7 @3.40Ghz  1TB SSD 16 Gb ram • Écran Dell 27\" (SN: CN-0W45GN-TV200-1A2-OQNV-A00)",
+    "os": "Windows 10 Pro",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "AUT3LTJMD2",
+      "pcSerial": "3LTJMD2",
+      "pcSpecs": "Windows 10 Pro Intel Core I7 @3.40Ghz  1TB SSD 16 Gb ram",
+      "monitorModel": "Dell 27\"",
+      "monitorSerial": "CN-0W45GN-TV200-1A2-OQNV-A00",
+      "monitorObs": "Good",
+      "keyboard": "Clavier Dell cable",
+      "keyboardDetails": "Clavier Alpha numerique",
+      "keyboardObs": "Good",
+      "mouse": "Dell",
+      "mouseDetails": "Souris Bureau (Cable)",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Good"
+    }
   }
 ];
 
@@ -1668,3 +1956,41 @@ export const INITIAL_ELECTRONICS: ElectronicComponent[] = [];
 export const INITIAL_MOVEMENTS: StockMovement[] = [];
 
 export const INITIAL_ALERTS: AlertItem[] = [];
+
+
+export const INITIAL_WIFI_NETWORKS: WifiNetwork[] = [
+  {
+    id: "wifi-delmas52-tirezone",
+    establishment: "Delmas 52",
+    company: "Tirezone",
+    ssid: "Tirezone",
+    password: "",
+    providerType: "Fibre Dédiée",
+    frequencyBand: "Dual-Band (2.4 / 5 GHz)",
+    security: "WPA2-Personal",
+    locationDetail: "Delmas 52 - Espace Service & Ateliers Tirezone",
+    isGuestNetwork: false,
+    notes: "Réseau Wi-Fi officiel Tirezone Delmas 52"
+  },
+  {
+    id: "wifi-delmas52-autobiz",
+    establishment: "Delmas 52",
+    company: "Autobiz",
+    ssid: "Autobiz Starlink",
+    password: "",
+    providerType: "Starlink",
+    starlinkDetails: {
+      dishSerial: "Starlink Delmas 52",
+      terminalId: "0100000000000000-D52",
+      speedEstimated: "240 Mbps",
+      latency: "24 ms",
+      servicePlan: "Priority / Business"
+    },
+    frequencyBand: "Dual-Band (2.4 / 5 GHz)",
+    security: "WPA2/WPA3",
+    locationDetail: "Delmas 52 - Showroom Commercial & Bureaux Autobiz",
+    isGuestNetwork: false,
+    notes: "Connexion Satellite Starlink Haute Performance Autobiz Delmas 52"
+  }
+];
+

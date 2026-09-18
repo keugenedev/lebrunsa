@@ -19,10 +19,12 @@ import {
   Eye
 } from 'lucide-react';
 import NetworkDetailsModal from './NetworkDetailsModal';
+import WifiPosterView from './WifiPosterView';
 
 export default function NetworkView() {
-  const { networkAssets, openNetworkModal, deleteNetworkAsset } = useInventory();
+  const { networkAssets, openNetworkModal, deleteNetworkAsset, wifiNetworks } = useInventory();
 
+  const [activeSubTab, setActiveSubTab] = useState<'infrastructure' | 'wifi'>('infrastructure');
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<NetworkAsset | null>(null);
@@ -202,13 +204,15 @@ export default function NetworkView() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => openNetworkModal()}
-            className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Ajouter Équipement</span>
-          </button>
+          {activeSubTab === 'infrastructure' && (
+            <button
+              onClick={() => openNetworkModal()}
+              className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Ajouter Équipement</span>
+            </button>
+          )}
           <button
             onClick={handleExportCSV}
             className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
@@ -220,7 +224,38 @@ export default function NetworkView() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* Sub-tab Switcher: Infrastructure vs Affiches Wi-Fi */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setActiveSubTab('infrastructure')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-2 ${
+            activeSubTab === 'infrastructure'
+              ? 'bg-slate-900 text-white shadow-2xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+          }`}
+        >
+          <Network className="w-3.5 h-3.5" />
+          <span>Infrastructure Réseau & Switches ({stats.total})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('wifi')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-2 ${
+            activeSubTab === 'wifi'
+              ? 'bg-slate-900 text-white shadow-2xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+          }`}
+        >
+          <Wifi className="w-3.5 h-3.5" />
+          <span>Affiches & Fiches Wi-Fi par Établissement ({wifiNetworks.length})</span>
+        </button>
+      </div>
+
+      {activeSubTab === 'wifi' ? (
+        <WifiPosterView />
+      ) : (
+        <>
+          {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="text-xs font-medium text-slate-600">Total Équipements</div>
@@ -278,6 +313,8 @@ export default function NetworkView() {
           </div>
         }
       />
+        </>
+      )}
 
       {/* Modal de consultation des détails complets remplis */}
       {selectedAssetForDetails && (

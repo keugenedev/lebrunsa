@@ -54,6 +54,7 @@ export interface ITAsset extends BaseAsset {
   purchaseCost: number;
   workstation?: WorkstationDetails;
   company?: string;
+  os?: string; // 'Windows 11 Pro' | 'Windows 10 Pro' | 'Windows 11 Home'
 }
 
 export interface PrinterAsset {
@@ -180,9 +181,11 @@ export interface WorkstationDetails {
   keyboardObs: string; // Good
   mouse: string; // Dell
   mouseDetails: string; // Souris Bureau (Cable), Bleutooth (Wirless)
-  mouseObs: string; // Good
-  generalState: string; // Good
-  observations: string; // Good
+  mouseObs?: string; // Good
+  generalState?: string; // Good
+  observations?: string; // Good
+  obs?: string;
+  notes?: string;
 }
 
 export interface UserAccountDetails {
@@ -240,3 +243,33 @@ export interface AlertItem {
   timestamp: string;
   read: boolean;
 }
+
+export interface WifiNetwork {
+  id: string;
+  establishment: string; // 'Delmas 52' | 'Aéroport Depot' | 'Autobiz' | 'Leader Foods' | 'Caribe Motors' | 'Tirezone'
+  company: string;
+  ssid: string;
+  password: string;
+  providerType: 'Starlink' | 'Fibre Dédiée' | 'Fibre Backup' | '4G/LTE';
+  starlinkDetails?: {
+    dishSerial?: string;
+    terminalId?: string;
+    speedEstimated?: string;
+    latency?: string;
+    servicePlan?: string;
+  };
+  frequencyBand: 'Dual-Band (2.4 / 5 GHz)' | '5 GHz Haute Vitesse' | '2.4 GHz Longue Portée';
+  security: 'WPA2-Personal' | 'WPA3-Personal' | 'WPA2/WPA3';
+  locationDetail: string;
+  isGuestNetwork?: boolean;
+  notes?: string;
+}
+
+export interface ToastMessage {
+  id: string;
+  title: string;
+  message: string;
+  type?: 'success' | 'info' | 'warning' | 'error';
+  timestamp?: number;
+}
+

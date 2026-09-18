@@ -42,7 +42,7 @@ export default function Sidebar() {
     { id: 'network', label: 'Réseau', count: networkAssets?.length || 5, icon: Network },
     { id: 'ups', label: 'Onduleurs UPS', count: upsAssets?.length || 7, icon: Zap },
     { id: 'applications', label: 'Applications', count: applicationAccounts?.length || 13, icon: KeyRound },
-    { id: 'personnel', label: 'Personnel & Badges', count: employees.length, icon: Users },
+    { id: 'personnel', label: 'Personnel', count: employees.length, icon: Users },
     { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
     { id: 'settings', label: 'Configuration', icon: Settings }
   ];

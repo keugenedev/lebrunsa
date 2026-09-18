@@ -6,11 +6,14 @@ import { ITAsset } from '@/types/inventory';
 import DataTable, { Column } from '@/components/common/DataTable';
 import CompanyLogo from '@/components/common/CompanyLogo';
 import WorkstationDetailsModal from './WorkstationDetailsModal';
+import OSLogo from '@/components/common/OSLogo';
 import { 
   Laptop, 
   Server, 
   Wifi, 
   Monitor, 
+  Mouse,
+  Keyboard, 
   Plus, 
   Download, 
   Barcode, 
@@ -41,6 +44,7 @@ export default function ITEquipmentView() {
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [osFilter, setOsFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const getSubCategoryIcon = (sub: string) => {
@@ -57,7 +61,7 @@ export default function ITEquipmentView() {
       case 'in_use':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             En service
           </span>
         );
@@ -71,13 +75,14 @@ export default function ITEquipmentView() {
       case 'maintenance':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
             Maintenance
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
             Déclassé
           </span>
         );
@@ -113,6 +118,10 @@ export default function ITEquipmentView() {
       
       if (siteFilter !== 'all' && a.location !== siteFilter) return false;
       if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+      if (osFilter !== 'all') {
+        const assetOS = a.os || (a.notes?.includes('10') ? 'Windows 10 Pro' : a.notes?.includes('Home') ? 'Windows 11 Home' : 'Windows 11 Pro');
+        if (!assetOS.toLowerCase().includes(osFilter.toLowerCase())) return false;
+      }
       
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -124,12 +133,13 @@ export default function ITEquipmentView() {
           a.assetTag.toLowerCase().includes(q) ||
           (a.assignedTo && a.assignedTo.toLowerCase().includes(q)) ||
           (a.cpu && a.cpu.toLowerCase().includes(q)) ||
+          (a.os && a.os.toLowerCase().includes(q)) ||
           (a.location && a.location.toLowerCase().includes(q));
         if (!match) return false;
       }
       return true;
     });
-  }, [itAssets, companyFilter, siteFilter, statusFilter, searchQuery]);
+  }, [itAssets, companyFilter, siteFilter, statusFilter, osFilter, searchQuery]);
 
   const columns: Column<ITAsset>[] = [
     {
@@ -164,17 +174,13 @@ export default function ITEquipmentView() {
     },
     {
       key: 'company',
-      label: 'Entreprise & Site',
+      label: 'Entreprise',
       sortable: true,
       render: (asset) => {
         const companyName = asset.company || (asset.assetTag.includes('LEB') ? 'Lebrun S.A.' : 'Autobiz');
         return (
           <div className="flex items-center gap-2 whitespace-nowrap">
-            <CompanyLogo company={companyName} className="h-4 max-w-[75px] w-auto object-contain" />
-            <span className="text-[11px] text-slate-500 flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-              <span>{asset.location}</span>
-            </span>
+            <CompanyLogo company={companyName} className="h-5 max-w-[85px] w-auto object-contain" />
           </div>
         );
       }
@@ -191,45 +197,106 @@ export default function ITEquipmentView() {
     },
     {
       key: 'specs',
-      label: 'Configuration Matérielle',
-      render: (asset) => (
-        <div className="text-xs text-slate-600 space-y-0.5">
-          {asset.cpu && (
-            <div className="flex items-center gap-1.5 truncate max-w-[220px]" title={asset.cpu}>
-              <Cpu className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="font-medium text-slate-800 text-[11px]">{asset.cpu}</span>
+      label: 'Configuration & OS',
+      render: (asset) => {
+        const assetOS = asset.os || (asset.notes?.includes('10') ? 'Windows 10 Pro' : asset.notes?.includes('Home') ? 'Windows 11 Home' : 'Windows 11 Pro');
+        return (
+          <div className="text-xs text-slate-600 space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs whitespace-nowrap">
+              <OSLogo os={assetOS} className="w-4 h-4 text-slate-800 shrink-0" />
+              <span>{assetOS}</span>
             </div>
-          )}
-          {asset.ram && (
-            <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
-              <HardDrive className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>{asset.ram} • {asset.storage || '500 GB SSD'}</span>
-            </div>
-          )}
-        </div>
-      )
+            {asset.cpu && (
+              <div className="flex items-center gap-1.5 truncate max-w-[220px]" title={asset.cpu}>
+                <Cpu className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="font-medium text-slate-800 text-[11px]">{asset.cpu}</span>
+              </div>
+            )}
+            {asset.ram && (
+              <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                <HardDrive className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>{asset.ram} • {asset.storage || '500 GB SSD'}</span>
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'assignedTo',
       label: 'Collaborateur Assigné',
       sortable: true,
-      render: (asset) => (
-        <div>
-          {asset.assignedTo ? (
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
-                {asset.assignedTo[0]}
+      render: (asset) => {
+        const liveEmp = employees.find(e => 
+          (asset.assignedPersonnelId && (e.id === asset.assignedPersonnelId || e.employeeId === asset.assignedPersonnelId)) ||
+          (asset.assignedTo && e.fullName.toLowerCase() === asset.assignedTo.toLowerCase())
+        );
+        const displayName = liveEmp ? liveEmp.fullName : asset.assignedTo;
+        const displayDept = liveEmp ? liveEmp.department : asset.assignedDepartment;
+
+        return (
+          <div>
+            {displayName ? (
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
+                  {displayName[0]}
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-900 text-xs">{displayName}</div>
+                  {displayDept && (
+                    <div className="text-[11px] text-slate-500">{displayDept}</div>
+                  )}
+                </div>
               </div>
-              <div>
-                <div className="font-semibold text-slate-900 text-xs">{asset.assignedTo}</div>
-                <div className="text-[11px] text-slate-500">{asset.assignedDepartment || asset.location}</div>
+            ) : (
+              <span className="text-slate-400 italic text-xs">Non assigné (En réserve)</span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'peripherals',
+      label: 'Écran & Périphériques',
+      render: (asset) => {
+        const ws = asset.workstation;
+        const monitor = ws?.monitorModel || (asset.notes?.includes('Écran') ? asset.notes.split('•').find(s => s.includes('Écran'))?.replace(/Écran/i, '').trim() : null);
+        const mouse = ws?.mouseDetails || ws?.mouse || 'Dell';
+        const keyboard = ws?.keyboard || 'Dell';
+        const obs = ws?.observations || (asset.notes?.includes('Windows lent') ? 'Windows lent' : null);
+
+        const hasMouse = mouse && mouse !== 'N/A' && !mouse.toLowerCase().includes('need') && !mouse.toLowerCase().includes('none');
+        const hasKeyboard = keyboard && keyboard !== 'N/A' && !keyboard.toLowerCase().includes('need') && !keyboard.toLowerCase().includes('none');
+
+        return (
+          <div className="text-xs space-y-1 max-w-[240px]">
+            {monitor && monitor !== 'Sans écran' && (
+              <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs truncate" title={ws?.monitorSerial ? `S/N: ${ws.monitorSerial}` : monitor}>
+                <Monitor className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                <span className="truncate">{monitor}</span>
               </div>
+            )}
+            <div className="flex items-center gap-2.5 pt-0.5 text-slate-600">
+              {hasMouse && (
+                <span title={`Souris: ${mouse}`} className="inline-flex">
+                  <Mouse className="w-4 h-4 text-slate-600 shrink-0" />
+                </span>
+              )}
+              {hasKeyboard && (
+                <span title={`Clavier: ${keyboard}`} className="inline-flex">
+                  <Keyboard className="w-4 h-4 text-slate-600 shrink-0" />
+                </span>
+              )}
             </div>
-          ) : (
-            <span className="text-slate-400 italic text-xs">Non assigné (En réserve)</span>
-          )}
-        </div>
-      )
+            {obs && obs !== 'Good' && (
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-200 truncate max-w-full" title={obs}>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                <span className="truncate">{obs}</span>
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'status',
@@ -399,7 +466,9 @@ export default function ITEquipmentView() {
               >
                 <option value="all">Tous les sites</option>
                 <option value="Delmas 52">Delmas 52</option>
-                <option value="Aéroport Depot">Aéroport Depot</option>
+                <option value="Pétion-Ville">Pétion-Ville</option>
+                <option value="Delmas 60">Delmas 60</option>
+                <option value="Canapé-Vert">Canapé-Vert</option>
               </select>
 
               {/* Statut */}
@@ -412,6 +481,20 @@ export default function ITEquipmentView() {
                 <option value="in_use">En service</option>
                 <option value="available">En réserve</option>
                 <option value="maintenance">En maintenance</option>
+              </select>
+
+              {/* Système d'exploitation (OS) */}
+              <select
+                value={osFilter}
+                onChange={(e) => setOsFilter(e.target.value)}
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+              >
+                <option value="all">Tous les OS (Windows & Mac)</option>
+                <option value="Windows 11 Pro">Windows 11 Pro</option>
+                <option value="Windows 10 Pro">Windows 10 Pro</option>
+                <option value="Windows 11 Home">Windows 11 Home</option>
+                <option value="macOS">macOS (Apple)</option>
+                <option value="Linux">Linux</option>
               </select>
             </div>
           </div>

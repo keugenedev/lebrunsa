@@ -34,8 +34,8 @@ interface DataTableProps<T> {
 }
 
 export default function DataTable<T extends { id: string }>({
-  items,
-  columns,
+  items = [],
+  columns = [],
   title,
   badge,
   subtitle,
@@ -81,16 +81,17 @@ export default function DataTable<T extends { id: string }>({
 
   // Filtered & Sorted items
   const processedItems = useMemo(() => {
-    let result = [...items];
+    let result = Array.isArray(items) ? [...items] : [];
 
     // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(item => {
+        if (!item) return false;
         if (searchFields && searchFields.length > 0) {
           return searchFields.some(field => {
             const val = (item as any)[field];
-            return val !== undefined && String(val).toLowerCase().includes(q);
+            return val !== undefined && val !== null && String(val).toLowerCase().includes(q);
           });
         }
         return Object.values(item).some(val => 
@@ -102,7 +103,7 @@ export default function DataTable<T extends { id: string }>({
     // Dropdown filters
     Object.entries(activeFilters).forEach(([key, filterVal]) => {
       if (filterVal && filterVal !== 'all') {
-        result = result.filter(item => String((item as any)[key]) === filterVal);
+        result = result.filter(item => item && String((item as any)[key]) === filterVal);
       }
     });
 
@@ -130,11 +131,11 @@ export default function DataTable<T extends { id: string }>({
   }, [items, search, searchFields, activeFilters, sortKey, sortOrder]);
 
   // Pagination calculation
-  const totalItems = processedItems.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
-  const paginatedItems = processedItems.slice(startIndex, endIndex);
+  const totalItems = (processedItems || []).length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / (rowsPerPage || 10)));
+  const startIndex = (currentPage - 1) * (rowsPerPage || 10);
+  const endIndex = Math.min(startIndex + (rowsPerPage || 10), totalItems);
+  const paginatedItems = (processedItems || []).slice(startIndex, endIndex);
 
   return (
     <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs">

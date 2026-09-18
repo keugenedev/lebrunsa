@@ -225,7 +225,7 @@ export default function OverviewView() {
             <span>Répartition par Entreprise</span>
           </h2>
           <span className="text-xs text-slate-500">
-            Delmas 52 & Aéroport Depot
+            Delmas 52 • Pétion-Ville • Delmas 60 • Canapé-Vert
           </span>
         </div>
 

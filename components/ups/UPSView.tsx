@@ -135,8 +135,8 @@ export default function UPSView() {
       width: '120px',
       align: 'center',
       render: (item) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.status?.toLowerCase().includes('actif') || item.status?.toLowerCase().includes('en service') || item.status?.toLowerCase().includes('opér') ? 'bg-emerald-500' : item.status?.toLowerCase().includes('panne') || item.status?.toLowerCase().includes('maint') ? 'bg-red-500' : 'bg-slate-400'}`}></span>
           {item.status}
         </span>
       )

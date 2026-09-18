@@ -15,6 +15,9 @@ import {
   Laptop, 
   Smartphone, 
   Satellite, 
+  Monitor,
+  Keyboard,
+  Mouse,
   Edit2, 
   Trash2, 
   Eye, 
@@ -30,7 +33,6 @@ export default function PersonnelView() {
     openEmployeeModal, 
     deleteEmployee, 
     getEmployeeAssignedAssets, 
-    formatCurrency, 
     exportCSV 
   } = useInventory();
 
@@ -90,7 +92,7 @@ export default function PersonnelView() {
         if (emp.status === 'active') {
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
               Actif
             </span>
           );
@@ -104,6 +106,7 @@ export default function PersonnelView() {
         }
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
             Inactif
           </span>
         );
@@ -296,10 +299,60 @@ export default function PersonnelView() {
               </div>
             </div>
 
+            {/* Workstation & Peripherals Details */}
+            {selectedEmployee.workstation && (
+              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="flex flex-wrap items-center justify-between pb-2 border-b border-slate-200 gap-2 mb-3">
+                  <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Laptop className="w-4 h-4 text-slate-700" />
+                    <span>Poste de Travail & Accessoires</span>
+                  </span>
+                  {selectedEmployee.workstation.pcSpecs && (
+                    <span className="text-[11px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      {selectedEmployee.workstation.pcSpecs}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {/* Clavier */}
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="text-[10px] text-slate-400 font-medium uppercase">Clavier</div>
+                    <div className="font-semibold text-slate-900 mt-0.5">{selectedEmployee.workstation.keyboard || 'Clavier Dell'}</div>
+                    <div className="text-[11px] text-slate-500">{selectedEmployee.workstation.keyboardDetails || 'Câble USB'}</div>
+                    {selectedEmployee.workstation.keyboardObs && (
+                      <span className="inline-block mt-1 text-[10px] text-slate-700 font-medium bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                        État: {selectedEmployee.workstation.keyboardObs}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Souris */}
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                    <div className="text-[10px] text-slate-400 font-medium uppercase">Souris</div>
+                    <div className="font-semibold text-slate-900 mt-0.5">{selectedEmployee.workstation.mouse || 'Dell'}</div>
+                    <div className="text-[11px] text-slate-500">{selectedEmployee.workstation.mouseDetails || 'Câble USB'}</div>
+                    {selectedEmployee.workstation.mouseObs && (
+                      <span className="inline-block mt-1 text-[10px] text-slate-700 font-medium bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                        État: {selectedEmployee.workstation.mouseObs}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {(selectedEmployee.workstation.observations || selectedEmployee.workstation.obs || selectedEmployee.workstation.notes) && (
+                  <div className="mt-2.5 p-2 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-700">
+                    <span className="font-bold text-slate-900">Observations Poste : </span>
+                    {selectedEmployee.workstation.observations || selectedEmployee.workstation.obs || selectedEmployee.workstation.notes}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Assigned Assets Section */}
             {(() => {
               const assets = getEmployeeAssignedAssets(selectedEmployee.id);
-              const totalVal = assets.totalValue;
+              const totalCount = assets.it.length + assets.plans.length + assets.starlink.length;
 
               return (
                 <div className="mt-6 space-y-4">
@@ -313,8 +366,9 @@ export default function PersonnelView() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block font-medium">Valeur des Équipements</span>
-                      <span className="text-sm font-bold text-slate-900">{formatCurrency(totalVal)}</span>
+                      <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700">
+                        {totalCount} équipement(s)
+                      </span>
                     </div>
                   </div>
 
@@ -339,8 +393,10 @@ export default function PersonnelView() {
                             </div>
                           </div>
                           <div className="text-right text-xs">
-                            <div className="font-bold text-slate-900">{formatCurrency(item.purchaseCost)}</div>
-                            <span className="text-[10px] text-slate-600 font-medium">En service</span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white text-slate-700 border border-slate-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                              En service
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -360,8 +416,9 @@ export default function PersonnelView() {
                             </div>
                           </div>
                           <div className="text-right text-xs">
-                            <div className="font-bold text-slate-800">{formatCurrency(plan.monthlyCost)}/mois</div>
-                            <span className="text-[10px] text-slate-500">{plan.dataUsedGb} Go consommés</span>
+                            <span className="text-[11px] font-medium text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                              {plan.dataUsedGb} Go consommés
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -381,8 +438,10 @@ export default function PersonnelView() {
                             </div>
                           </div>
                           <div className="text-right text-xs">
-                            <div className="font-bold text-slate-800">{kit.tier}</div>
-                            <span className="text-[10px] text-slate-600 font-medium">Terminal actif</span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white text-slate-700 border border-slate-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                              {kit.tier}
+                            </span>
                           </div>
                         </div>
                       ))}

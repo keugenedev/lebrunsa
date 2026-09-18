@@ -16,7 +16,8 @@ import {
   Wrench,
   User,
   Building,
-  Calendar
+  Calendar,
+  X
 } from 'lucide-react';
 
 export default function MovementsView() {
@@ -220,113 +221,153 @@ export default function MovementsView() {
 
       {/* New Movement Modal */}
       {isNewMoveModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-          <div className="lebron-card w-full max-w-md p-6 bg-white border border-slate-200 shadow-2xl relative">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <ArrowLeftRight className="w-4 h-4 text-slate-700" />
-              <span>Enregistrer un Mouvement</span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Affectation nominative à un salarié ou retour en stock central Lebrun S.A.
-            </p>
-
-            <form onSubmit={handleSaveMovement} className="mt-4 space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Équipement concerné *</label>
-                <select
-                  required
-                  value={selectedAssetId}
-                  onChange={(e) => setSelectedAssetId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
-                >
-                  <option value="">Sélectionnez un équipement...</option>
-                  <optgroup label="Équipements IT">
-                    {itAssets.map(a => (
-                      <option key={a.id} value={a.id}>
-                        {a.name} ({a.assetTag}) - Statut: {a.status}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Flotte Starlink">
-                    {starlinkKits.map(k => (
-                      <option key={k.id} value={k.id}>
-                        {k.name} ({k.kitNumber})
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Type d&apos;opération *</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'check_out', label: 'Prêt / Sortie' },
-                    { id: 'check_in', label: 'Retour Stock' },
-                    { id: 'maintenance_start', label: 'Maintenance' }
-                  ].map(t => (
-                    <button
-                      type="button"
-                      key={t.id}
-                      onClick={() => setActionType(t.id as any)}
-                      className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                        actionType === t.id
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs font-semibold'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg bg-white border border-slate-200 shadow-2xl rounded-2xl relative max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+                  <ArrowLeftRight className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Enregistrer un Mouvement</h3>
+                  <p className="text-[11px] text-slate-500">
+                    Affectation nominative à un salarié ou retour en stock central Lebrun S.A.
+                  </p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsNewMoveModalOpen(false)}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-              {actionType === 'check_out' && (
+            <form onSubmit={handleSaveMovement} className="p-4 overflow-y-auto space-y-4 text-xs flex-1">
+              {/* Section 1: Opération & Matériel */}
+              <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+                <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <ArrowLeftRight className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Opération & Matériel</span>
+                </div>
+
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Salarié Bénéficiaire *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
+                    Équipement concerné <span className="text-red-500">*</span>
+                  </label>
                   <select
                     required
-                    value={selectedEmployeeId}
-                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
+                    value={selectedAssetId}
+                    onChange={(e) => setSelectedAssetId(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
                   >
-                    <option value="">Sélectionnez un collaborateur...</option>
-                    {employees.map(e => (
-                      <option key={e.id} value={e.id}>
-                        {e.fullName} ({e.employeeId}) • {e.department}
-                      </option>
-                    ))}
+                    <option value="">Sélectionnez un équipement...</option>
+                    <optgroup label="Équipements IT">
+                      {itAssets.map(a => (
+                        <option key={a.id} value={a.id}>
+                          {a.name} ({a.assetTag}) - Statut: {a.status}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Flotte Starlink">
+                      {starlinkKits.map(k => (
+                        <option key={k.id} value={k.id}>
+                          {k.name} ({k.kitNumber})
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Motif / Commentaires</label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="ex: Affectation pour mission sur site..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:outline-none"
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
+                    Type d&apos;opération <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'check_out', label: 'Prêt / Sortie' },
+                      { id: 'check_in', label: 'Retour Stock' },
+                      { id: 'maintenance_start', label: 'Maintenance' }
+                    ].map(t => (
+                      <button
+                        type="button"
+                        key={t.id}
+                        onClick={() => setActionType(t.id as any)}
+                        className={`h-10 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                          actionType === t.id
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-2xs font-semibold'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {actionType === 'check_out' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
+                      Salarié Bénéficiaire <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={selectedEmployeeId}
+                      onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                      className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">Sélectionnez un collaborateur...</option>
+                      {employees.map(e => (
+                        <option key={e.id} value={e.id}>
+                          {e.fullName} ({e.employeeId}) • {e.department}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsNewMoveModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium shadow-xs"
-                >
-                  Valider le mouvement
-                </button>
+              {/* Section 2: Motif & Remarques */}
+              <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+                <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Motif & Commentaires</span>
+                </div>
+
+                <div>
+                  <textarea
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="ex: Affectation pour mission sur site..."
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-slate-400 resize-none"
+                  />
+                </div>
               </div>
             </form>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-2.5 p-4 border-t border-slate-200 bg-slate-50/50 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsNewMoveModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  const form = (e.currentTarget.closest('.bg-white') as HTMLElement)?.querySelector('form');
+                  if (form) form.requestSubmit();
+                }}
+                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+              >
+                Valider le mouvement
+              </button>
+            </div>
           </div>
         </div>
       )}

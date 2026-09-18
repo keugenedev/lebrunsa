@@ -22,6 +22,7 @@ import NetworkModal from '@/components/network/NetworkModal';
 import UPSModal from '@/components/ups/UPSModal';
 import ApplicationModal from '@/components/applications/ApplicationModal';
 import QuickSearchModal from '@/components/common/QuickSearchModal';
+import ToastNotification from '@/components/common/ToastNotification';
 import LoginPage from '@/components/auth/LoginPage';
 
 function MainContent() {
@@ -40,7 +41,7 @@ function MainContent() {
   if (!mounted) {
     return (
       <div className="min-h-screen w-screen bg-[#f8fafc] flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -102,6 +103,7 @@ function MainContent() {
       <UPSModal />
       <ApplicationModal />
       <QuickSearchModal />
+      <ToastNotification />
     </div>
   );
 }

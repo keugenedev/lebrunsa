@@ -15,9 +15,11 @@ import {
   ApplicationAccount,
   AssetCategory,
   AnyAsset,
-  NavigationTab
+  NavigationTab,
+  WifiNetwork,
+  ToastMessage
 } from '@/types/inventory';
-export type { NavigationTab };
+export type { NavigationTab, WifiNetwork, ToastMessage };
 import { 
   INITIAL_PRINTERS, 
   INITIAL_IT_ASSETS, 
@@ -29,7 +31,8 @@ import {
   INITIAL_ALERTS, 
   INITIAL_NETWORK_ASSETS, 
   INITIAL_UPS_ASSETS, 
-  INITIAL_APPLICATIONS 
+  INITIAL_APPLICATIONS,
+  INITIAL_WIFI_NETWORKS
 } from '@/data/initialData';
 import { supabase } from '@/lib/supabase';
 
@@ -82,6 +85,22 @@ interface InventoryContextType {
 
   isSpotlightOpen: boolean;
   setIsSpotlightOpen: (open: boolean) => void;
+
+  // Wi-Fi Posters & Networks
+  wifiNetworks: WifiNetwork[];
+  addWifiNetwork: (net: Omit<WifiNetwork, 'id'>) => void;
+  updateWifiNetwork: (id: string, updates: Partial<WifiNetwork>) => void;
+  deleteWifiNetwork: (id: string) => void;
+  isWifiPosterModalOpen: boolean;
+  openWifiPosterModal: (establishment?: string) => void;
+  closeWifiPosterModal: () => void;
+  selectedWifiEstablishment: string;
+  setSelectedWifiEstablishment: (est: string) => void;
+
+  // Toast Notifications
+  toasts: ToastMessage[];
+  showToast: (toast: Omit<ToastMessage, 'id'>) => void;
+  dismissToast: (id: string) => void;
 
   // Actions IT
   addITAsset: (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -335,17 +354,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length >= INITIAL_IT_ASSETS.length) {
             return parsed.map((item: any) => {
-              if (!item.company) {
-                const initMatch = INITIAL_IT_ASSETS.find(i => i.id === item.id || i.assetTag === item.assetTag);
-                if (initMatch?.company) {
-                  return { ...item, company: initMatch.company };
-                }
-                if (item.assetTag?.includes('AUT') || item.id?.includes('aut') || item.assignedEmail?.includes('autobiz')) {
-                  return { ...item, company: 'Autobiz' };
-                }
-                return { ...item, company: 'Lebrun S.A.' };
-              }
-              return item;
+              const initMatch = INITIAL_IT_ASSETS.find(i => i.id === item.id || i.assetTag === item.assetTag);
+              const company = item.company || initMatch?.company || (item.assetTag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
+              const os = item.os || initMatch?.os || (item.notes?.includes('10') ? 'Windows 10 Pro' : 'Windows 11 Pro');
+              const workstation = item.workstation || initMatch?.workstation;
+              return {
+                ...item,
+                company,
+                os,
+                workstation
+              };
             });
           }
         } catch (e) { console.error(e); }
@@ -449,12 +467,120 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return INITIAL_PRINTERS;
   });
 
+  // Wi-Fi Networks state (Real Delmas 52 networks: Tirezone & Autobiz Starlink)
+  const [wifiNetworks, setWifiNetworks] = useState<WifiNetwork[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_wifi');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const hasOldMock = parsed.some((p: any) => p.id === 'wifi-1' || p.id === 'wifi-3');
+          if (Array.isArray(parsed) && parsed.length > 0 && !hasOldMock) {
+            // Auto migrate any Delmas 53 to Delmas 52
+            const migrated = parsed.map((p: any) => {
+              if (p.establishment === 'Delmas 53' || (p.id && p.id.includes('delmas53')) || (p.establishment && p.establishment.includes('53'))) {
+                return {
+                  ...p,
+                  id: p.id ? p.id.replace(/delmas53/g, 'delmas52') : p.id,
+                  establishment: 'Delmas 52',
+                  locationDetail: p.locationDetail ? p.locationDetail.replace(/Delmas 53/g, 'Delmas 52') : p.locationDetail,
+                  notes: p.notes ? p.notes.replace(/Delmas 53/g, 'Delmas 52') : p.notes,
+                  starlinkDetails: p.starlinkDetails ? {
+                    ...p.starlinkDetails,
+                    dishSerial: p.starlinkDetails.dishSerial ? p.starlinkDetails.dishSerial.replace(/Delmas 53/g, 'Delmas 52') : p.starlinkDetails.dishSerial,
+                    terminalId: p.starlinkDetails.terminalId ? p.starlinkDetails.terminalId.replace(/D53/g, 'D52') : p.starlinkDetails.terminalId,
+                  } : p.starlinkDetails
+                };
+              }
+              return p;
+            });
+            localStorage.setItem('lebron_inv_wifi', JSON.stringify(migrated));
+            return migrated;
+          } else {
+            localStorage.setItem('lebron_inv_wifi', JSON.stringify(INITIAL_WIFI_NETWORKS));
+          }
+        } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_WIFI_NETWORKS;
+  });
+
+  // Toast Notifications state
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Wi-Fi Poster Modal state
+  const [isWifiPosterModalOpen, setIsWifiPosterModalOpen] = useState(false);
+  const [selectedWifiEstablishment, setSelectedWifiEstablishment] = useState('all');
+
+  const openWifiPosterModal = (establishment: string = 'all') => {
+    setSelectedWifiEstablishment(establishment);
+    setIsWifiPosterModalOpen(true);
+  };
+
+  const closeWifiPosterModal = () => {
+    setIsWifiPosterModalOpen(false);
+  };
+
+  const showToast = (toast: Omit<ToastMessage, 'id'>) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const newToast: ToastMessage = {
+      ...toast,
+      id,
+      timestamp: Date.now()
+    };
+    setToasts(prev => [newToast, ...prev]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4500);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const addWifiNetwork = (net: Omit<WifiNetwork, 'id'>) => {
+    const newNet: WifiNetwork = {
+      ...net,
+      id: `wifi-${Date.now()}`
+    };
+    setWifiNetworks(prev => [newNet, ...prev]);
+    showToast({
+      title: 'Réseau Wi-Fi Ajouté',
+      message: `Le réseau ${newNet.ssid} pour ${newNet.establishment} a été créé.`,
+      type: 'success'
+    });
+  };
+
+  const updateWifiNetwork = (id: string, updates: Partial<WifiNetwork>) => {
+    setWifiNetworks(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+    showToast({
+      title: 'Réseau Wi-Fi Mis à Jour',
+      message: 'La configuration Wi-Fi a été enregistrée avec succès.',
+      type: 'info'
+    });
+  };
+
+  const deleteWifiNetwork = (id: string) => {
+    setWifiNetworks(prev => prev.filter(item => item.id !== id));
+    showToast({
+      title: 'Réseau Wi-Fi Supprimé',
+      message: "Le réseau a été retiré de l'affiche.",
+      type: 'warning'
+    });
+  };
+
   // Save to localStorage on change
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('lebron_inv_printers', JSON.stringify(printers));
     }
   }, [printers]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_wifi', JSON.stringify(wifiNetworks));
+    }
+  }, [wifiNetworks]);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('lebron_inv_employees', JSON.stringify(employees));
@@ -673,7 +799,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // Global keybinding for Spotlight Ctrl+K / Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if (e && (e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsSpotlightOpen(prev => !prev);
       }
@@ -735,6 +861,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     };
     setEmployees(prev => [newEmp, ...prev]);
 
+    showToast({
+      title: 'Collaborateur Enregistré',
+      message: `${newEmp.fullName} (${newEmp.company}) a été ajouté.`,
+      type: 'success'
+    });
+
     try {
       await supabase.from('users').insert({
         username: emp.accounts?.appUsername || emp.employeeId.toLowerCase().replace(/[^a-z0-9]/g, ''),
@@ -750,7 +882,54 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+    const targetEmp = employees.find(e => e.id === id);
+    const oldFullName = targetEmp?.fullName;
+    const oldEmployeeId = targetEmp?.employeeId;
+
     setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+
+    // Connect and synchronize in real-time with Poste IT (itAssets), plans, and Starlink
+    if (updates.fullName || updates.department !== undefined || updates.site !== undefined || updates.company !== undefined) {
+      setItAssets(prev => prev.map(asset => {
+        const isAssigned = (asset.assignedPersonnelId && (asset.assignedPersonnelId === id || asset.assignedPersonnelId === oldEmployeeId)) ||
+                           (oldFullName && asset.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        if (isAssigned) {
+          return {
+            ...asset,
+            assignedTo: updates.fullName !== undefined ? updates.fullName : asset.assignedTo,
+            assignedDepartment: updates.department !== undefined ? updates.department : asset.assignedDepartment,
+            location: updates.site || updates.location || asset.location || '',
+            company: updates.company !== undefined ? updates.company : asset.company,
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return asset;
+      }));
+
+      setPlans(prev => prev.map(plan => {
+        const isAssigned = (plan.assignedPersonnelId && (plan.assignedPersonnelId === id || plan.assignedPersonnelId === oldEmployeeId)) ||
+                           (oldFullName && plan.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        if (isAssigned) {
+          return {
+            ...plan,
+            assignedTo: updates.fullName !== undefined ? updates.fullName : plan.assignedTo
+          };
+        }
+        return plan;
+      }));
+
+      setStarlinkKits(prev => prev.map(kit => {
+        const isAssigned = (kit.assignedPersonnelId && (kit.assignedPersonnelId === id || kit.assignedPersonnelId === oldEmployeeId)) ||
+                           (oldFullName && kit.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        if (isAssigned) {
+          return {
+            ...kit,
+            assignedTo: updates.fullName !== undefined ? updates.fullName : kit.assignedTo
+          };
+        }
+        return kit;
+      }));
+    }
 
     try {
       const payload: Record<string, any> = {};
@@ -769,7 +948,44 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const deleteEmployee = async (id: string) => {
     const target = employees.find(e => e.id === id);
+    const oldFullName = target?.fullName;
+    const oldEmployeeId = target?.employeeId;
+
     setEmployees(prev => prev.filter(e => e.id !== id));
+
+    // Automatically unassign Poste IT assets when employee is removed
+    setItAssets(prev => prev.map(asset => {
+      const isAssigned = (asset.assignedPersonnelId && (asset.assignedPersonnelId === id || asset.assignedPersonnelId === oldEmployeeId)) ||
+                         (oldFullName && asset.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+      if (isAssigned) {
+        return {
+          ...asset,
+          assignedTo: undefined,
+          assignedPersonnelId: undefined,
+          status: 'available',
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return asset;
+    }));
+
+    setPlans(prev => prev.map(plan => {
+      const isAssigned = (plan.assignedPersonnelId && (plan.assignedPersonnelId === id || plan.assignedPersonnelId === oldEmployeeId)) ||
+                         (oldFullName && plan.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+      if (isAssigned) {
+        return { ...plan, assignedTo: undefined, assignedPersonnelId: undefined };
+      }
+      return plan;
+    }));
+
+    setStarlinkKits(prev => prev.map(kit => {
+      const isAssigned = (kit.assignedPersonnelId && (kit.assignedPersonnelId === id || kit.assignedPersonnelId === oldEmployeeId)) ||
+                         (oldFullName && kit.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+      if (isAssigned) {
+        return { ...kit, assignedTo: undefined, assignedPersonnelId: undefined };
+      }
+      return kit;
+    }));
 
     try {
       if (target?.email) {
@@ -803,6 +1019,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       updatedAt: now
     };
     setItAssets(prev => [newAsset, ...prev]);
+
+    showToast({
+      title: 'Poste de Travail IT Ajouté',
+      message: `${newAsset.name} (${newAsset.assetTag}) a été enregistré avec succès.`,
+      type: 'success'
+    });
 
     // Record movement
     recordMovement({
@@ -840,6 +1062,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const updateITAsset = async (id: string, updates: Partial<ITAsset>) => {
     setItAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+
+    showToast({
+      title: 'Poste IT Mis à Jour',
+      message: 'Les informations du poste ont été enregistrées.',
+      type: 'info'
+    });
 
     try {
       const payload: Record<string, any> = {};
@@ -888,6 +1116,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       updatedAt: now
     };
     setNetworkAssets(prev => [newNet, ...prev]);
+
+    showToast({
+      title: 'Équipement Réseau Ajouté',
+      message: `${newNet.deviceType} (${newNet.assetTag}) a été enregistré.`,
+      type: 'success'
+    });
 
     try {
       await supabase.from('network_equipment').insert({
@@ -956,6 +1190,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       updatedAt: now
     };
     setUpsAssets(prev => [newUPS, ...prev]);
+
+    showToast({
+      title: 'Onduleur UPS Ajouté',
+      message: `${newUPS.name} (${newUPS.assetTag}) a été enregistré.`,
+      type: 'success'
+    });
 
     try {
       await supabase.from('ups').insert({
@@ -1075,6 +1315,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       updatedAt: now
     };
     setPrinters(prev => [newPrinter, ...prev]);
+
+    showToast({
+      title: 'Imprimante Ajoutée',
+      message: `${newPrinter.name} (${newPrinter.assetTag}) a été enregistrée.`,
+      type: 'success'
+    });
 
     try {
       await supabase.from('printers').insert({
@@ -1421,6 +1667,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         dismissAlert,
         exportCSV,
         resetToDefaultData,
+        wifiNetworks,
+        addWifiNetwork,
+        updateWifiNetwork,
+        deleteWifiNetwork,
+        isWifiPosterModalOpen,
+        openWifiPosterModal,
+        closeWifiPosterModal,
+        selectedWifiEstablishment,
+        setSelectedWifiEstablishment,
+        toasts,
+        showToast,
+        dismissToast,
         stats
       }}
     >
