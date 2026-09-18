@@ -46,10 +46,26 @@ export default function OverviewView() {
     { name: 'Tirezone', site: 'Delmas 52', tag: 'TRZ', logo: '/logos/tirezone.png' }
   ];
 
+  const matchCompany = (comp: string | undefined, target: string, tag?: string, email?: string) => {
+    const t = target.toLowerCase();
+    const c = (comp || '').toLowerCase();
+    const tg = (tag || '').toUpperCase();
+    const em = (email || '').toLowerCase();
+    if (t.includes('autobiz')) return c.includes('auto') || tg.includes('AUT') || em.includes('autobiz');
+    if (t.includes('lebrun')) return c.includes('lebrun') || tg.includes('LEB') || em.includes('lebrun');
+    if (t.includes('caribe')) return c.includes('caribe') || tg.includes('CAR') || em.includes('caribe');
+    if (t.includes('leader')) return c.includes('leader') || tg.includes('LFD') || em.includes('leader');
+    if (t.includes('tirezone')) return c.includes('tire') || tg.includes('TRZ') || em.includes('tirezone');
+    return c.includes(t);
+  };
+
   const companyStats = companies.map(c => {
-    const cPrinters = printers.filter(p => p.company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && p.company?.toLowerCase().includes('lebrun')));
-    const cIT = itAssets.filter(i => (i as any).company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && (i.assetTag?.includes('LEB') || i.assignedDepartment?.toLowerCase().includes('lebrun'))));
-    const cEmp = employees.filter(e => e.company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && e.company?.toLowerCase().includes('lebrun')));
+    const cPrinters = printers.filter(p => matchCompany(p.company, c.name));
+    const cIT = itAssets.filter(i => {
+      const emp = employees.find(e => e.id === i.assignedPersonnelId || e.fullName === i.assignedTo);
+      return matchCompany(i.company || emp?.company, c.name, i.assetTag, i.assignedEmail);
+    });
+    const cEmp = employees.filter(e => matchCompany(e.company, c.name));
     return {
       ...c,
       printerCount: cPrinters.length,

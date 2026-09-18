@@ -1244,6 +1244,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-1",
     "assetTag": "AST-PC-LEB01",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEBHWP6KH2",
     "category": "it",
     "subCategory": "desktop",
@@ -1269,6 +1270,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-aut-2",
     "assetTag": "AST-PC-AUT02",
+    "company": "Autobiz",
     "name": "Poste Desktop AUTDR4G9N2",
     "category": "it",
     "subCategory": "desktop",
@@ -1294,6 +1296,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-aut-3",
     "assetTag": "AST-PC-AUT03",
+    "company": "Autobiz",
     "name": "Poste Desktop AUTJKZKDH2",
     "category": "it",
     "subCategory": "desktop",
@@ -1319,6 +1322,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-4",
     "assetTag": "AST-PC-LEB04",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEB36LF4Z2",
     "category": "it",
     "subCategory": "desktop",
@@ -1344,6 +1348,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-5",
     "assetTag": "AST-PC-LEB05",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop GMMSRW1",
     "category": "it",
     "subCategory": "desktop",
@@ -1369,6 +1374,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-6",
     "assetTag": "AST-PC-LEB06",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEB31PY0T2",
     "category": "it",
     "subCategory": "desktop",
@@ -1394,6 +1400,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-7",
     "assetTag": "AST-PC-LEB07",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEB1FC7XK2",
     "category": "it",
     "subCategory": "desktop",
@@ -1419,6 +1426,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-8",
     "assetTag": "AST-PC-LEB08",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEBHQW4HH2",
     "category": "it",
     "subCategory": "desktop",
@@ -1444,6 +1452,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-9",
     "assetTag": "AST-PC-LEB09",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEBJ33DH63",
     "category": "it",
     "subCategory": "desktop",
@@ -1469,6 +1478,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-aut-10",
     "assetTag": "AST-PC-AUT10",
+    "company": "Autobiz",
     "name": "Poste Desktop AUT59PYQD2",
     "category": "it",
     "subCategory": "desktop",
@@ -1494,6 +1504,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-aut-11",
     "assetTag": "AST-PC-AUT11",
+    "company": "Autobiz",
     "name": "Poste Laptop AUTFXMQTW3",
     "category": "it",
     "subCategory": "laptop",
@@ -1519,6 +1530,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-12",
     "assetTag": "AST-PC-LEB12",
+    "company": "Lebrun S.A.",
     "name": "Poste Laptop LEB1H85350LG1",
     "category": "it",
     "subCategory": "laptop",
@@ -1544,6 +1556,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-13",
     "assetTag": "AST-PC-LEB13",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEB99RSMN2",
     "category": "it",
     "subCategory": "desktop",
@@ -1569,6 +1582,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-14",
     "assetTag": "AST-PC-LEB14",
+    "company": "Lebrun S.A.",
     "name": "Poste Laptop LEB1H8531195N",
     "category": "it",
     "subCategory": "laptop",
@@ -1594,6 +1608,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-leb-15",
     "assetTag": "AST-PC-LEB15",
+    "company": "Lebrun S.A.",
     "name": "Poste Desktop LEBJKLHZ23",
     "category": "it",
     "subCategory": "desktop",
@@ -1619,6 +1634,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
   {
     "id": "it-aut-16",
     "assetTag": "AST-PC-AUT16",
+    "company": "Autobiz",
     "name": "Poste Desktop AUT3LTJMD2",
     "category": "it",
     "subCategory": "desktop",

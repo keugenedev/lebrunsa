@@ -216,10 +216,26 @@ export default function OverviewCharts() {
   ], []);
 
   const companyData = useMemo(() => {
+    const matchCompany = (comp: string | undefined, target: string, tag?: string, email?: string) => {
+      const t = target.toLowerCase();
+      const c = (comp || '').toLowerCase();
+      const tg = (tag || '').toUpperCase();
+      const em = (email || '').toLowerCase();
+      if (t.includes('autobiz')) return c.includes('auto') || tg.includes('AUT') || em.includes('autobiz');
+      if (t.includes('lebrun')) return c.includes('lebrun') || tg.includes('LEB') || em.includes('lebrun');
+      if (t.includes('caribe')) return c.includes('caribe') || tg.includes('CAR') || em.includes('caribe');
+      if (t.includes('leader')) return c.includes('leader') || tg.includes('LFD') || em.includes('leader');
+      if (t.includes('tirezone')) return c.includes('tire') || tg.includes('TRZ') || em.includes('tirezone');
+      return c.includes(t);
+    };
+
     return companies.map(c => {
-      const cPrinters = printers.filter(p => p.company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && p.company?.toLowerCase().includes('lebrun'))).length;
-      const cIT = itAssets.filter(i => (i as any).company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && (i.assetTag?.includes('LEB') || i.assignedDepartment?.toLowerCase().includes('lebrun')))).length;
-      const cEmp = employees.filter(e => e.company?.toLowerCase().includes(c.name.toLowerCase()) || (c.name === 'Lebrun S.A.' && e.company?.toLowerCase().includes('lebrun'))).length;
+      const cPrinters = printers.filter(p => matchCompany(p.company, c.name)).length;
+      const cIT = itAssets.filter(i => {
+        const emp = employees.find(e => e.id === i.assignedPersonnelId || e.fullName === i.assignedTo);
+        return matchCompany(i.company || emp?.company, c.name, i.assetTag, i.assignedEmail);
+      }).length;
+      const cEmp = employees.filter(e => matchCompany(e.company, c.name)).length;
       return {
         name: c.name,
         printers: cPrinters,

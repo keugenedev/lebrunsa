@@ -334,7 +334,19 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try { 
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length >= INITIAL_IT_ASSETS.length) {
-            return parsed;
+            return parsed.map((item: any) => {
+              if (!item.company) {
+                const initMatch = INITIAL_IT_ASSETS.find(i => i.id === item.id || i.assetTag === item.assetTag);
+                if (initMatch?.company) {
+                  return { ...item, company: initMatch.company };
+                }
+                if (item.assetTag?.includes('AUT') || item.id?.includes('aut') || item.assignedEmail?.includes('autobiz')) {
+                  return { ...item, company: 'Autobiz' };
+                }
+                return { ...item, company: 'Lebrun S.A.' };
+              }
+              return item;
+            });
           }
         } catch (e) { console.error(e); }
       }
@@ -628,6 +640,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           const mappedIT: ITAsset[] = dbIT.map((row: any, idx: number) => ({
             id: row.id ? row.id.toString() : `it-${idx + 1}`,
             category: 'it' as const,
+            company: row.company || (row.asset_tag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.'),
             subCategory: 'desktop' as const,
             assetTag: row.asset_tag || `AST-PC-LEB${(idx + 1).toString().padStart(2, '0')}`,
             name: row.nom || `Poste Desktop ${row.modele || ''}`,
