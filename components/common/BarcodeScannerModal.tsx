@@ -250,25 +250,25 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-xs text-amber-800 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+          <div className="mt-4 p-3 rounded-xl bg-slate-100 border border-slate-300 flex items-start gap-2.5 text-xs text-slate-800 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-slate-600 mt-0.5" />
             <div className="space-y-1">
               <p className="font-semibold">Code non reconnu</p>
-              <p className="text-[11px] text-amber-700">{errorMessage}</p>
+              <p className="text-[11px] text-slate-600">{errorMessage}</p>
             </div>
           </div>
         )}
 
         {/* Last Scanned Result Card */}
         {lastScanned && (
-          <div className="mt-5 p-4 rounded-xl bg-white border border-emerald-200/80 shadow-sm space-y-3 animate-in fade-in">
+          <div className="mt-5 p-4 rounded-xl bg-white border border-slate-300 shadow-sm space-y-3 animate-in fade-in">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                     Matériel Identifié avec Succès
                   </span>
                   <h4 className="text-xs font-bold text-slate-900">{lastScanned.title}</h4>

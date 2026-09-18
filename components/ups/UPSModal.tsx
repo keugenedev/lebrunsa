@@ -89,7 +89,7 @@ export default function UPSModal() {
         {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-600/30 border border-amber-400/40 flex items-center justify-center text-amber-400">
+            <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
               <Zap className="w-4 h-4" />
             </div>
             <div>
@@ -120,7 +120,7 @@ export default function UPSModal() {
                 value={assetTag}
                 onChange={(e) => setAssetTag(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-mono font-bold text-slate-900"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono font-bold text-slate-900"
                 placeholder="UPS-LEB-001"
               />
             </div>
@@ -133,7 +133,7 @@ export default function UPSModal() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-semibold text-slate-900"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-semibold text-slate-900"
                 placeholder="Ex: UPS 1, Onduleur Direction..."
               />
             </div>
@@ -162,7 +162,7 @@ export default function UPSModal() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-semibold text-slate-900"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-semibold text-slate-900"
                 placeholder="NT-1011D, Back-UPS 1000..."
               />
             </div>
@@ -175,7 +175,7 @@ export default function UPSModal() {
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono"
                 placeholder="1000 VA / 500 W"
               />
             </div>
@@ -187,7 +187,7 @@ export default function UPSModal() {
                 type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono"
                 placeholder="NT-1011D"
               />
             </div>
@@ -246,7 +246,7 @@ export default function UPSModal() {
               rows={2}
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-600 resize-none text-slate-800"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 resize-none text-slate-800"
               placeholder="Ex: Entrée 110–120 Vac, sortie 110–120 Vac. Écran LCD indiquant ON LINE..."
             />
           </div>
@@ -262,7 +262,7 @@ export default function UPSModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
             >
               {editingUPSAsset ? "Enregistrer les modifications" : "Ajouter au Parc Onduleurs"}
             </button>

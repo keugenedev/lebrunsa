@@ -90,15 +90,15 @@ export default function MovementsView() {
       sortable: true,
       render: (mov) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
             {mov.assetCategory === 'it' ? (
-              <Laptop className="w-4 h-4 text-red-600" />
+              <Laptop className="w-4 h-4 text-slate-600" />
             ) : mov.assetCategory === 'starlink' ? (
-              <Satellite className="w-4 h-4 text-cyan-600" />
+              <Satellite className="w-4 h-4 text-slate-600" />
             ) : mov.assetCategory === 'plans' ? (
-              <Smartphone className="w-4 h-4 text-orange-600" />
+              <Smartphone className="w-4 h-4 text-slate-600" />
             ) : (
-              <Cpu className="w-4 h-4 text-emerald-600" />
+              <Cpu className="w-4 h-4 text-slate-600" />
             )}
           </div>
           <span className="font-semibold text-slate-900">{mov.assetName}</span>
@@ -114,22 +114,22 @@ export default function MovementsView() {
       render: (mov) => {
         if (mov.actionType === 'check_out') {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-orange-50 text-orange-700 border border-orange-200 whitespace-nowrap">
-              <ArrowUpRight className="w-3 h-3 shrink-0" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+              <ArrowUpRight className="w-3 h-3 shrink-0 text-slate-500" />
               Prêt / Sortie
             </span>
           );
         } else if (mov.actionType === 'check_in') {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-              <ArrowDownLeft className="w-3 h-3 shrink-0" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+              <ArrowDownLeft className="w-3 h-3 shrink-0 text-slate-500" />
               Retour Réserve
             </span>
           );
         }
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-            <Wrench className="w-3 h-3 shrink-0" />
+            <Wrench className="w-3 h-3 shrink-0 text-slate-500" />
             Maintenance
           </span>
         );

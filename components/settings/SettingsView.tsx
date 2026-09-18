@@ -103,7 +103,7 @@ export default function SettingsView() {
                 onClick={() => exportCSV('printers')}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
-                <FileSpreadsheet className="w-4 h-4 text-red-600" />
+                <FileSpreadsheet className="w-4 h-4 text-slate-600" />
                 <span>CSV Imprimantes</span>
               </button>
 
@@ -111,7 +111,7 @@ export default function SettingsView() {
                 onClick={() => exportCSV('it')}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
-                <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                <FileSpreadsheet className="w-4 h-4 text-slate-600" />
                 <span>CSV Postes Dell</span>
               </button>
 
@@ -119,16 +119,16 @@ export default function SettingsView() {
                 onClick={() => exportCSV('personnel')}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
-                <Users className="w-4 h-4 text-emerald-600" />
+                <Users className="w-4 h-4 text-slate-600" />
                 <span>CSV Personnel</span>
               </button>
             </div>
 
             <button
               onClick={exportAllJSON}
-              className="w-full flex items-center justify-center gap-2 mt-3 p-3 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-xs 2xl:text-sm font-semibold text-red-700 transition-all cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 mt-3 p-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs 2xl:text-sm font-semibold text-slate-800 transition-all cursor-pointer"
             >
-              <Download className="w-4 h-4 2xl:w-5 2xl:h-5" />
+              <Download className="w-4 h-4 2xl:w-5 2xl:h-5 text-slate-600" />
               <span>Sauvegarder l&apos;intégralité de la base de données (JSON)</span>
             </button>
           </div>
@@ -137,7 +137,7 @@ export default function SettingsView() {
         {/* System & Storage status */}
         <div className="lebron-card p-6 2xl:p-8 bg-white border border-slate-200 shadow-xs space-y-5 rounded-2xl 2xl:rounded-3xl">
           <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-            <div className="w-10 h-10 2xl:w-12 2xl:h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
+            <div className="w-10 h-10 2xl:w-12 2xl:h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
               <Server className="w-5 h-5 2xl:w-6 2xl:h-6" />
             </div>
             <div>

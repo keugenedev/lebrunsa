@@ -70,7 +70,7 @@ export default function ApplicationModal() {
         {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-400">
+            <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
               <KeyRound className="w-4 h-4" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export default function ApplicationModal() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 font-mono font-bold text-slate-900"
+                  className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono font-bold text-slate-900"
                   placeholder="ex: rmdguerrier, autobiz1..."
                 />
               </div>
@@ -117,7 +117,7 @@ export default function ApplicationModal() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600"
                 placeholder="Roody-Max-Dominique"
               />
             </div>
@@ -130,7 +130,7 @@ export default function ApplicationModal() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600"
                 placeholder="Guerrier"
               />
             </div>
@@ -144,7 +144,7 @@ export default function ApplicationModal() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 font-mono font-semibold text-slate-900"
+                  className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono font-semibold text-slate-900"
                   placeholder="Mot de passe"
                 />
                 <button
@@ -165,7 +165,7 @@ export default function ApplicationModal() {
                 value={applications}
                 onChange={(e) => setApplications(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 text-slate-800"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 text-slate-800"
                 placeholder="Microsoft GP, Outlook, Sage..."
               />
             </div>
@@ -198,7 +198,7 @@ export default function ApplicationModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
             >
               {editingApplicationAccount ? "Enregistrer les modifications" : "Ajouter l'Accès"}
             </button>

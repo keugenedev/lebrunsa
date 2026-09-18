@@ -152,12 +152,12 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
                     <span>Moniteur / Écran</span>
                   </span>
                   {ws?.monitorObs && ws.monitorObs.includes('deffecteux') ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                      <AlertTriangle className="w-3 h-3 text-amber-500" />
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-200 text-slate-800 border border-slate-300">
+                      <AlertTriangle className="w-3 h-3 text-slate-600" />
                       <span>Trace défectueuse</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
                       {ws?.monitorObs || 'Opérationnel'}
                     </span>
                   )}

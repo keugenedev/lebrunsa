@@ -196,7 +196,7 @@ export default function ApplicationsView() {
             type="button"
             onClick={() => openApplicationModal(acc)}
             title="Modifier cet accès"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>

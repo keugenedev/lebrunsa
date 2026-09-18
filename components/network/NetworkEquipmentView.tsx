@@ -133,9 +133,9 @@ export default function NetworkEquipmentView() {
         <div>
           <div className="font-semibold text-slate-900 text-xs flex items-center gap-1.5 whitespace-nowrap">
             {item.deviceType.includes('Switch') ? (
-              <Network className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <Network className="w-3.5 h-3.5 text-slate-600 shrink-0" />
             ) : (
-              <Wifi className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <Wifi className="w-3.5 h-3.5 text-slate-600 shrink-0" />
             )}
             <span>{item.deviceType}</span>
           </div>
@@ -185,8 +185,8 @@ export default function NetworkEquipmentView() {
       width: '120px',
       align: 'center',
       render: (item) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
           {item.status}
         </span>
       )
@@ -212,7 +212,7 @@ export default function NetworkEquipmentView() {
       render: (item) => (
         <div>
           <div className="font-semibold text-slate-900 text-xs flex items-center gap-1.5 whitespace-nowrap">
-            <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <Zap className="w-3.5 h-3.5 text-slate-600 shrink-0" />
             <span>{item.name}</span>
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">
@@ -226,7 +226,7 @@ export default function NetworkEquipmentView() {
       label: 'Capacité Électrique',
       sortable: true,
       render: (item) => (
-        <span className="font-mono text-[11px] font-semibold text-slate-800 bg-amber-50/80 px-2 py-0.5 rounded border border-amber-200/60 whitespace-nowrap">
+        <span className="font-mono text-[11px] font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 whitespace-nowrap">
           {item.capacity}
         </span>
       )
@@ -258,8 +258,8 @@ export default function NetworkEquipmentView() {
       width: '120px',
       align: 'center',
       render: (item) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
           {item.status}
         </span>
       )
@@ -272,7 +272,7 @@ export default function NetworkEquipmentView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
               <Network className="w-4 h-4" />
             </div>
             <div>
@@ -303,7 +303,7 @@ export default function NetworkEquipmentView() {
           onClick={() => setActiveSubTab('network')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             activeSubTab === 'network'
-              ? 'bg-blue-600 text-white shadow-2xs'
+              ? 'bg-slate-900 text-white shadow-2xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -315,7 +315,7 @@ export default function NetworkEquipmentView() {
           onClick={() => setActiveSubTab('ups')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             activeSubTab === 'ups'
-              ? 'bg-amber-600 text-white shadow-2xs'
+              ? 'bg-slate-900 text-white shadow-2xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -333,7 +333,7 @@ export default function NetworkEquipmentView() {
             placeholder={activeSubTab === 'network' ? 'Rechercher un switch, borne Wi-Fi, modèle...' : 'Rechercher un UPS, marque, capacité...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-500 transition-all"
           />
         </div>
 

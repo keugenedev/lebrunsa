@@ -43,7 +43,7 @@ export default function PrinterDetailsModal({
         {/* Header */}
         <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0">
               <Printer className="w-5 h-5" />
             </div>
             <div>
@@ -51,7 +51,7 @@ export default function PrinterDetailsModal({
                 <h3 className="text-sm font-bold tracking-tight">
                   {printer.name}
                 </h3>
-                <span className="font-mono text-xs font-bold text-purple-300 px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/60">
+                <span className="font-mono text-xs font-bold text-slate-300 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
                   {printer.assetTag}
                 </span>
               </div>
@@ -160,12 +160,12 @@ export default function PrinterDetailsModal({
           </div>
 
           {/* Section 3: Observations / Remarques remplies */}
-          <div className="rounded-xl border border-purple-200/80 bg-purple-50/40 p-4 space-y-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
             <div className="flex items-center gap-2 font-bold text-slate-900">
-              <FileText className="w-4 h-4 text-purple-600" />
+              <FileText className="w-4 h-4 text-slate-500" />
               <span>Observations & Notes Remplies</span>
             </div>
-            <div className="p-3 rounded-lg bg-white border border-purple-100 text-slate-800 leading-relaxed font-medium">
+            <div className="p-3 rounded-lg bg-white border border-slate-200 text-slate-800 leading-relaxed font-medium">
               {printer.observations ? (
                 <span>{printer.observations}</span>
               ) : (

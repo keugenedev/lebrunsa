@@ -175,8 +175,8 @@ export default function WorkstationDetailsModal({
                 <span>{"Écran & Moniteur de Bureau"}</span>
               </div>
               {isScreenDefective ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900">
-                  <AlertTriangle className="w-3 h-3 text-black" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-200 text-slate-800 border border-slate-300">
+                  <AlertTriangle className="w-3 h-3 text-slate-700" />
                   {"Défectueux (Trace dans l'écran)"}
                 </span>
               ) : (
@@ -213,8 +213,8 @@ export default function WorkstationDetailsModal({
             </div>
 
             {ws?.monitorObs && ws.monitorObs !== 'Good' && (
-              <div className="p-2 rounded-lg bg-amber-50 text-amber-900 text-[11px] flex items-center gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-black shrink-0" />
+              <div className="p-2 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 text-[11px] flex items-center gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                 <span><strong>{"Observation Écran : "}</strong>{ws.monitorObs}</span>
               </div>
             )}

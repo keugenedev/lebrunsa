@@ -97,7 +97,7 @@ export default function NetworkModal() {
         {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400">
+            <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
               <Network className="w-4 h-4" />
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function NetworkModal() {
                 value={assetTag}
                 onChange={(e) => setAssetTag(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-mono font-bold text-slate-900"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono font-bold text-slate-900"
                 placeholder="NET-LEB-001"
               />
             </div>
@@ -187,7 +187,7 @@ export default function NetworkModal() {
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600"
                 placeholder="TP-Link, Cisco..."
               />
             </div>
@@ -200,7 +200,7 @@ export default function NetworkModal() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-semibold text-slate-900"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-semibold text-slate-900"
                 placeholder="TL-SG1218MP..."
               />
             </div>
@@ -212,7 +212,7 @@ export default function NetworkModal() {
                 type="text"
                 value={hostname}
                 onChange={(e) => setHostname(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono"
                 placeholder="Switch-Rack-18P"
               />
             </div>
@@ -225,7 +225,7 @@ export default function NetworkModal() {
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-mono select-all"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono select-all"
                 placeholder="TL-SG1218MP-SN01"
               />
             </div>
@@ -237,7 +237,7 @@ export default function NetworkModal() {
                 type="text"
                 value={ipAddress}
                 onChange={(e) => setIpAddress(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-mono"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono"
                 placeholder="192.168.1.250"
               />
             </div>
@@ -249,7 +249,7 @@ export default function NetworkModal() {
                 type="text"
                 value={macAddress}
                 onChange={(e) => setMacAddress(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-mono uppercase"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 font-mono uppercase"
                 placeholder="00:31:92:AB:CD:EF"
               />
             </div>
@@ -277,7 +277,7 @@ export default function NetworkModal() {
               rows={2}
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none text-slate-800"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 resize-none text-slate-800"
               placeholder="Ex: 18 ports Gigabit, dont 16 ports PoE+, version 5.6..."
             />
           </div>
@@ -293,7 +293,7 @@ export default function NetworkModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors shadow-xs cursor-pointer"
             >
               {editingNetworkAsset ? "Enregistrer les modifications" : "Ajouter au Parc Réseau"}
             </button>

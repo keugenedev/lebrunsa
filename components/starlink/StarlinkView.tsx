@@ -68,7 +68,7 @@ export default function StarlinkView() {
       sortable: true,
       render: (kit) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-700 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
             <Satellite className="w-4 h-4" />
           </div>
           <div>
@@ -159,7 +159,7 @@ export default function StarlinkView() {
             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div 
                 className={`h-full rounded-full ${
-                  usagePercent > 90 ? 'bg-red-500' : usagePercent > 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                  usagePercent > 90 ? 'bg-red-600' : 'bg-slate-700'
                 }`}
                 style={{ width: `${usagePercent}%` }}
               />
@@ -240,7 +240,7 @@ export default function StarlinkView() {
         title="Flotte Satellite Starlink"
         subtitle="Supervision télémétrique, forfaits prioritaires chantiers distants et liaisons maritimes"
         badge={
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 font-medium border border-cyan-200">
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium border border-slate-200">
             {starlinkKits.length} terminaux déployés
           </span>
         }

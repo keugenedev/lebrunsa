@@ -63,12 +63,12 @@ export default function AlertsView() {
           <p className="text-[11px] text-slate-500 mt-1">Action immédiate recommandée</p>
         </div>
 
-        <div className="lebron-card p-5 bg-white border-l-4 border-l-amber-500 shadow-xs">
+        <div className="lebron-card p-5 bg-white border-l-4 border-l-slate-400 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500 font-medium">Avertissements & Quotas</span>
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertTriangle className="w-4 h-4 text-slate-600" />
           </div>
-          <div className="text-3xl font-bold text-amber-600 mt-2">{warningCount}</div>
+          <div className="text-3xl font-bold text-slate-800 mt-2">{warningCount}</div>
           <p className="text-[11px] text-slate-500 mt-1">Seuils proches d&apos;épuisement</p>
         </div>
 
@@ -88,25 +88,23 @@ export default function AlertsView() {
       <div className="space-y-3">
         {alerts.length === 0 ? (
           <div className="lebron-card p-12 text-center bg-white border border-slate-200">
-            <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+            <CheckCircle2 className="w-10 h-10 text-slate-600 mx-auto" />
             <h3 className="text-base font-bold text-slate-900 mt-3">Tous les systèmes sont nominaux</h3>
-            <p className="text-xs text-slate-500 mt-1">Aucune alerte active dans l&apos;inventaire Lebronsa.</p>
+            <p className="text-xs text-slate-500 mt-1">Aucune alerte active dans l&apos;inventaire Lebrun S.A.</p>
           </div>
         ) : (
           alerts.map((alert) => (
             <div
               key={alert.id}
               className={`lebron-card p-4 bg-white border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all shadow-xs ${
-                alert.read ? 'opacity-70 border-slate-200' : 'border-red-200'
+                alert.read ? 'opacity-70 border-slate-200' : 'border-slate-300'
               }`}
             >
               <div className="flex items-start gap-3.5">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                   alert.severity === 'critical'
                     ? 'bg-red-50 text-red-600 border border-red-200'
-                    : alert.severity === 'warning'
-                      ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200'
                 }`}>
                   {alert.severity === 'critical' ? (
                     <AlertOctagon className="w-4 h-4" />
@@ -138,7 +136,7 @@ export default function AlertsView() {
                 {alert.category === 'starlink' && (
                   <button
                     onClick={() => setActiveTab('starlink')}
-                    className="px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold"
                   >
                     Voir Starlink
                   </button>
@@ -146,7 +144,7 @@ export default function AlertsView() {
                 {alert.category === 'electronics' && (
                   <button
                     onClick={() => setActiveTab('electronics')}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold"
                   >
                     Réapprovisionner
                   </button>
@@ -154,7 +152,7 @@ export default function AlertsView() {
                 {alert.category === 'plans' && (
                   <button
                     onClick={() => setActiveTab('plans')}
-                    className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 text-xs font-semibold"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-semibold"
                   >
                     Gérer Forfait
                   </button>

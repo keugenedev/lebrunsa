@@ -45,7 +45,7 @@ export default function NetworkDetailsModal({
         {/* Header */}
         <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0">
               {isSwitch ? <Network className="w-5 h-5" /> : <Wifi className="w-5 h-5" />}
             </div>
             <div>
@@ -53,7 +53,7 @@ export default function NetworkDetailsModal({
                 <h3 className="text-sm font-bold tracking-tight">
                   {asset.model || asset.deviceType}
                 </h3>
-                <span className="font-mono text-xs font-bold text-blue-300 px-2 py-0.5 rounded bg-blue-950/60 border border-blue-800/60">
+                <span className="font-mono text-xs font-bold text-slate-300 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
                   {asset.assetTag}
                 </span>
               </div>
@@ -157,12 +157,12 @@ export default function NetworkDetailsModal({
           </div>
 
           {/* Section 3: Spécifications & Observations complètes remplies */}
-          <div className="rounded-xl border border-blue-200/80 bg-blue-50/40 p-4 space-y-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
             <div className="flex items-center gap-2 font-bold text-slate-900">
-              <FileText className="w-4 h-4 text-blue-600" />
+              <FileText className="w-4 h-4 text-slate-500" />
               <span>Spécifications & Observations Remplies</span>
             </div>
-            <div className="p-3 rounded-lg bg-white border border-blue-100 text-slate-800 leading-relaxed font-medium">
+            <div className="p-3 rounded-lg bg-white border border-slate-200 text-slate-800 leading-relaxed font-medium">
               {asset.observations ? (
                 <span>{asset.observations}</span>
               ) : (

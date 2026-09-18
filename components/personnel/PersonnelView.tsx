@@ -328,7 +328,7 @@ export default function PersonnelView() {
                       {assets.it.map(item => (
                         <div key={item.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-700 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                               <Laptop className="w-4 h-4" />
                             </div>
                             <div>
@@ -340,7 +340,7 @@ export default function PersonnelView() {
                           </div>
                           <div className="text-right text-xs">
                             <div className="font-bold text-slate-900">{formatCurrency(item.purchaseCost)}</div>
-                            <span className="text-[10px] text-emerald-600 font-semibold">En service</span>
+                            <span className="text-[10px] text-slate-600 font-medium">En service</span>
                           </div>
                         </div>
                       ))}
@@ -349,7 +349,7 @@ export default function PersonnelView() {
                       {assets.plans.map(plan => (
                         <div key={plan.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                               <Smartphone className="w-4 h-4" />
                             </div>
                             <div>
@@ -360,7 +360,7 @@ export default function PersonnelView() {
                             </div>
                           </div>
                           <div className="text-right text-xs">
-                            <div className="font-bold text-orange-600">{formatCurrency(plan.monthlyCost)}/mois</div>
+                            <div className="font-bold text-slate-800">{formatCurrency(plan.monthlyCost)}/mois</div>
                             <span className="text-[10px] text-slate-500">{plan.dataUsedGb} Go consommés</span>
                           </div>
                         </div>
@@ -370,7 +370,7 @@ export default function PersonnelView() {
                       {assets.starlink.map(kit => (
                         <div key={kit.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                               <Satellite className="w-4 h-4" />
                             </div>
                             <div>
@@ -381,8 +381,8 @@ export default function PersonnelView() {
                             </div>
                           </div>
                           <div className="text-right text-xs">
-                            <div className="font-bold text-cyan-700">{kit.tier}</div>
-                            <span className="text-[10px] text-emerald-600 font-semibold">Terminal actif</span>
+                            <div className="font-bold text-slate-800">{kit.tier}</div>
+                            <span className="text-[10px] text-slate-600 font-medium">Terminal actif</span>
                           </div>
                         </div>
                       ))}

@@ -44,7 +44,7 @@ export default function TelecomPlansView() {
       sortable: true,
       render: (plan) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
             <Smartphone className="w-4 h-4" />
           </div>
           <div>
@@ -83,7 +83,7 @@ export default function TelecomPlansView() {
             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200">
               <div 
                 className={`h-full rounded-full ${
-                  usagePercent > 90 ? 'bg-red-500' : usagePercent > 70 ? 'bg-amber-500' : 'bg-orange-500'
+                  usagePercent > 90 ? 'bg-red-600' : 'bg-slate-700'
                 }`}
                 style={{ width: `${usagePercent}%` }}
               />
@@ -100,7 +100,7 @@ export default function TelecomPlansView() {
         <div>
           {plan.assignedTo ? (
             <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-full bg-red-50 text-red-700 text-[10px] font-semibold flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-semibold flex items-center justify-center">
                 {plan.assignedTo[0]}
               </div>
               <div>
@@ -180,7 +180,7 @@ export default function TelecomPlansView() {
         title="Forfaits Télécoms & Flotte Mobile"
         subtitle="Suivi des abonnements mobiles 5G, cartes SIM physiques, eSIMs et puces data M2M IoT"
         badge={
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-800 font-medium border border-orange-200">
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium border border-slate-200">
             {plans.length} abonnements actifs
           </span>
         }

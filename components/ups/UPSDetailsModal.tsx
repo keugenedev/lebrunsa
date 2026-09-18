@@ -42,7 +42,7 @@ export default function UPSDetailsModal({
         {/* Header */}
         <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 shrink-0">
               <Zap className="w-5 h-5" />
             </div>
             <div>
@@ -50,7 +50,7 @@ export default function UPSDetailsModal({
                 <h3 className="text-sm font-bold tracking-tight">
                   {asset.name}
                 </h3>
-                <span className="font-mono text-xs font-bold text-amber-300 px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/60">
+                <span className="font-mono text-xs font-bold text-slate-300 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
                   {asset.assetTag}
                 </span>
               </div>
@@ -99,7 +99,7 @@ export default function UPSDetailsModal({
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-medium">Capacité Électrique</span>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <BatteryCharging className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <BatteryCharging className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                   <span className="font-mono font-bold text-slate-900 text-xs">
                     {asset.capacity}
                   </span>
@@ -119,12 +119,12 @@ export default function UPSDetailsModal({
           </div>
 
           {/* Section 2: Spécifications & Observations complètes */}
-          <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4 space-y-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2">
             <div className="flex items-center gap-2 font-bold text-slate-900">
-              <FileText className="w-4 h-4 text-amber-600" />
+              <FileText className="w-4 h-4 text-slate-500" />
               <span>Caractéristiques & Notes Techniques Remplies</span>
             </div>
-            <div className="p-3 rounded-lg bg-white border border-amber-100 text-slate-800 leading-relaxed font-medium">
+            <div className="p-3 rounded-lg bg-white border border-slate-200 text-slate-800 leading-relaxed font-medium">
               {asset.observations ? (
                 <span>{asset.observations}</span>
               ) : (
