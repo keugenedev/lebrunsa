@@ -20,7 +20,7 @@ import {
 import UPSDetailsModal from './UPSDetailsModal';
 
 export default function UPSView() {
-  const { upsAssets, openUPSModal, deleteUPSAsset } = useInventory();
+  const { upsAssets, openUPSModal, deleteUPSAsset, exportCSV } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
@@ -53,27 +53,7 @@ export default function UPSView() {
   }, [upsAssets]);
 
   const handleExportCSV = () => {
-    const headers = ['Tag', 'Entreprise', 'Site', 'Nom UPS', 'Marque', 'Modèle', 'Capacité (VA/W)', 'Référence', 'État', 'Observations'];
-    const rows = filteredUPS.map(u => [
-      u.assetTag,
-      u.company,
-      u.site,
-      u.name,
-      u.brand,
-      u.model,
-      u.capacity,
-      u.reference,
-      u.status,
-      u.observations
-    ]);
-    const csv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Inventaire_UPS_Lebronsa_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    exportCSV('ups');
   };
 
   const columns: Column<UPSAsset>[] = [

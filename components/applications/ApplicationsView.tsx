@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export default function ApplicationsView() {
-  const { applicationAccounts, openApplicationModal, deleteApplicationAccount, employees } = useInventory();
+  const { applicationAccounts, openApplicationModal, deleteApplicationAccount, employees, exportCSV } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [orgFilter, setOrgFilter] = useState('all');
@@ -86,41 +86,7 @@ export default function ApplicationsView() {
   }, [applicationAccounts, orgFilter, appFilter, searchQuery, employees]);
 
   const handleExportCSV = () => {
-    const headers = [
-      'Collaborateur',
-      'Matricule',
-      'Session Windows (Username)',
-      'Session Windows (Password)',
-      'Identifiant Logiciel',
-      'Mot de Passe Logiciel',
-      'Logiciel Métier',
-      'Organisation',
-      'Email'
-    ];
-    const rows = filteredAccounts.map(a => {
-      const emp = getLinkedEmployee(a);
-      const winUser = a.windowsUsername || emp?.accounts?.windowsUsername || 'N/A';
-      const winPass = a.windowsPassword || emp?.accounts?.windowsPassword || 'N/A';
-      return [
-        emp ? emp.fullName : `${a.firstName} ${a.lastName}`,
-        emp?.employeeId || 'N/A',
-        winUser,
-        winPass,
-        a.username,
-        a.password || 'N/A',
-        a.applications,
-        a.organization,
-        emp?.email || 'N/A'
-      ];
-    });
-    const csv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Comptes_Sessions_Applications_Lebronsa_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    exportCSV('applications');
   };
 
   const columns: Column<ApplicationAccount>[] = [

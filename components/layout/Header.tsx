@@ -28,6 +28,8 @@ export default function Header() {
       case 'ups': return 'Onduleurs & Alimentation';
       case 'applications': return 'Comptes & Applications';
       case 'personnel': return 'Personnel & Collaborateurs';
+      case 'accounts': return 'Comptes';
+      case 'documents': return 'Documents & Procédures';
       case 'settings': return 'Paramètres & Configuration';
       default: return 'Gestion de Parc';
     }
@@ -41,6 +43,8 @@ export default function Header() {
       case 'ups': return 'Rechercher onduleur APC, puissance VA, modèle, S/N...';
       case 'applications': return 'Rechercher compte utilisateur, application GP, identifiant...';
       case 'personnel': return 'Rechercher collaborateur, nom, matricule, département...';
+      case 'accounts': return 'Rechercher compte, nom, rôle, email...';
+      case 'documents': return 'Rechercher document, procédure, contrat, référence...';
       default: return 'Rechercher équipement, numéro de série, collaborateur...';
     }
   };
@@ -94,7 +98,19 @@ export default function Header() {
 
         {/* Quick Export Excel */}
         <button
-          onClick={() => exportCSV(activeTab === 'printers' ? 'printers' : activeTab === 'personnel' ? 'personnel' : 'it')}
+          onClick={() => {
+            const validTabs: Record<string, any> = {
+              printers: 'printers',
+              personnel: 'personnel',
+              accounts: 'accounts',
+              documents: 'documents',
+              applications: 'applications',
+              network: 'network',
+              ups: 'ups',
+              it: 'it'
+            };
+            exportCSV(validTabs[activeTab] || 'it');
+          }}
           className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 text-xs font-semibold transition-all cursor-pointer shrink-0"
           title="Exporter la liste en Excel"
         >

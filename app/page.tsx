@@ -11,6 +11,8 @@ import PersonnelView from '@/components/personnel/PersonnelView';
 import NetworkView from '@/components/network/NetworkView';
 import UPSView from '@/components/ups/UPSView';
 import ApplicationsView from '@/components/applications/ApplicationsView';
+import AccountsView from '@/components/accounts/AccountsView';
+import DocumentsView from '@/components/documents/DocumentsView';
 import SettingsView from '@/components/settings/SettingsView';
 import BarcodeModal from '@/components/common/BarcodeModal';
 import BarcodeScannerModal from '@/components/common/BarcodeScannerModal';
@@ -21,6 +23,8 @@ import PrinterModal from '@/components/printers/PrinterModal';
 import NetworkModal from '@/components/network/NetworkModal';
 import UPSModal from '@/components/ups/UPSModal';
 import ApplicationModal from '@/components/applications/ApplicationModal';
+import AccountModal from '@/components/accounts/AccountModal';
+import DocumentModal from '@/components/documents/DocumentModal';
 import QuickSearchModal from '@/components/common/QuickSearchModal';
 import ToastNotification from '@/components/common/ToastNotification';
 import LoginPage from '@/components/auth/LoginPage';
@@ -66,6 +70,10 @@ function MainContent() {
         return <ApplicationsView />;
       case 'personnel':
         return <PersonnelView />;
+      case 'accounts':
+        return <AccountsView />;
+      case 'documents':
+        return <DocumentsView />;
       case 'settings':
         return <SettingsView />;
       default:
@@ -102,6 +110,8 @@ function MainContent() {
       <NetworkModal />
       <UPSModal />
       <ApplicationModal />
+      <AccountModal />
+      <DocumentModal />
       <QuickSearchModal />
       <ToastNotification />
     </div>

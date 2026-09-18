@@ -7,10 +7,12 @@ export type NavigationTab =
   | 'network'
   | 'ups'
   | 'applications'
+  | 'personnel'
+  | 'accounts'
+  | 'documents'
   | 'plans' 
   | 'starlink' 
   | 'electronics' 
-  | 'personnel'
   | 'movements' 
   | 'alerts' 
   | 'settings';
@@ -228,6 +230,32 @@ export interface Employee {
   accounts?: UserAccountDetails;
 }
 
+export type ITRole = 
+  | 'Super Administrateur IT'
+  | 'Administrateur Systèmes & Réseaux'
+  | 'Technicien Support & Maintenance'
+  | 'Technicien Réseaux & Télécoms'
+  | 'Gestionnaire Parc Informatique';
+
+export interface ITAccount {
+  id: string;
+  username: string; // e.g. keugene
+  fullName: string; // Kensly Eugene
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: ITRole;
+  company: string; // Lebrun S.A., Autobiz, Caribe Motors, Groupe Lebrun
+  site: string; // Delmas 52, etc.
+  phone?: string;
+  status: 'active' | 'inactive';
+  specialty?: string; // Infrastructure, Windows Server, Réseau, Helpdesk, GP
+  passwordHint?: string; // Mot de passe / Session
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type AnyAsset = ITAsset | TelecomPlan | StarlinkKit | ElectronicComponent;
 
 export interface StockMovement {
@@ -282,5 +310,32 @@ export interface ToastMessage {
   message: string;
   type?: 'success' | 'info' | 'warning' | 'error';
   timestamp?: number;
+}
+
+export type DocumentCategory = 
+  | 'Fiches d\'Affectation'
+  | 'Procédures & Guides IT'
+  | 'Contrats & Garanties'
+  | 'Schémas Réseau & Infrastructure'
+  | 'Politiques de Sécurité'
+  | 'Factures & Bons de Commande'
+  | 'Procès-Verbaux & Décharges';
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  reference: string;
+  category: DocumentCategory;
+  company: string;
+  site?: string;
+  fileType: 'pdf' | 'xlsx' | 'docx' | 'png' | 'txt';
+  fileSize?: string;
+  author: string;
+  lastUpdated: string;
+  description?: string;
+  url?: string;
+  status: 'valide' | 'en_revue' | 'archive';
+  createdAt?: string;
+  updatedAt?: string;
 }
 

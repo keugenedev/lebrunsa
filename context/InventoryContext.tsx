@@ -17,9 +17,11 @@ import {
   AnyAsset,
   NavigationTab,
   WifiNetwork,
-  ToastMessage
+  ToastMessage,
+  ITAccount,
+  DocumentItem
 } from '@/types/inventory';
-export type { NavigationTab, WifiNetwork, ToastMessage };
+export type { NavigationTab, WifiNetwork, ToastMessage, DocumentItem };
 import { 
   INITIAL_PRINTERS, 
   INITIAL_IT_ASSETS, 
@@ -32,9 +34,12 @@ import {
   INITIAL_NETWORK_ASSETS, 
   INITIAL_UPS_ASSETS, 
   INITIAL_APPLICATIONS,
-  INITIAL_WIFI_NETWORKS
+  INITIAL_WIFI_NETWORKS,
+  INITIAL_IT_ACCOUNTS,
+  INITIAL_DOCUMENTS
 } from '@/data/initialData';
 import { supabase } from '@/lib/supabase';
+import { downloadExcel, downloadExcelCSV } from '@/lib/exportExcel';
 
 interface InventoryContextType {
   // State
@@ -177,11 +182,31 @@ interface InventoryContextType {
     totalValue: number;
   };
 
+  // Modals & Actions IT Accounts (Informaticiens)
+  itAccounts: ITAccount[];
+  isAccountModalOpen: boolean;
+  editingAccount: ITAccount | null;
+  openAccountModal: (account?: ITAccount) => void;
+  closeAccountModal: () => void;
+  addITAccount: (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateITAccount: (id: string, updates: Partial<ITAccount>) => void;
+  deleteITAccount: (id: string) => void;
+
+  // Modals & Actions Documents
+  documents: DocumentItem[];
+  isDocumentModalOpen: boolean;
+  editingDocument: DocumentItem | null;
+  openDocumentModal: (doc?: DocumentItem) => void;
+  closeDocumentModal: () => void;
+  addDocument: (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateDocument: (id: string, updates: Partial<DocumentItem>) => void;
+  deleteDocument: (id: string) => void;
+
   // Operations
   recordMovement: (mov: Omit<StockMovement, 'id' | 'date'>) => void;
   markAlertRead: (id: string) => void;
   dismissAlert: (id: string) => void;
-  exportCSV: (category?: AssetCategory | 'personnel') => void;
+  exportCSV: (category?: AssetCategory | 'personnel' | 'accounts' | 'documents' | 'applications' | 'network' | 'ups') => void;
   resetToDefaultData: () => void;
 
   // Aggregated Stats
@@ -267,6 +292,30 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const closePrinterModal = () => {
     setIsPrinterModalOpen(false);
     setEditingPrinter(null);
+  };
+
+  // IT Account Modal (Informaticiens)
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<ITAccount | null>(null);
+  const openAccountModal = (account?: ITAccount) => {
+    setEditingAccount(account || null);
+    setIsAccountModalOpen(true);
+  };
+  const closeAccountModal = () => {
+    setIsAccountModalOpen(false);
+    setEditingAccount(null);
+  };
+
+  // Documents Modal
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState<DocumentItem | null>(null);
+  const openDocumentModal = (doc?: DocumentItem) => {
+    setEditingDocument(doc || null);
+    setIsDocumentModalOpen(true);
+  };
+  const closeDocumentModal = () => {
+    setIsDocumentModalOpen(false);
+    setEditingDocument(null);
   };
 
   // Authentication State
@@ -533,6 +582,40 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return INITIAL_WIFI_NETWORKS;
   });
 
+  // IT Accounts state (Informaticiens & Administrateurs)
+  const [itAccounts, setItAccounts] = useState<ITAccount[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_it_accounts');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const missing = INITIAL_IT_ACCOUNTS.filter(initAcc => !parsed.some((p: any) => p.id === initAcc.id || p.username === initAcc.username));
+            return [...parsed, ...missing];
+          }
+        } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_IT_ACCOUNTS;
+  });
+
+  // Documents state
+  const [documents, setDocuments] = useState<DocumentItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_documents');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const missing = INITIAL_DOCUMENTS.filter(initDoc => !parsed.some((p: any) => p.id === initDoc.id || p.title === initDoc.title));
+            return [...parsed, ...missing];
+          }
+        } catch (e) { console.error(e); }
+      }
+    }
+    return INITIAL_DOCUMENTS;
+  });
+
   // Toast Notifications state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -614,6 +697,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('lebron_inv_employees', JSON.stringify(employees));
     }
   }, [employees]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(itAccounts));
+    }
+  }, [itAccounts]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_documents', JSON.stringify(documents));
+    }
+  }, [documents]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1097,6 +1192,121 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       starlink: sl,
       totalValue: totalVal
     };
+  };
+
+  // IT Accounts Actions (Informaticiens)
+  const addITAccount = async (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newAcc: ITAccount = {
+      ...account,
+      id: `it-acc-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now
+    };
+    setItAccounts(prev => [newAcc, ...prev]);
+
+    showToast({
+      title: 'Compte Informaticien Créé',
+      message: `${newAcc.fullName} (@${newAcc.username}) a été enregistré.`,
+      type: 'success'
+    });
+
+    try {
+      await supabase.from('users').insert({
+        username: newAcc.username,
+        email: newAcc.email,
+        nom: newAcc.lastName,
+        prenom: newAcc.firstName,
+        entreprise: newAcc.company,
+        site: newAcc.site
+      });
+    } catch (err) {
+      console.warn('Sync Supabase addITAccount error:', err);
+    }
+  };
+
+  const updateITAccount = async (id: string, updates: Partial<ITAccount>) => {
+    setItAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, ...updates, updatedAt: new Date().toISOString() } : acc));
+
+    showToast({
+      title: 'Compte Informaticien Modifié',
+      message: 'Les informations du compte ont été mises à jour.',
+      type: 'info'
+    });
+
+    try {
+      if (updates.username || updates.email || updates.lastName || updates.firstName || updates.company || updates.site) {
+        const payload: Record<string, any> = {};
+        if (updates.email) payload.email = updates.email;
+        if (updates.lastName) payload.nom = updates.lastName;
+        if (updates.firstName) payload.prenom = updates.firstName;
+        if (updates.company) payload.entreprise = updates.company;
+        if (updates.site) payload.site = updates.site;
+        if (updates.username) {
+          await supabase.from('users').update(payload).eq('username', updates.username);
+        }
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateITAccount error:', err);
+    }
+  };
+
+  const deleteITAccount = async (id: string) => {
+    const target = itAccounts.find(a => a.id === id);
+    setItAccounts(prev => prev.filter(a => a.id !== id));
+
+    showToast({
+      title: 'Compte Informaticien Retiré',
+      message: target ? `${target.fullName} a été supprimé.` : 'Compte supprimé.',
+      type: 'info'
+    });
+
+    try {
+      if (target?.username) {
+        await supabase.from('users').delete().eq('username', target.username);
+      }
+    } catch (err) {
+      console.warn('Sync Supabase deleteITAccount error:', err);
+    }
+  };
+
+  // Documents Actions
+  const addDocument = async (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newDoc: DocumentItem = {
+      ...doc,
+      id: `doc-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now
+    };
+    setDocuments(prev => [newDoc, ...prev]);
+
+    showToast({
+      title: 'Document Ajouté',
+      message: `"${newDoc.title}" a été ajouté avec succès.`,
+      type: 'success'
+    });
+  };
+
+  const updateDocument = async (id: string, updates: Partial<DocumentItem>) => {
+    setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d));
+
+    showToast({
+      title: 'Document Mis à Jour',
+      message: 'Les modifications ont été enregistrées.',
+      type: 'info'
+    });
+  };
+
+  const deleteDocument = async (id: string) => {
+    const target = documents.find(d => d.id === id);
+    setDocuments(prev => prev.filter(d => d.id !== id));
+
+    showToast({
+      title: 'Document Supprimé',
+      message: target ? `"${target.title}" a été retiré.` : 'Document supprimé.',
+      type: 'info'
+    });
   };
 
   // IT Actions
@@ -1698,57 +1908,375 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Export CSV
-  const exportCSV = (cat?: AssetCategory | 'personnel') => {
-    let rows: string[][] = [];
-    let filename = 'lebronsa_inventaire_export.csv';
+  // Export Excel Haute Définition (.xlsx)
+  const exportCSV = (cat?: AssetCategory | 'personnel' | 'accounts' | 'documents' | 'applications' | 'network' | 'ups') => {
+    const today = new Date().toISOString().slice(0, 10);
+    let headers: string[] = [];
+    let rows: (string | number | undefined | null)[][] = [];
+    let filename = `LebrunSA_Inventaire_${today}.xlsx`;
+    let sheetTitle = 'Inventaire';
 
     if (cat === 'personnel') {
-      rows.push(['Matricule', 'Nom & Prénom', 'Email', 'Téléphone', 'Département', 'Fonction', 'Site / Localisation', 'Statut', 'Date Embauche']);
-      employees.forEach(e => {
-        rows.push([e.employeeId, e.fullName, e.email, e.phone || '', e.department, e.jobTitle, e.location, e.status, e.hireDate]);
+      filename = `LebrunSA_Personnel_${today}.xlsx`;
+      sheetTitle = 'Personnel';
+      headers = [
+        'Matricule',
+        'Nom & Prénom',
+        'Entreprise',
+        'Site / Affectation',
+        'Département',
+        'Fonction / Poste',
+        'Email Professionnel',
+        'Téléphone',
+        'Statut Collaborateur',
+        'Date d\'Embauche',
+        'Session Windows',
+        'Identifiant Applicatif',
+        'Application Métier',
+        'Notes & Observations'
+      ];
+      rows = employees.map(e => [
+        e.employeeId,
+        e.fullName,
+        e.company || 'Lebrun S.A.',
+        e.site || e.location || 'Delmas 52',
+        e.department || 'Non renseigné',
+        e.jobTitle || 'Non renseigné',
+        e.email || 'N/A',
+        e.phone || 'N/A',
+        e.status === 'active' ? 'Actif' : e.status === 'on_leave' ? 'En congé' : 'Inactif',
+        e.hireDate || 'N/A',
+        e.accounts?.windowsUsername || 'N/A',
+        e.accounts?.appUsername || 'N/A',
+        e.accounts?.applications || 'N/A',
+        e.notes || ''
+      ]);
+    } else if (cat === 'accounts') {
+      filename = `LebrunSA_Comptes_Informaticiens_${today}.xlsx`;
+      sheetTitle = 'Informaticiens IT';
+      headers = [
+        'Nom & Prénom',
+        'Identifiant (@username)',
+        'Email Professionnel',
+        'Rôle & Privilèges IT',
+        'Société Rattachée',
+        'Site Principal',
+        'Téléphone',
+        'Spécialité & Compétences IT',
+        'Statut du Compte',
+        'Date de Création',
+        'Notes'
+      ];
+      rows = itAccounts.map(a => [
+        a.fullName,
+        `@${a.username}`,
+        a.email,
+        a.role,
+        a.company,
+        a.site,
+        a.phone || 'N/A',
+        a.specialty || 'Général IT',
+        a.status === 'active' ? 'Actif' : 'Inactif',
+        a.createdAt ? a.createdAt.slice(0, 10) : 'N/A',
+        a.notes || ''
+      ]);
+    } else if (cat === 'documents') {
+      filename = `LebrunSA_Registre_Documents_${today}.xlsx`;
+      sheetTitle = 'Documents IT';
+      headers = [
+        'Titre du Document',
+        'Référence',
+        'Catégorie',
+        'Entreprise',
+        'Site / Localisation',
+        'Format',
+        'Taille',
+        'Statut',
+        'Auteur',
+        'Date de Mise à Jour',
+        'Description'
+      ];
+      rows = documents.map(d => [
+        d.title,
+        d.reference || 'N/A',
+        d.category,
+        d.company,
+        d.site || 'Delmas 52',
+        (d.fileType || 'pdf').toUpperCase(),
+        d.fileSize || 'N/A',
+        d.status === 'valide' ? 'Valide / En vigueur' : d.status === 'en_revue' ? 'En revue' : 'Archivé',
+        d.author,
+        d.lastUpdated || 'N/A',
+        d.description || ''
+      ]);
+    } else if (cat === 'applications') {
+      filename = `LebrunSA_Comptes_Applications_Sessions_${today}.xlsx`;
+      sheetTitle = 'Applications';
+      headers = [
+        'Collaborateur',
+        'Matricule',
+        'Organisation / Société',
+        'Logiciel Métier Autorisé',
+        'Session Windows (Username)',
+        'Session Windows (Mot de Passe)',
+        'Identifiant Logiciel (@username)',
+        'Mot de Passe Logiciel',
+        'Email Collaborateur'
+      ];
+      rows = applicationAccounts.map(a => {
+        const emp = employees.find(e => e.id === a.employeeId || e.accounts?.appUsername === a.username || e.fullName.toLowerCase() === `${a.firstName} ${a.lastName}`.toLowerCase());
+        return [
+          emp ? emp.fullName : `${a.firstName} ${a.lastName}`,
+          emp?.employeeId || 'N/A',
+          a.organization || emp?.company || 'Lebrun S.A.',
+          a.applications,
+          a.windowsUsername || emp?.accounts?.windowsUsername || 'N/A',
+          a.windowsPassword || emp?.accounts?.windowsPassword || 'N/A',
+          a.username,
+          a.password || 'N/A',
+          emp?.email || 'N/A'
+        ];
       });
-      filename = 'lebronsa_personnel_export.csv';
     } else if (cat === 'printers') {
-      rows.push(['Entreprise', 'Site', 'Nom', 'Marque', 'Modèle', 'SN', 'Adresse IP', 'Type', 'Statut', 'Observations']);
-      printers.forEach(p => {
-        rows.push([p.company, p.site, p.name, p.brand, p.model, p.serialNumber, p.ipAddress, p.type, p.status, p.observations]);
-      });
-      filename = 'lebronsa_printers_export.csv';
+      filename = `LebrunSA_Inventaire_Imprimantes_${today}.xlsx`;
+      sheetTitle = 'Imprimantes';
+      headers = [
+        'Tag Matériel',
+        'Nom de l\'Imprimante',
+        'Entreprise',
+        'Site / Localisation',
+        'Marque',
+        'Modèle',
+        'N° de Série (SN)',
+        'Adresse IP',
+        'Type d\'Impression',
+        'État de Fonctionnement',
+        'Observations'
+      ];
+      rows = printers.map(p => [
+        p.assetTag,
+        p.name,
+        p.company,
+        p.site,
+        p.brand,
+        p.model,
+        p.serialNumber,
+        p.ipAddress || 'Non assignée',
+        p.type,
+        p.status,
+        p.observations || 'Good'
+      ]);
+    } else if (cat === 'network') {
+      filename = `LebrunSA_Equipements_Reseau_${today}.xlsx`;
+      sheetTitle = 'Réseau';
+      headers = [
+        'Tag Matériel',
+        'Entreprise',
+        'Site',
+        'Type d\'Équipement',
+        'Marque',
+        'Modèle',
+        'N° de Série',
+        'Nom d\'Hôte (Hostname)',
+        'Adresse IP',
+        'Adresse MAC',
+        'Statut',
+        'Observations'
+      ];
+      rows = networkAssets.map(n => [
+        n.assetTag,
+        n.company,
+        n.site,
+        n.deviceType,
+        n.brand,
+        n.model,
+        n.serialNumber,
+        n.hostname || 'N/A',
+        n.ipAddress || 'N/A',
+        n.macAddress || 'N/A',
+        n.status,
+        n.observations || 'Opérationnel'
+      ]);
+    } else if (cat === 'ups') {
+      filename = `LebrunSA_Inventaire_Onduleurs_UPS_${today}.xlsx`;
+      sheetTitle = 'Onduleurs UPS';
+      headers = [
+        'Tag Matériel',
+        'Entreprise',
+        'Site',
+        'Désignation',
+        'Marque',
+        'Modèle',
+        'Capacité (VA/W)',
+        'Référence / SN',
+        'Statut',
+        'Observations'
+      ];
+      rows = upsAssets.map(u => [
+        u.assetTag,
+        u.company,
+        u.site,
+        u.name,
+        u.brand,
+        u.model,
+        u.capacity,
+        u.reference,
+        u.status,
+        u.observations || 'Good'
+      ]);
     } else if (!cat || cat === 'it') {
-      rows.push(['ID Tag', 'Nom', 'Marque', 'Modèle', 'SN', 'Catégorie', 'Statut', 'Collaborateur Assigné', 'Département', 'Prix (€)', 'Localisation']);
-      itAssets.forEach(i => {
-        rows.push([i.assetTag, i.name, i.brand, i.model, i.serialNumber, i.subCategory, i.status, i.assignedTo || 'Libre', i.assignedDepartment || 'N/A', i.purchaseCost.toString(), i.location]);
+      filename = `LebrunSA_Postes_IT_Materiel_${today}.xlsx`;
+      sheetTitle = 'Postes IT';
+      headers = [
+        'Tag Matériel',
+        'Désignation Poste',
+        'Entreprise',
+        'Site / Affectation',
+        'Format',
+        'Marque',
+        'Modèle',
+        'N° Série (Service Tag)',
+        'Système d\'Exploitation (OS)',
+        'Processeur (CPU)',
+        'Mémoire RAM',
+        'Stockage SSD/Disque',
+        'Collaborateur Assigné',
+        'Département',
+        'Écran / Moniteur',
+        'État Écran',
+        'Clavier Associé',
+        'État Clavier',
+        'Souris Associée',
+        'État Souris',
+        'Statut Poste',
+        'Valeur d\'Achat (€)',
+        'Date Acquisition',
+        'Garantie',
+        'Notes & Observations'
+      ];
+      rows = itAssets.map(i => {
+        const ws = i.workstation;
+        return [
+          i.assetTag,
+          i.name,
+          i.company || 'Lebrun S.A.',
+          i.location || 'Delmas 52',
+          i.subCategory === 'laptop' ? 'PC Portable' : 'Poste Desktop',
+          i.brand || 'Dell',
+          i.model || 'OptiPlex Workstation',
+          i.serialNumber,
+          i.os || 'Windows 11 Pro',
+          i.cpu || 'Intel Core i5',
+          i.ram || '8 GB RAM',
+          i.storage || '500 GB SSD',
+          i.assignedTo || 'Non assigné (Réserve)',
+          i.assignedDepartment || 'N/A',
+          ws?.monitorModel || 'Écran standard',
+          ws?.monitorObs || 'Good',
+          ws?.keyboard || i.keyboard || 'Clavier Dell câble',
+          ws?.keyboardObs || (i as any).keyboardObs || 'Good',
+          ws?.mouse || i.mouse || 'Souris Dell',
+          ws?.mouseObs || (i as any).mouseObs || 'Good',
+          i.status === 'in_use' ? 'En service' : i.status === 'maintenance' ? 'Maintenance' : i.status === 'available' ? 'En réserve' : 'Déclassé',
+          i.purchaseCost ? i.purchaseCost.toString() : '0',
+          i.purchaseDate || 'N/A',
+          i.warrantyExpiry || 'N/A',
+          i.notes || ''
+        ];
       });
-      filename = 'lebronsa_it_equipment_export.csv';
     } else if (cat === 'starlink') {
-      rows.push(['Asset Tag', 'Nom Kit', 'Kit SN', 'Dish SN', 'Terminal ID', 'Modèle', 'Forfait', 'Statut Réseau', 'Vitesse Down (Mbps)', 'Vitesse Up (Mbps)', 'Latence (ms)', 'Site / Coordonnées', 'Responsable']);
-      starlinkKits.forEach(s => {
-        rows.push([s.assetTag, s.name, s.kitNumber, s.dishSerial, s.terminalId, s.tier, s.servicePlan, s.networkStatus, s.downloadSpeedMbps.toString(), s.uploadSpeedMbps.toString(), s.latencyMs.toString(), s.siteName, s.assignedTo || 'N/A']);
-      });
-      filename = 'lebronsa_starlink_flotte_export.csv';
+      filename = `LebrunSA_Flotte_Starlink_${today}.xlsx`;
+      sheetTitle = 'Starlink';
+      headers = [
+        'Tag Matériel',
+        'Nom du Kit',
+        'N° Série Kit',
+        'N° Série Antenne (Dish)',
+        'Terminal ID',
+        'Modèle',
+        'Forfait Satellite',
+        'Statut Réseau',
+        'Vitesse Down (Mbps)',
+        'Vitesse Up (Mbps)',
+        'Latence (ms)',
+        'Site / Coordonnées',
+        'Responsable'
+      ];
+      rows = starlinkKits.map(s => [
+        s.assetTag,
+        s.name,
+        s.kitNumber,
+        s.dishSerial,
+        s.terminalId,
+        s.tier,
+        s.servicePlan,
+        s.networkStatus,
+        s.downloadSpeedMbps.toString(),
+        s.uploadSpeedMbps.toString(),
+        s.latencyMs.toString(),
+        s.siteName,
+        s.assignedTo || 'N/A'
+      ]);
     } else if (cat === 'plans') {
-      rows.push(['Asset Tag', 'Nom Forfait', 'Opérateur', 'Numéro Ligne', 'Type SIM', 'Data Limite (Go)', 'Data Consommée (Go)', 'Coût Mensuel (€)', 'Renouvellement', 'Collaborateur Assigné']);
-      plans.forEach(p => {
-        rows.push([p.assetTag, p.name, p.operator, p.phoneNumber || 'N/A', p.simType, p.dataLimitGb.toString(), p.dataUsedGb.toString(), p.monthlyCost.toString(), p.renewalDate, p.assignedTo || 'N/A']);
-      });
-      filename = 'lebronsa_telecom_plans_export.csv';
+      filename = `LebrunSA_Lignes_Telecom_${today}.xlsx`;
+      sheetTitle = 'Forfaits Télécom';
+      headers = [
+        'Tag Matériel',
+        'Nom Forfait',
+        'Opérateur',
+        'Numéro Ligne',
+        'Format SIM',
+        'Data Limite (Go)',
+        'Data Consommée (Go)',
+        'Coût Mensuel (€)',
+        'Renouvellement',
+        'Collaborateur Assigné'
+      ];
+      rows = plans.map(p => [
+        p.assetTag,
+        p.name,
+        p.operator,
+        p.phoneNumber || 'N/A',
+        p.simType,
+        p.dataLimitGb.toString(),
+        p.dataUsedGb.toString(),
+        p.monthlyCost.toString(),
+        p.renewalDate,
+        p.assignedTo || 'N/A'
+      ]);
     } else if (cat === 'electronics') {
-      rows.push(['Asset Tag', 'Désignation', 'Sous-catégorie', 'Part Number', 'Fabricant', 'Quantité en Stock', 'Seuil Min', 'Prix Unitaire (€)', 'Emplacement']);
-      electronics.forEach(e => {
-        rows.push([e.assetTag, e.name, e.subCategory, e.partNumber, e.manufacturer, e.quantityInStock.toString(), e.minThreshold.toString(), e.unitCost.toString(), e.storageBin]);
-      });
-      filename = 'lebronsa_electronics_export.csv';
+      filename = `LebrunSA_Composants_Electronique_${today}.xlsx`;
+      sheetTitle = 'Électronique';
+      headers = [
+        'Tag Matériel',
+        'Désignation Pièce',
+        'Sous-catégorie',
+        'Part Number',
+        'Fabricant',
+        'Quantité en Stock',
+        'Seuil Minimum Alerte',
+        'Prix Unitaire (€)',
+        'Emplacement / Casier'
+      ];
+      rows = electronics.map(e => [
+        e.assetTag,
+        e.name,
+        e.subCategory,
+        e.partNumber,
+        e.manufacturer,
+        e.quantityInStock.toString(),
+        e.minThreshold.toString(),
+        e.unitCost.toString(),
+        e.storageBin
+      ]);
     }
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(r => r.map(cell => `"${(cell || '').replace(/"/g, '""')}"`).join(';')).join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadExcel(filename, headers, rows, sheetTitle);
+    showToast({
+      title: 'Extraction Excel (.xlsx) Réussie',
+      message: `Le classeur ${filename} a été généré avec succès.`,
+      type: 'success'
+    });
   };
 
   // Calculated stats
@@ -1887,6 +2415,22 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         toasts,
         showToast,
         dismissToast,
+        itAccounts,
+        isAccountModalOpen,
+        editingAccount,
+        openAccountModal,
+        closeAccountModal,
+        addITAccount,
+        updateITAccount,
+        deleteITAccount,
+        documents,
+        isDocumentModalOpen,
+        editingDocument,
+        openDocumentModal,
+        closeDocumentModal,
+        addDocument,
+        updateDocument,
+        deleteDocument,
         stats
       }}
     >

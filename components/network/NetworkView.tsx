@@ -22,7 +22,7 @@ import NetworkDetailsModal from './NetworkDetailsModal';
 import WifiPosterView from './WifiPosterView';
 
 export default function NetworkView() {
-  const { networkAssets, openNetworkModal, deleteNetworkAsset, wifiNetworks } = useInventory();
+  const { networkAssets, openNetworkModal, deleteNetworkAsset, wifiNetworks, exportCSV } = useInventory();
 
   const [activeSubTab, setActiveSubTab] = useState<'infrastructure' | 'wifi'>('infrastructure');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,27 +55,7 @@ export default function NetworkView() {
   }, [networkAssets]);
 
   const handleExportCSV = () => {
-    const headers = ['Tag', 'Entreprise', 'Site', "Type d'équipement", 'Marque', 'Modèle', 'N° Série', 'Adresse IP', 'État', 'Observations'];
-    const rows = filteredNetwork.map(n => [
-      n.assetTag,
-      n.company,
-      n.site,
-      n.deviceType,
-      n.brand,
-      n.model,
-      n.serialNumber,
-      n.ipAddress,
-      n.status,
-      n.observations
-    ]);
-    const csv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Equipements_Reseau_Lebronsa_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    exportCSV('network');
   };
 
   const columns: Column<NetworkAsset>[] = [

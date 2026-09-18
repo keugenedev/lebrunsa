@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function NetworkEquipmentView() {
-  const { networkAssets, upsAssets, openQRModal } = useInventory();
+  const { networkAssets, upsAssets, openQRModal, exportCSV } = useInventory();
 
   const [activeSubTab, setActiveSubTab] = useState<'network' | 'ups'>('network');
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,49 +67,9 @@ export default function NetworkEquipmentView() {
 
   const handleExportCSV = () => {
     if (activeSubTab === 'network') {
-      const headers = ['Tag', 'Entreprise', 'Site', "Type d'équipement", 'Marque', 'Modèle', 'N° Série', 'Adresse IP', 'État', 'Observations'];
-      const rows = filteredNetwork.map(n => [
-        n.assetTag,
-        n.company,
-        n.site,
-        n.deviceType,
-        n.brand,
-        n.model,
-        n.serialNumber,
-        n.ipAddress,
-        n.status,
-        n.observations
-      ]);
-      const csv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Equipements_Reseau_Lebronsa_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      exportCSV('network');
     } else {
-      const headers = ['Tag', 'Entreprise', 'Site', 'Nom UPS', 'Marque', 'Modèle', 'Capacité (VA/W)', 'Référence', 'État', 'Observations'];
-      const rows = filteredUPS.map(u => [
-        u.assetTag,
-        u.company,
-        u.site,
-        u.name,
-        u.brand,
-        u.model,
-        u.capacity,
-        u.reference,
-        u.status,
-        u.observations
-      ]);
-      const csv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Inventaire_UPS_Lebronsa_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
+      exportCSV('ups');
     }
   };
 

@@ -12,7 +12,9 @@ import {
   Printer, 
   Network, 
   Zap, 
-  KeyRound 
+  KeyRound,
+  UserCheck,
+  FileText
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -26,6 +28,8 @@ export default function Sidebar() {
     networkAssets,
     upsAssets,
     applicationAccounts,
+    itAccounts,
+    documents,
     logout,
     currentUser
   } = useInventory();
@@ -43,6 +47,8 @@ export default function Sidebar() {
     { id: 'ups', label: 'Onduleurs UPS', count: upsAssets?.length || 7, icon: Zap },
     { id: 'applications', label: 'Applications', count: applicationAccounts?.length || 13, icon: KeyRound },
     { id: 'personnel', label: 'Personnel', count: employees.length, icon: Users },
+    { id: 'accounts', label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck },
+    { id: 'documents', label: 'Documents', count: documents?.length || 0, icon: FileText },
     { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
     { id: 'settings', label: 'Configuration', icon: Settings }
   ];
@@ -61,13 +67,13 @@ export default function Sidebar() {
       <div className="py-3.5 px-5 border-b border-slate-100 flex items-center justify-center bg-white">
         <div
           onClick={() => setActiveTab('overview')}
-          className="cursor-pointer flex items-center justify-center w-full group"
+          className="cursor-pointer flex items-center justify-center w-full"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/Lebrunog.png"
             alt="Logo Lebrun S.A."
-            className="h-14 w-auto max-w-[170px] object-contain transition-transform group-hover:scale-105"
+            className="h-14 w-auto max-w-[170px] object-contain"
           />
         </div>
       </div>

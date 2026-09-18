@@ -92,8 +92,8 @@ export default function SettingsView() {
               <Database className="w-5 h-5 2xl:w-6 2xl:h-6" />
             </div>
             <div>
-              <h3 className="text-sm 2xl:text-base font-bold text-slate-900">Exports CSV & Tableurs</h3>
-              <p className="text-[11px] 2xl:text-xs text-slate-500">Extraction directe certifiée compatible Microsoft Excel</p>
+              <h3 className="text-sm 2xl:text-base font-bold text-slate-900">Exports Microsoft Excel (.xlsx)</h3>
+              <p className="text-[11px] 2xl:text-xs text-slate-500">Extraction native classeur Excel haute définition avec colonnes ajustées</p>
             </div>
           </div>
 
@@ -103,24 +103,48 @@ export default function SettingsView() {
                 onClick={() => exportCSV('printers')}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
-                <FileSpreadsheet className="w-4 h-4 text-slate-600" />
-                <span>CSV Imprimantes</span>
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Excel Imprimantes</span>
               </button>
 
               <button
                 onClick={() => exportCSV('it')}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
-                <FileSpreadsheet className="w-4 h-4 text-slate-600" />
-                <span>CSV Postes Dell</span>
+                <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+                <span>Excel Postes Dell</span>
               </button>
 
               <button
                 onClick={() => exportCSV('personnel')}
                 className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
               >
-                <Users className="w-4 h-4 text-slate-600" />
-                <span>CSV Personnel</span>
+                <Users className="w-4 h-4 text-indigo-600" />
+                <span>Excel Personnel</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV('accounts')}
+                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-purple-600" />
+                <span>Excel Informaticiens</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV('applications')}
+                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-amber-600" />
+                <span>Excel Applications</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV('network')}
+                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs 2xl:text-sm font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-cyan-600" />
+                <span>Excel Réseau & UPS</span>
               </button>
             </div>
 

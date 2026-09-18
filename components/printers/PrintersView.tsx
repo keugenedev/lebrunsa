@@ -32,7 +32,8 @@ export default function PrintersView() {
     printers, 
     deletePrinter, 
     openQRModal,
-    openPrinterModal
+    openPrinterModal,
+    exportCSV
   } = useInventory();
 
   const [selectedPrinterForDetails, setSelectedPrinterForDetails] = useState<PrinterAsset | null>(null);
@@ -91,28 +92,7 @@ export default function PrintersView() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Entreprise', 'Adresse / Site', "Nom de l'imprimante", 'Marque', 'Modèle', 'N° de série', 'Adresse IP', 'Type', 'État', 'Observations'];
-    const rows = filteredPrinters.map(p => [
-      p.company,
-      p.site,
-      p.name,
-      p.brand,
-      p.model,
-      p.serialNumber,
-      p.ipAddress,
-      p.type,
-      p.status,
-      p.observations
-    ]);
-
-    const csvContent = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Inventaire_Imprimantes_Lebronsa_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    exportCSV('printers');
   };
 
   const columns: Column<PrinterAsset>[] = [

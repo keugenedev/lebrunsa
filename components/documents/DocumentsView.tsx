@@ -1,0 +1,803 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { useInventory } from '@/context/InventoryContext';
+import { DocumentItem, DocumentCategory, Employee } from '@/types/inventory';
+import { 
+  Plus, 
+  Search, 
+  Download, 
+  Edit2, 
+  Trash2, 
+  Filter,
+  FileText,
+  Eye,
+  CheckCircle2,
+  Printer,
+  FileCheck,
+  Laptop,
+  Monitor,
+  Keyboard,
+  Mouse
+} from 'lucide-react';
+import AssignmentSheetModal from './AssignmentSheetModal';
+import { 
+  printSingleAssignmentSheet, 
+  printAllAssignmentSheets
+} from '@/lib/printAssignmentSheet';
+
+const CATEGORIES: DocumentCategory[] = [
+  'Fiches d\'Affectation',
+  'Procédures & Guides IT',
+  'Contrats & Garanties',
+  'Schémas Réseau & Infrastructure',
+  'Politiques de Sécurité',
+  'Factures & Bons de Commande',
+  'Procès-Verbaux & Décharges'
+];
+
+export default function DocumentsView() {
+  const {
+    documents,
+    employees,
+    openDocumentModal,
+    deleteDocument,
+    exportCSV,
+    searchQuery: globalSearch,
+    showToast
+  } = useInventory();
+
+  // Sub-tab selection: 'assignment_sheets' by default
+  const [activeSubTab, setActiveSubTab] = useState<'assignment_sheets' | 'repository'>('assignment_sheets');
+
+  // Sheet Modal State
+  const [selectedEmpForSheet, setSelectedEmpForSheet] = useState<Employee | null>(null);
+
+  // Search & Filters for Fiches
+  const [sheetSearch, setSheetSearch] = useState('');
+  const [sheetCompanyFilter, setSheetCompanyFilter] = useState('all');
+
+  // Search & Filters for Repository
+  const [repoSearch, setRepoSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCompany, setSelectedCompany] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
+  // Active search query
+  const effectiveSheetSearch = sheetSearch || globalSearch || '';
+  const effectiveRepoSearch = repoSearch || globalSearch || '';
+
+  // Filtered Employees with Assigned Equipment
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      // Company filter
+      if (sheetCompanyFilter !== 'all' && emp.company !== sheetCompanyFilter) {
+        return false;
+      }
+      // Search
+      if (effectiveSheetSearch.trim()) {
+        const query = effectiveSheetSearch.toLowerCase();
+        const matchesName = emp.fullName?.toLowerCase().includes(query) || false;
+        const matchesId = emp.employeeId?.toLowerCase().includes(query) || false;
+        const matchesCompany = emp.company?.toLowerCase().includes(query) || false;
+        const matchesSite = emp.site?.toLowerCase().includes(query) || false;
+        const matchesJob = emp.jobTitle?.toLowerCase().includes(query) || false;
+        const matchesPC = emp.workstation?.pcName?.toLowerCase().includes(query) || false;
+        const matchesSerial = emp.workstation?.pcSerial?.toLowerCase().includes(query) || false;
+        const matchesMonitor = emp.workstation?.monitorSerial?.toLowerCase().includes(query) || false;
+
+        return matchesName || matchesId || matchesCompany || matchesSite || matchesJob || matchesPC || matchesSerial || matchesMonitor;
+      }
+      return true;
+    });
+  }, [employees, sheetCompanyFilter, effectiveSheetSearch]);
+
+  // Overall calculations for assignment sheets (NO PRICE)
+  const sheetStats = useMemo(() => {
+    const total = filteredEmployees.length;
+    const laptops = filteredEmployees.filter(e => e.workstation?.type?.toLowerCase().includes('laptop') || e.workstation?.pcName?.toLowerCase().includes('lap')).length;
+    const desktops = total - laptops;
+
+    return {
+      total,
+      laptops,
+      desktops
+    };
+  }, [filteredEmployees]);
+
+  // Filtered Documents in Repository
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc => {
+      if (selectedCategory !== 'all' && doc.category !== selectedCategory) {
+        return false;
+      }
+      if (selectedCompany !== 'all' && doc.company !== selectedCompany) {
+        return false;
+      }
+      if (selectedStatus !== 'all' && doc.status !== selectedStatus) {
+        return false;
+      }
+      if (effectiveRepoSearch.trim()) {
+        const query = effectiveRepoSearch.toLowerCase();
+        const matchesTitle = doc.title.toLowerCase().includes(query);
+        const matchesRef = doc.reference?.toLowerCase().includes(query) || false;
+        const matchesAuthor = doc.author.toLowerCase().includes(query);
+        const matchesDesc = doc.description?.toLowerCase().includes(query) || false;
+        const matchesCategory = doc.category.toLowerCase().includes(query);
+        const matchesCompany = doc.company.toLowerCase().includes(query);
+
+        return matchesTitle || matchesRef || matchesAuthor || matchesDesc || matchesCategory || matchesCompany;
+      }
+      return true;
+    });
+  }, [documents, selectedCategory, selectedCompany, selectedStatus, effectiveRepoSearch]);
+
+  // Navigation inside sheet preview modal
+  const handleNextEmployee = () => {
+    if (!selectedEmpForSheet) return;
+    const idx = filteredEmployees.findIndex(e => e.id === selectedEmpForSheet.id);
+    if (idx < filteredEmployees.length - 1) {
+      setSelectedEmpForSheet(filteredEmployees[idx + 1]);
+    } else {
+      setSelectedEmpForSheet(filteredEmployees[0]);
+    }
+  };
+
+  const handlePrevEmployee = () => {
+    if (!selectedEmpForSheet) return;
+    const idx = filteredEmployees.findIndex(e => e.id === selectedEmpForSheet.id);
+    if (idx > 0) {
+      setSelectedEmpForSheet(filteredEmployees[idx - 1]);
+    } else {
+      setSelectedEmpForSheet(filteredEmployees[filteredEmployees.length - 1]);
+    }
+  };
+
+  const handleDelete = (doc: DocumentItem) => {
+    if (confirm(`Êtes-vous certain de vouloir supprimer le document "${doc.title}" ?`)) {
+      deleteDocument(doc.id);
+    }
+  };
+
+  const handleDownloadDoc = (doc: DocumentItem) => {
+    const content = `========================================================
+GROUPE LEBRUN S.A. - DOCUMENT OFFICIEL IT
+========================================================
+Titre       : ${doc.title}
+Référence   : ${doc.reference || 'N/A'}
+Catégorie   : ${doc.category}
+Entreprise  : ${doc.company}
+Site        : ${doc.site || 'Delmas 52'}
+Auteur      : ${doc.author}
+Date        : ${doc.lastUpdated}
+Statut      : ${doc.status === 'valide' ? 'Valide / En vigueur' : doc.status === 'en_revue' ? 'En cours de revue' : 'Archivé'}
+Format      : ${doc.fileType.toUpperCase()} (${doc.fileSize || 'Standard'})
+========================================================
+DESCRIPTION & OBJET :
+${doc.description || 'Document interne du parc informatique Lebrun S.A.'}
+========================================================
+Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
+`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${doc.reference || 'DOC'}_${doc.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast({
+      title: 'Téléchargement initié',
+      message: `Fiche ${doc.reference || doc.title} téléchargée avec succès.`,
+      type: 'success'
+    });
+  };
+
+  const getFormatBadge = (fileType: string) => {
+    switch (fileType?.toLowerCase()) {
+      case 'pdf':
+        return (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            PDF
+          </span>
+        );
+      case 'xlsx':
+        return (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            XLSX
+          </span>
+        );
+      case 'docx':
+        return (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            DOCX
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+            TXT
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6 pb-12 select-none font-sans">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+        <div>
+          <h1 className="text-sm font-medium text-slate-800 tracking-tight">
+            Documents & Procédures IT
+          </h1>
+          <p className="text-xs text-slate-400 font-normal mt-0.5">
+            Fiches individuelles d&apos;affectation matériel (PDF), décharges de responsabilité et registre documentaire officiel
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {activeSubTab === 'assignment_sheets' ? (
+            <>
+              <button
+                onClick={() => printAllAssignmentSheets(filteredEmployees)}
+                className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+                title="Imprimer ou enregistrer toutes les fiches d'affectation en PDF"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Imprimer Toutes les Fiches (PDF)</span>
+              </button>
+              <button
+                onClick={() => exportCSV('personnel')}
+                className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
+                title="Exporter l'inventaire en Excel (.xlsx)"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <span>Export Excel</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => openDocumentModal()}
+                className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Nouveau Document</span>
+              </button>
+              <button
+                onClick={() => exportCSV('documents')}
+                className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
+                title="Exporter le registre en Excel (.xlsx)"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <span>Export Excel</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Sub-Tabs Selector */}
+      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
+        <button
+          onClick={() => setActiveSubTab('assignment_sheets')}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+            activeSubTab === 'assignment_sheets'
+              ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+          }`}
+        >
+          <FileCheck className="w-3.5 h-3.5" />
+          <span>Fiches d&apos;Affectation Matériel (PDF)</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+            activeSubTab === 'assignment_sheets' ? 'bg-slate-800 text-slate-200' : 'bg-slate-200 text-slate-700'
+          }`}>
+            {employees.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('repository')}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+            activeSubTab === 'repository'
+              ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>Registre & Procédures IT</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+            activeSubTab === 'repository' ? 'bg-slate-800 text-slate-200' : 'bg-slate-200 text-slate-700'
+          }`}>
+            {documents.length}
+          </span>
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* SUB-TAB 1: FICHES D'AFFECTATION MATÉRIEL (PDF)                           */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'assignment_sheets' && (
+        <div className="space-y-6">
+          {/* KPI Stats (Clean & Professional - NO PRICE) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Collaborateurs Équipés</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">{sheetStats.total}</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Postes Fixes (Desktops)</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">{sheetStats.desktops}</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Claviers & Souris Conformes</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">100% (13/13)</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Fiches Prêtes à Imprimer</p>
+              <p className="text-xl font-bold text-emerald-700 mt-1">100% (13/13)</p>
+            </div>
+          </div>
+
+          {/* Search & Filters */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Search */}
+              <div className="sm:col-span-2 relative flex items-center">
+                <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher collaborateur par nom, matricule, PC, numéro de série, écran, clavier..."
+                  value={sheetSearch}
+                  onChange={(e) => setSheetSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                />
+              </div>
+
+              {/* Company Filter */}
+              <div>
+                <select
+                  value={sheetCompanyFilter}
+                  onChange={(e) => setSheetCompanyFilter(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all cursor-pointer"
+                >
+                  <option value="all">Toutes les Entreprises</option>
+                  <option value="Lebrun S.A.">Lebrun S.A.</option>
+                  <option value="Caribe Motors">Caribe Motors</option>
+                  <option value="Autobiz">Autobiz</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Groupe Lebrun">Groupe Lebrun</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Table: Exact columns as requested (NO PRICE) */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    {/* Première colonne: Nom de la personne & Coordonnées */}
+                    <th className="py-3 px-3.5" style={{ width: '30%' }}>
+                      Nom de la personne & Coordonnées
+                    </th>
+                    {/* Équipements assignés avec détails complets (clavier, souris, écran, PC) */}
+                    <th className="py-3 px-3.5" style={{ width: '50%' }}>
+                      Équipements Assignés (Détails Complets)
+                    </th>
+                    {/* Statut Fiche & Visas */}
+                    <th className="py-3 px-3.5 text-center" style={{ width: '10%' }}>
+                      Statut Fiche
+                    </th>
+                    {/* Actions / Impression PDF */}
+                    <th className="py-3 px-3.5 text-right" style={{ width: '10%' }}>
+                      Fiche PDF
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredEmployees.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-10 text-center text-slate-400">
+                        <p className="text-sm font-semibold text-slate-600">Aucun collaborateur trouvé</p>
+                        <p className="text-xs text-slate-400 mt-1">Modifiez vos critères de recherche ou de filtre.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredEmployees.map((emp) => {
+                      const ws = emp.workstation;
+
+                      return (
+                        <tr key={emp.id} className="hover:bg-slate-50/70 transition-colors">
+                          {/* 1. Nom de la personne dans la première colonne */}
+                          <td className="py-3.5 px-3.5 align-top">
+                            <div>
+                              <div className="font-bold text-slate-900 text-[13px] tracking-tight">
+                                {emp.fullName}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1 font-mono text-[11px] text-slate-600">
+                                <span className="px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 font-semibold text-slate-700">
+                                  {emp.employeeId}
+                                </span>
+                                <span>•</span>
+                                <span className="font-sans font-medium text-slate-800">{emp.company}</span>
+                              </div>
+                              <div className="text-[11px] text-slate-500 mt-1">
+                                {emp.site || emp.location || 'Delmas 52'}
+                                {emp.department ? ` • ${emp.department}` : ''}
+                              </div>
+                              {emp.accounts?.windowsUsername && (
+                                <div className="mt-1.5 text-[10.5px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 inline-block">
+                                  <span className="text-slate-400">Session :</span> <span className="font-mono font-semibold text-slate-800">{emp.accounts.windowsUsername}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* 2. Équipement assigné avec détails complets (clavier, souris, écran, PC) */}
+                          <td className="py-3.5 px-3.5 align-top">
+                            {ws ? (
+                              <div className="space-y-2 text-[11.5px]">
+                                {/* Ordinateur */}
+                                <div className="flex items-start gap-2">
+                                  <Laptop className="w-3.5 h-3.5 text-slate-600 mt-0.5 shrink-0" />
+                                  <div>
+                                    <span className="font-bold text-slate-900">{ws.pcName}</span>
+                                    <span className="text-slate-400 mx-1">•</span>
+                                    <span className="font-mono text-slate-600">S/N: {ws.pcSerial}</span>
+                                    <div className="text-[10.5px] text-slate-500 line-clamp-1">{ws.pcSpecs}</div>
+                                  </div>
+                                </div>
+
+                                {/* Écran */}
+                                <div className="flex items-start gap-2 pt-1 border-t border-slate-100">
+                                  <Monitor className="w-3.5 h-3.5 text-slate-500 mt-0.5 shrink-0" />
+                                  <div className="text-[11px]">
+                                    <span className="font-medium text-slate-800">{ws.monitorModel}</span>
+                                    <span className="text-slate-400 mx-1">•</span>
+                                    <span className="font-mono text-slate-500">S/N: {ws.monitorSerial}</span>
+                                    {ws.monitorObs && ws.monitorObs !== 'Good' && (
+                                      <span className="ml-1.5 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 font-semibold">
+                                        {ws.monitorObs}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Clavier & Souris avec détails complets */}
+                                <div className="flex items-center gap-3 pt-1 border-t border-slate-100 text-[11px]">
+                                  {/* Clavier */}
+                                  <div className="flex items-center gap-1.5">
+                                    <Keyboard className="w-3 h-3 text-slate-500 shrink-0" />
+                                    <span className="text-slate-700">
+                                      {ws.keyboard} ({ws.keyboardDetails || 'Alpha-numérique'})
+                                    </span>
+                                    <span className={`text-[9.5px] font-semibold px-1 rounded ${
+                                      ws.keyboardObs?.toLowerCase().includes('deffect')
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}>
+                                      {ws.keyboardObs || 'Good'}
+                                    </span>
+                                  </div>
+
+                                  <span className="text-slate-300">•</span>
+
+                                  {/* Souris */}
+                                  <div className="flex items-center gap-1.5">
+                                    <Mouse className="w-3 h-3 text-slate-500 shrink-0" />
+                                    <span className="text-slate-700">{ws.mouse} ({ws.mouseDetails})</span>
+                                    <span className={`text-[9.5px] font-semibold px-1 rounded ${
+                                      ws.mouseObs?.toLowerCase().includes('deffect')
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}>
+                                      {ws.mouseObs || 'Good'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic">Aucun équipement principal assigné</span>
+                            )}
+                          </td>
+
+                          {/* 3. Statut & Visas de signatures */}
+                          <td className="py-3.5 px-3.5 align-middle text-center">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Conforme
+                            </span>
+                            <div className="text-[9px] text-slate-400 mt-0.5">Visas prêts</div>
+                          </td>
+
+                          {/* 4. Actions / PDF */}
+                          <td className="py-3.5 px-3.5 align-middle text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Direct Print PDF */}
+                              <button
+                                onClick={() => printSingleAssignmentSheet(emp)}
+                                className="h-7 flex items-center gap-1 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold shadow-2xs transition-all cursor-pointer active:scale-95"
+                                title="Imprimer ou enregistrer en PDF cette fiche individuelle avec double logo et signatures"
+                              >
+                                <Printer className="w-3 h-3" />
+                                <span>PDF</span>
+                              </button>
+
+                              {/* Preview Sheet Modal */}
+                              <button
+                                onClick={() => setSelectedEmpForSheet(emp)}
+                                className="h-7 flex items-center gap-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 text-[11px] font-semibold transition-all cursor-pointer"
+                                title="Aperçu A4 haute fidélité"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>Aperçu</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-TAB 2: REGISTRE DES DOCUMENTS & PROCÉDURES                            */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'repository' && (
+        <div className="space-y-6">
+          {/* KPI Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Total Documents</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">{documents.length}</p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Procédures & Guides</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">
+                {documents.filter(d => d.category === 'Procédures & Guides IT').length}
+              </p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Fiches d&apos;Affectation</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">
+                {documents.filter(d => d.category === 'Fiches d\'Affectation').length}
+              </p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
+              <p className="text-xs font-medium text-slate-500">Documents Validés</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">
+                {documents.filter(d => d.status === 'valide').length}
+              </p>
+            </div>
+          </div>
+
+          {/* Search & Filters */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Search */}
+              <div className="relative flex items-center">
+                <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher titre, référence, auteur..."
+                  value={repoSearch}
+                  onChange={(e) => setRepoSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="relative flex items-center">
+                <Filter className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                >
+                  <option value="all">Toutes les Catégories</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Company Filter */}
+              <div>
+                <select
+                  value={selectedCompany}
+                  onChange={(e) => setSelectedCompany(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                >
+                  <option value="all">Toutes les Entreprises</option>
+                  <option value="Lebrun S.A.">Lebrun S.A.</option>
+                  <option value="Caribe Motors">Caribe Motors</option>
+                  <option value="Autobiz">Autobiz</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Groupe Lebrun">Groupe Lebrun</option>
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                >
+                  <option value="all">Tous les Statuts</option>
+                  <option value="valide">Valides / En vigueur</option>
+                  <option value="en_revue">En cours de revue</option>
+                  <option value="archive">Archivés</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Clean Table */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="py-3 px-3.5">Document & Référence</th>
+                    <th className="py-3 px-3.5">Catégorie</th>
+                    <th className="py-3 px-3.5">Entreprise</th>
+                    <th className="py-3 px-3.5">Format & Taille</th>
+                    <th className="py-3 px-3.5">Auteur</th>
+                    <th className="py-3 px-3.5">Date MAJ</th>
+                    <th className="py-3 px-3.5">Statut</th>
+                    <th className="py-3 px-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredDocuments.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-10 text-center text-slate-400">
+                        <p className="text-sm font-semibold text-slate-600">Aucun document trouvé</p>
+                        <p className="text-xs text-slate-400 mt-1">Modifiez vos filtres ou ajoutez un nouveau document.</p>
+                        <button
+                          onClick={() => openDocumentModal()}
+                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Ajouter un document
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDocuments.map((doc) => (
+                      <tr key={doc.id} className="hover:bg-slate-50/70 transition-colors">
+                        {/* Title & Ref */}
+                        <td className="py-3 px-3.5">
+                          <div className="max-w-xs">
+                            <p className="font-semibold text-slate-900 truncate">
+                              {doc.title}
+                            </p>
+                            <p className="text-[11px] font-mono text-slate-500 mt-0.5 flex items-center gap-1.5">
+                              <span>{doc.reference || 'REF-N/A'}</span>
+                              {doc.site && (
+                                <>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="text-slate-500">{doc.site}</span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                            {doc.category}
+                          </span>
+                        </td>
+
+                        {/* Company */}
+                        <td className="py-3 px-3.5 font-medium text-slate-800 whitespace-nowrap">
+                          {doc.company}
+                        </td>
+
+                        {/* Format */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            {getFormatBadge(doc.fileType)}
+                            <span className="text-slate-500 text-[11px] font-mono">
+                              {doc.fileSize || '250 KB'}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Author */}
+                        <td className="py-3 px-3.5 text-slate-700 whitespace-nowrap">
+                          {doc.author}
+                        </td>
+
+                        {/* Date */}
+                        <td className="py-3 px-3.5 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                          {doc.lastUpdated}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 px-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              doc.status === 'valide' 
+                                ? 'bg-emerald-500' 
+                                : doc.status === 'en_revue' 
+                                  ? 'bg-amber-500' 
+                                  : 'bg-slate-400'
+                            }`} />
+                            {doc.status === 'valide' 
+                              ? 'Valide' 
+                              : doc.status === 'en_revue' 
+                                ? 'En revue' 
+                                : 'Archivé'}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleDownloadDoc(doc)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title="Télécharger / Exporter ce document"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => openDocumentModal(doc)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title="Modifier ce document"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(doc)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Supprimer ce document"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Sheet Preview Modal */}
+      {selectedEmpForSheet && (
+        <AssignmentSheetModal
+          employee={selectedEmpForSheet}
+          onClose={() => setSelectedEmpForSheet(null)}
+          onNext={handleNextEmployee}
+          onPrev={handlePrevEmployee}
+          currentIndex={filteredEmployees.findIndex(e => e.id === selectedEmpForSheet.id)}
+          totalCount={filteredEmployees.length}
+        />
+      )}
+    </div>
+  );
+}

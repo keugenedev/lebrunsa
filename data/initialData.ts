@@ -1,4 +1,4 @@
-import { ITAsset, WifiNetwork, TelecomPlan, StarlinkKit, ElectronicComponent, StockMovement, AlertItem, Employee, PrinterAsset, NetworkAsset, UPSAsset, ApplicationAccount } from '@/types/inventory';
+import { ITAsset, WifiNetwork, TelecomPlan, StarlinkKit, ElectronicComponent, StockMovement, AlertItem, Employee, PrinterAsset, NetworkAsset, UPSAsset, ApplicationAccount, ITAccount, DocumentItem } from '@/types/inventory';
 
 export const INITIAL_PRINTERS: PrinterAsset[] = [
   {
@@ -2177,3 +2177,171 @@ export const INITIAL_WIFI_NETWORKS: WifiNetwork[] = [
   }
 ];
 
+export const INITIAL_IT_ACCOUNTS: ITAccount[] = [
+  {
+    id: "it-acc-1",
+    username: "keugene",
+    fullName: "Kensly Eugene",
+    firstName: "Kensly",
+    lastName: "Eugene",
+    email: "keugene@lebrunsa.com",
+    role: "Super Administrateur IT",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    phone: "+509 3415-2280",
+    status: "active",
+    specialty: "Administration Systèmes & Réseaux, Sécurité IT, Parc Informatique",
+    notes: "Compte Super Administrateur Principal du Groupe Lebrun S.A.",
+    createdAt: "2024-01-10T08:00:00Z",
+    updatedAt: "2026-09-18T12:00:00Z"
+  },
+  {
+    id: "it-acc-2",
+    username: "rmdguerrier",
+    fullName: "Roody-Max-Dominique Guerrier",
+    firstName: "Roody-Max-Dominique",
+    lastName: "Guerrier",
+    email: "rmdguerrier@lebrunsa.com",
+    role: "Administrateur Systèmes & Réseaux",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    phone: "+509 3700-1234",
+    status: "active",
+    specialty: "Gestion ERP Microsoft GP, Infrastructure, Déploiements",
+    notes: "Administrateur Systèmes & Applications Métier GP",
+    createdAt: "2024-02-15T09:00:00Z",
+    updatedAt: "2026-09-18T12:00:00Z"
+  },
+  {
+    id: "it-acc-3",
+    username: "adorcius",
+    fullName: "Alexis Dorcius",
+    firstName: "Alexis",
+    lastName: "Dorcius",
+    email: "adorcius@autobiz.com",
+    role: "Technicien Support & Maintenance",
+    company: "Autobiz",
+    site: "Delmas 52",
+    phone: "+509 3612-4578",
+    status: "active",
+    specialty: "Support Utilisateurs, Diagnostic Postes, Maintenance Matérielle",
+    notes: "Technicien Support Autobiz S.A.",
+    createdAt: "2024-03-01T10:00:00Z",
+    updatedAt: "2026-09-18T12:00:00Z"
+  }
+];
+
+export const INITIAL_DOCUMENTS: DocumentItem[] = [
+  {
+    id: "doc-1",
+    title: "Fiche d'Affectation Matériel IT & Poste de Travail",
+    reference: "DOC-LEB-2026-001",
+    category: "Fiches d'Affectation",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    fileType: "pdf",
+    fileSize: "240 KB",
+    author: "Kensly Eugene",
+    lastUpdated: "2026-09-10",
+    description: "Modèle officiel de remise et décharge d'ordinateur Dell, moniteur, clavier et souris aux collaborateurs.",
+    status: "valide"
+  },
+  {
+    id: "doc-2",
+    title: "Procédure Déploiement & Configuration Antenne Starlink V4",
+    reference: "DOC-LEB-2026-002",
+    category: "Procédures & Guides IT",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    fileType: "pdf",
+    fileSize: "1.2 MB",
+    author: "Kensly Eugene",
+    lastUpdated: "2026-09-05",
+    description: "Guide technique pas-à-pas pour l'alignement, le câblage et la configuration réseau du kit satellite Starlink.",
+    status: "valide"
+  },
+  {
+    id: "doc-3",
+    title: "Guide d'Accès & Paramétrage Sessions DealerPro & Microsoft GP",
+    reference: "DOC-CAR-2026-003",
+    category: "Procédures & Guides IT",
+    company: "Caribe Motors",
+    site: "Pétion-Ville",
+    fileType: "pdf",
+    fileSize: "850 KB",
+    author: "Roody-Max Guerrier",
+    lastUpdated: "2026-08-28",
+    description: "Manuel utilisateur pour la connexion aux sessions Windows et le lancement des ERP métiers DealerPro et Microsoft GP.",
+    status: "valide"
+  },
+  {
+    id: "doc-4",
+    title: "Schéma d'Architecture Réseau & Topologie Switches Cisco",
+    reference: "DOC-LEB-2026-004",
+    category: "Schémas Réseau & Infrastructure",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    fileType: "png",
+    fileSize: "3.4 MB",
+    author: "Roody-Max Guerrier",
+    lastUpdated: "2026-09-12",
+    description: "Cartographie complète des VLANs, commutateurs, adresses IP fixes et liaisons montantes du siège Delmas 52.",
+    status: "valide"
+  },
+  {
+    id: "doc-5",
+    title: "Politique de Sécurité des Systèmes d'Information (PSSI)",
+    reference: "DOC-GRP-2026-005",
+    category: "Politiques de Sécurité",
+    company: "Groupe Lebrun",
+    site: "Delmas 52",
+    fileType: "pdf",
+    fileSize: "520 KB",
+    author: "Kensly Eugene",
+    lastUpdated: "2026-08-15",
+    description: "Règles applicables pour la gestion des mots de passe, l'utilisation d'Internet et la protection des données d'entreprise.",
+    status: "valide"
+  },
+  {
+    id: "doc-6",
+    title: "Contrat de Maintenance du Parc Imprimantes HP & GoDEX",
+    reference: "DOC-LEB-2026-006",
+    category: "Contrats & Garanties",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    fileType: "pdf",
+    fileSize: "1.8 MB",
+    author: "Direction Générale",
+    lastUpdated: "2026-07-20",
+    description: "Conditions contractuelles, SLA de dépannage et approvisionnement en toners des imprimantes réseau et étiqueteuses.",
+    status: "valide"
+  },
+  {
+    id: "doc-7",
+    title: "Procédure de Maintenance Préventive des Onduleurs UPS APC/Forza",
+    reference: "DOC-AUT-2026-007",
+    category: "Procédures & Guides IT",
+    company: "Autobiz",
+    site: "Delmas 52",
+    fileType: "pdf",
+    fileSize: "640 KB",
+    author: "Alexis Dorcius",
+    lastUpdated: "2026-08-10",
+    description: "Checklist trimestrielle de vérification des batteries, tests de charge et remplacement d'onduleurs de secours.",
+    status: "valide"
+  },
+  {
+    id: "doc-8",
+    title: "Procès-Verbal de Décharge & Restitution d'Équipements",
+    reference: "DOC-LEB-2026-008",
+    category: "Procès-Verbaux & Décharges",
+    company: "Lebrun S.A.",
+    site: "Delmas 52",
+    fileType: "docx",
+    fileSize: "180 KB",
+    author: "Kensly Eugene",
+    lastUpdated: "2026-09-01",
+    description: "Document juridique signé lors de la restitution d'ordinateurs, téléphones de service et accessoires lors des départs.",
+    status: "valide"
+  }
+];
