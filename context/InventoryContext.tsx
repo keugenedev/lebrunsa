@@ -812,11 +812,23 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   // Chargement et synchronisation avec Supabase
   // Chargement et synchronisation avec Supabase
+  const sortByNewest = <T extends { createdAt?: string; id?: string }>(items: T[]): T[] => {
+    return [...items].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
+      const idA = String(a.id || '');
+      const idB = String(b.id || '');
+      return idB.localeCompare(idA, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  };
+
+  // Chargement et synchronisation avec Supabase
   useEffect(() => {
     async function loadFromSupabase() {
       try {
-        // 1. Load Printers from Supabase
-        const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*');
+        // 1. Load Printers from Supabase (Newest first)
+        const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*').order('created_at', { ascending: false });
         if (!prnErr && dbPrinters && dbPrinters.length > 0) {
           setPrinters(prev => {
             const mappedFromDb: PrinterAsset[] = dbPrinters.map((r: any, idx: number) => {
@@ -842,12 +854,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
 
             const localOnly = prev.filter(p => !mappedFromDb.some(dbP => dbP.serialNumber === p.serialNumber || dbP.assetTag === p.assetTag));
-            return [...mappedFromDb, ...localOnly];
+            return sortByNewest([...localOnly, ...mappedFromDb]);
           });
         }
 
-        // 2. Load Users / Employees from Supabase
-        const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
+        // 2. Load Users / Employees from Supabase (Newest first)
+        const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*').order('created_at', { ascending: false });
         if (!usrErr && dbUsers && dbUsers.length > 0) {
           setEmployees(prev => {
             const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
@@ -892,12 +904,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
 
             const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || (dbE.email && dbE.email === e.email)));
-            return [...mappedFromDb, ...localOnly];
+            return sortByNewest([...localOnly, ...mappedFromDb]);
           });
         }
 
-        // 3. Load Network Equipment from Supabase
-        const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*');
+        // 3. Load Network Equipment from Supabase (Newest first)
+        const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*').order('created_at', { ascending: false });
         if (!netErr && dbNet && dbNet.length > 0) {
           const mappedNet: NetworkAsset[] = dbNet.map((row: any, idx: number) => ({
             id: row.network_equipment_id ? String(row.network_equipment_id) : (row.id ? row.id.toString() : `net-${idx + 1}`),
@@ -916,11 +928,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setNetworkAssets(mappedNet);
+          setNetworkAssets(sortByNewest(mappedNet));
         }
 
-        // 4. Load UPS from Supabase
-        const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*');
+        // 4. Load UPS from Supabase (Newest first)
+        const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*').order('created_at', { ascending: false });
         if (!upsErr && dbUps && dbUps.length > 0) {
           const mappedUps: UPSAsset[] = dbUps.map((row: any, idx: number) => ({
             id: row.ups_id ? String(row.ups_id) : (row.id ? row.id.toString() : `ups-${idx + 1}`),
@@ -937,11 +949,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setUpsAssets(mappedUps);
+          setUpsAssets(sortByNewest(mappedUps));
         }
 
-        // 5. Load User Applications from Supabase
-        const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*');
+        // 5. Load User Applications from Supabase (Newest first)
+        const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*').order('app_account_id', { ascending: false });
         if (!appsErr && dbApps && dbApps.length > 0) {
           setApplicationAccounts(prev => {
             const syncedFromDb = dbApps.map((row: any) => {
@@ -978,7 +990,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               !dbApps.some((r: any) => r.username?.toLowerCase() === localAcc.username.toLowerCase())
             );
 
-            return [...syncedFromDb, ...localOnly];
+            return sortByNewest([...localOnly, ...syncedFromDb]);
           });
 
           setEmployees(prevEmp => {
@@ -1003,8 +1015,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           });
         }
 
-        // 6. Load IT Equipment from Supabase (Merging DB and local)
-        const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
+        // 6. Load IT Equipment from Supabase (Newest first)
+        const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*').order('created_at', { ascending: false });
         if (!itErr && dbIT && dbIT.length > 0) {
           setItAssets(prev => {
             const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
@@ -1063,12 +1075,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
 
             const localOnly = prev.filter(a => !mappedFromDb.some(dbA => dbA.serialNumber === a.serialNumber || dbA.assetTag === a.assetTag));
-            return [...mappedFromDb, ...localOnly];
+            return sortByNewest([...localOnly, ...mappedFromDb]);
           });
         }
 
-        // 7. Load Wi-Fi Networks from Supabase
-        const { data: dbWifi, error: wifiErr } = await supabase.from('wifi_networks').select('*');
+        // 7. Load Wi-Fi Networks from Supabase (Newest first)
+        const { data: dbWifi, error: wifiErr } = await supabase.from('wifi_networks').select('*').order('created_at', { ascending: false });
         if (!wifiErr && dbWifi && dbWifi.length > 0) {
           const mappedWifi: WifiNetwork[] = dbWifi.map((row: any, idx: number) => ({
             id: row.wifi_id || `wifi-${idx + 1}`,
@@ -1084,11 +1096,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             notes: row.notes || '',
             starlinkDetails: row.starlink_details || undefined
           }));
-          setWifiNetworks(mappedWifi);
+          setWifiNetworks(sortByNewest(mappedWifi));
         }
 
-        // 8. Load Documents from Supabase
-        const { data: dbDocs, error: docErr } = await supabase.from('documents').select('*');
+        // 8. Load Documents from Supabase (Newest first)
+        const { data: dbDocs, error: docErr } = await supabase.from('documents').select('*').order('created_at', { ascending: false });
         if (!docErr && dbDocs && dbDocs.length > 0) {
           const mappedDocs: DocumentItem[] = dbDocs.map((row: any, idx: number) => ({
             id: row.document_id || `doc-${idx + 1}`,
@@ -1105,7 +1117,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setDocuments(mappedDocs);
+          setDocuments(sortByNewest(mappedDocs));
         }
       } catch (err) {
         console.error('Erreur synchronisation Supabase:', err);
