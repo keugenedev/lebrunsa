@@ -988,7 +988,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       ...emp,
       id: `emp-${Date.now()}`
     };
-    setEmployees(prev => [...prev, newEmp]);
+    setEmployees(prev => [newEmp, ...prev]);
 
     showToast({
       title: 'Collaborateur Enregistré',
@@ -1306,7 +1306,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setDocuments(prev => [...prev, newDoc]);
+    setDocuments(prev => [newDoc, ...prev]);
 
     showToast({
       title: 'Document Ajouté',
@@ -1345,7 +1345,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setItAssets(prev => [...prev, newAsset]);
+    setItAssets(prev => [newAsset, ...prev]);
 
     showToast({
       title: 'Poste de Travail IT Ajouté',
@@ -1681,7 +1681,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       ...account,
       id: `app-${Date.now()}`
     };
-    setApplicationAccounts(prev => [...prev, newAcc]);
+    setApplicationAccounts(prev => [newAcc, ...prev]);
 
     // Sync to employee accounts in real time
     if (account.employeeId) {
@@ -1910,7 +1910,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setPrinters(prev => [...prev, newPrinter]);
+    setPrinters(prev => [newPrinter, ...prev]);
 
     showToast({
       title: 'Imprimante Ajoutée',
