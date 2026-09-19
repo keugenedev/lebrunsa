@@ -282,7 +282,6 @@ export default function ITEquipmentView() {
         const mouseObs = ws?.mouseObs || (asset as any).mouseObs;
         const keyboard = ws?.keyboard || (asset as any).keyboard || (asset as any).clavier || 'Dell';
         const keyboardObs = ws?.keyboardObs || (asset as any).keyboardObs;
-        const obs = ws?.observations || (asset.notes?.includes('Windows lent') ? 'Windows lent' : null);
 
         const isKbDefective = keyboardObs?.toLowerCase().includes('defect') ||
                               keyboardObs?.toLowerCase().includes('défect') ||
@@ -341,12 +340,6 @@ export default function ITEquipmentView() {
                 </div>
               )}
             </div>
-            {obs && obs !== 'Good' && (
-              <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-md border border-red-200 truncate max-w-full" title={obs}>
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
-                <span className="truncate">{obs}</span>
-              </div>
-            )}
           </div>
         );
       }
