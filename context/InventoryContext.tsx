@@ -361,7 +361,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - forces immediate cache sync across clients
-  const CURRENT_DATA_VERSION = '2026-09-19-v14-fix-carl-sync';
+  const CURRENT_DATA_VERSION = '2026-09-19-v17-apps-online-sync';
 
   if (typeof window !== 'undefined') {
     const version = localStorage.getItem('lebron_inv_data_version');
@@ -821,29 +821,66 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
         // Load User Applications from Supabase
         const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*');
-        if (!appsErr && dbApps) {
+        if (!appsErr && dbApps && dbApps.length > 0) {
           setApplicationAccounts(prev => {
-            return prev
-              .filter(initApp => {
-                const inDb = dbApps.some((r: any) => 
-                  (r.username && initApp.username && r.username.toLowerCase() === initApp.username.toLowerCase()) ||
-                  (r.user_id && initApp.employeeId && r.user_id === initApp.employeeId)
-                );
-                return inDb || initApp.id.startsWith('app-' + Date.now().toString().slice(0, 4));
-              })
-              .map(initApp => {
-                const row = dbApps.find((r: any) => 
-                  (r.username && initApp.username && r.username.toLowerCase() === initApp.username.toLowerCase()) ||
-                  (r.user_id && initApp.employeeId && r.user_id === initApp.employeeId)
-                );
-                if (!row) return initApp;
-                return {
-                  ...initApp,
-                  password: row.password_source || row.password || initApp.password,
-                  applications: row.application || initApp.applications,
-                  organization: row.organisation || initApp.organization
-                };
-              });
+            const syncedFromDb = dbApps.map((row: any) => {
+              const strId = String(row.app_account_id || '');
+              const existingAcc = prev.find(initApp => 
+                (strId && initApp.id.replace('app-', '') === strId) ||
+                (row.username && initApp.username && row.username.toLowerCase() === initApp.username.toLowerCase()) ||
+                (row.user_id && initApp.employeeId && row.user_id === initApp.employeeId)
+              );
+
+              const matchedEmp = INITIAL_EMPLOYEES.find(e => 
+                (row.user_id && (e.employeeId === row.user_id || e.id === row.user_id)) ||
+                (row.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === row.username.toLowerCase())
+              );
+
+              const appId = existingAcc?.id || (strId ? `app-${strId}` : `app-${row.username}`);
+
+              return {
+                id: appId,
+                username: row.username || existingAcc?.username || '',
+                lastName: existingAcc?.lastName || matchedEmp?.lastName || '',
+                firstName: existingAcc?.firstName || matchedEmp?.firstName || '',
+                password: row.password_source || row.password || existingAcc?.password || 'CP@2026',
+                applications: row.application || existingAcc?.applications || 'Microsoft GP',
+                organization: row.organisation || existingAcc?.organization || (matchedEmp?.company || 'Lebrun S.A.'),
+                employeeId: matchedEmp ? matchedEmp.id : (existingAcc?.employeeId || row.user_id),
+                windowsUsername: existingAcc?.windowsUsername || matchedEmp?.accounts?.windowsUsername || (matchedEmp ? matchedEmp.fullName : ''),
+                windowsPassword: existingAcc?.windowsPassword || matchedEmp?.accounts?.windowsPassword || '1234'
+              };
+            });
+
+            // Keep any local-only new accounts that haven't been assigned an id in DB yet
+            const localOnly = prev.filter(localAcc => 
+              localAcc.id.startsWith('app-1') && 
+              !dbApps.some((r: any) => r.username?.toLowerCase() === localAcc.username.toLowerCase())
+            );
+
+            return [...syncedFromDb, ...localOnly];
+          });
+
+          // Also synchronize employees' accounts field with Supabase applications
+          setEmployees(prevEmp => {
+            return prevEmp.map(emp => {
+              const appRow = dbApps.find((r: any) => 
+                (r.user_id && (r.user_id === emp.employeeId || r.user_id === emp.id)) ||
+                (r.username && emp.accounts?.appUsername && r.username.toLowerCase() === emp.accounts.appUsername.toLowerCase())
+              );
+              if (!appRow) return emp;
+              return {
+                ...emp,
+                accounts: {
+                  windowsUsername: emp.accounts?.windowsUsername || emp.fullName || emp.firstName,
+                  windowsPassword: emp.accounts?.windowsPassword || '1234',
+                  appUsername: appRow.username || emp.accounts?.appUsername || '',
+                  appPassword: appRow.password_source || emp.accounts?.appPassword || '',
+                  applications: appRow.application || emp.accounts?.applications || 'Microsoft GP',
+                  organization: appRow.organisation || emp.accounts?.organization || emp.company
+                }
+              };
+            });
           });
         }
 
@@ -1667,6 +1704,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }));
     }
 
+    const linkedEmp = employees.find(e => 
+      (account.employeeId && (e.id === account.employeeId || e.employeeId === account.employeeId)) ||
+      (account.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === account.username.toLowerCase())
+    );
+
+    if (linkedEmp) {
+      setEmployees(prev => prev.map(emp => {
+        if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
+          return {
+            ...emp,
+            accounts: {
+              ...(emp.accounts || {}),
+              windowsUsername: account.windowsUsername || emp.accounts?.windowsUsername || '',
+              windowsPassword: account.windowsPassword || emp.accounts?.windowsPassword || '',
+              appUsername: account.username,
+              appPassword: account.password || '',
+              applications: account.applications || emp.accounts?.applications || 'Microsoft GP',
+              organization: account.organization || emp.accounts?.organization || emp.company
+            }
+          };
+        }
+        return emp;
+      }));
+    }
+
     showToast({
       title: 'Accès & Session Enregistrés',
       message: `Compte ${newAcc.username} rattaché au personnel avec succès.`,
@@ -1674,12 +1736,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     });
 
     try {
+      const empMatricule = linkedEmp?.employeeId || (account.employeeId?.startsWith('EMP-') ? account.employeeId : null);
       await supabase.from('user_applications').insert({
-        user_id: account.employeeId || null,
+        user_id: empMatricule,
         username: account.username,
-        password_source: account.password,
-        application: account.applications,
-        organisation: account.organization
+        password_source: account.password || '1234',
+        application: account.applications || 'Microsoft GP',
+        organisation: account.organization || 'Lebrun S.A.'
       });
     } catch (err) {
       console.warn('Sync Supabase addApplicationAccount error:', err);
@@ -1692,9 +1755,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
     setApplicationAccounts(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
 
-    if (empId) {
+    const linkedEmp = employees.find(emp => 
+      (empId && (emp.id === empId || emp.employeeId === empId)) ||
+      (target?.username && emp.accounts?.appUsername && emp.accounts.appUsername.toLowerCase() === target.username.toLowerCase())
+    );
+
+    if (linkedEmp) {
       setEmployees(prev => prev.map(emp => {
-        if (emp.id === empId || emp.employeeId === empId) {
+        if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
           return {
             ...emp,
             accounts: {
@@ -1725,16 +1793,61 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.applications !== undefined) payload.application = updates.applications;
       if (updates.organization !== undefined) payload.organisation = updates.organization;
 
-      const targetUser = updates.username || target?.username;
-      const targetEmpId = updates.employeeId || target?.employeeId;
+      const empMatricule = linkedEmp?.employeeId || (empId?.startsWith('EMP-') ? empId : undefined);
+      if (empMatricule) {
+        payload.user_id = empMatricule;
+      }
 
-      if (targetUser) {
-        const { error } = await supabase.from('user_applications').update(payload).ilike('username', targetUser);
-        if (error && targetEmpId) {
-          await supabase.from('user_applications').update(payload).eq('user_id', targetEmpId);
+      const dbId = id.replace('app-', '');
+      let updated = false;
+
+      // Strategy 1: Update by primary key app_account_id
+      if (dbId && !isNaN(Number(dbId))) {
+        const { data, error } = await supabase
+          .from('user_applications')
+          .update(payload)
+          .eq('app_account_id', dbId)
+          .select();
+        if (!error && data && data.length > 0) {
+          updated = true;
         }
-      } else if (targetEmpId) {
-        await supabase.from('user_applications').update(payload).eq('user_id', targetEmpId);
+      }
+
+      // Strategy 2: Update by original / previous username
+      if (!updated && target?.username) {
+        const { data, error } = await supabase
+          .from('user_applications')
+          .update(payload)
+          .ilike('username', target.username)
+          .select();
+        if (!error && data && data.length > 0) {
+          updated = true;
+        }
+      }
+
+      // Strategy 3: Update by employee matricule
+      if (!updated && empMatricule) {
+        const { data, error } = await supabase
+          .from('user_applications')
+          .update(payload)
+          .eq('user_id', empMatricule)
+          .select();
+        if (!error && data && data.length > 0) {
+          updated = true;
+        }
+      }
+
+      // Strategy 4: If not yet in Supabase, insert it
+      if (!updated) {
+        await supabase.from('user_applications').insert({
+          ...payload,
+          app_account_id: dbId && !isNaN(Number(dbId)) ? dbId : undefined
+        });
+      }
+
+      // Also update username in users table if username was changed
+      if (updates.username && empMatricule) {
+        await supabase.from('users').update({ username: updates.username }).eq('user_id', empMatricule);
       }
     } catch (err) {
       console.warn('Sync Supabase updateApplicationAccount error:', err);
@@ -1745,9 +1858,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const target = applicationAccounts.find(a => a.id === id);
     setApplicationAccounts(prev => prev.filter(item => item.id !== id));
 
-    if (target?.employeeId) {
+    const linkedEmp = employees.find(e => 
+      (target?.employeeId && (e.id === target.employeeId || e.employeeId === target.employeeId)) ||
+      (target?.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === target.username.toLowerCase())
+    );
+
+    if (linkedEmp) {
       setEmployees(prev => prev.map(emp => {
-        if (emp.id === target.employeeId || emp.employeeId === target.employeeId) {
+        if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
           return {
             ...emp,
             accounts: emp.accounts ? {
@@ -1767,11 +1885,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     });
 
     try {
+      const dbId = id.replace('app-', '');
+      if (dbId && !isNaN(Number(dbId))) {
+        await supabase.from('user_applications').delete().eq('app_account_id', dbId);
+      }
       if (target?.username) {
         await supabase.from('user_applications').delete().ilike('username', target.username);
       }
-      if (target?.employeeId) {
-        await supabase.from('user_applications').delete().eq('user_id', target.employeeId);
+      const empMatricule = linkedEmp?.employeeId || (target?.employeeId?.startsWith('EMP-') ? target.employeeId : undefined);
+      if (empMatricule) {
+        await supabase.from('user_applications').delete().eq('user_id', empMatricule);
       }
     } catch (err) {
       console.warn('Sync Supabase deleteApplicationAccount error:', err);

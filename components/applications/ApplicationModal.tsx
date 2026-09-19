@@ -92,7 +92,7 @@ export default function ApplicationModal() {
   const handleSelectSoftware = (type: 'Microsoft GP' | 'DealerPro' | 'custom') => {
     setSoftwareType(type);
     if (type === 'DealerPro') {
-      setApplications('DealerPro');
+      setApplications('DealerPro DMS');
       if (organization === 'Lebrun S.A.' || !organization) {
         setOrganization('Caribe Motors');
       }
@@ -198,7 +198,7 @@ export default function ApplicationModal() {
 
     const finalApp = softwareType === 'custom' 
       ? (customSoftware.trim() || 'Autre Logiciel') 
-      : softwareType;
+      : (softwareType === 'DealerPro' ? 'DealerPro DMS' : 'Microsoft GP');
 
     const payload: Omit<ApplicationAccount, 'id'> = {
       employeeId: selectedEmployeeId,
