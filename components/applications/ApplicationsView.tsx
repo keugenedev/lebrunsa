@@ -82,6 +82,10 @@ export default function ApplicationsView() {
         );
       }
       return true;
+    }).sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
     });
   }, [applicationAccounts, orgFilter, appFilter, searchQuery, employees]);
 

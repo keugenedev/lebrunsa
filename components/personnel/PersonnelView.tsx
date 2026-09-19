@@ -246,7 +246,11 @@ export default function PersonnelView() {
 
       {/* Main Data Table */}
       <DataTable
-        items={employees}
+        items={[...employees].sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        })}
         columns={columns}
         searchPlaceholder="Rechercher collaborateur par nom, matricule, département, email..."
         searchFields={['fullName', 'employeeId', 'department', 'email', 'jobTitle', 'location']}

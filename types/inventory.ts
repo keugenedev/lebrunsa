@@ -129,6 +129,7 @@ export interface ApplicationAccount {
   employeeId?: string; // ID du collaborateur dans le Personnel (ex: emp-1)
   windowsUsername?: string; // Identifiant de connexion session Windows (ex: ALEXIS, Admin)
   windowsPassword?: string; // Mot de passe de connexion session Windows (ex: 198936)
+  createdAt?: string;
 }
 
 export interface TelecomPlan extends BaseAsset {
@@ -226,6 +227,7 @@ export interface Employee {
   status: 'active' | 'on_leave' | 'inactive';
   hireDate: string;
   notes?: string;
+  createdAt?: string;
   workstation?: WorkstationDetails;
   accounts?: UserAccountDetails;
 }

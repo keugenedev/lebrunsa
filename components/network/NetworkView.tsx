@@ -44,6 +44,10 @@ export default function NetworkView() {
         );
       }
       return true;
+    }).sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
     });
   }, [networkAssets, companyFilter, searchQuery]);
 

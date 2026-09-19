@@ -97,6 +97,10 @@ export default function DocumentsView() {
         return matchesName || matchesId || matchesCompany || matchesSite || matchesJob || matchesPC || matchesSerial || matchesMonitor;
       }
       return true;
+    }).sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
     });
   }, [employees, sheetCompanyFilter, effectiveSheetSearch]);
 
@@ -137,6 +141,10 @@ export default function DocumentsView() {
         return matchesTitle || matchesRef || matchesAuthor || matchesDesc || matchesCategory || matchesCompany;
       }
       return true;
+    }).sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
     });
   }, [documents, selectedCategory, selectedCompany, selectedStatus, effectiveRepoSearch]);
 

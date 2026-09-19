@@ -610,35 +610,120 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const addWifiNetwork = (net: Omit<WifiNetwork, 'id'>) => {
+  const addWifiNetwork = async (net: Omit<WifiNetwork, 'id'>) => {
+    const newId = `wifi-${Date.now()}`;
     const newNet: WifiNetwork = {
       ...net,
-      id: `wifi-${Date.now()}`
+      id: newId
     };
-    setWifiNetworks(prev => [newNet, ...prev]);
-    showToast({
-      title: 'Réseau Wi-Fi Ajouté',
-      message: `Le réseau ${newNet.ssid} pour ${newNet.establishment} a été créé.`,
-      type: 'success'
-    });
+
+    try {
+      const { error } = await supabase.from('wifi_networks').insert({
+        wifi_id: newId,
+        establishment: net.establishment,
+        company: net.company,
+        ssid: net.ssid,
+        password: net.password || '',
+        provider_type: net.providerType,
+        frequency_band: net.frequencyBand,
+        security: net.security,
+        location_detail: net.locationDetail || '',
+        is_guest_network: net.isGuestNetwork || false,
+        notes: net.notes || '',
+        starlink_details: net.starlinkDetails || null
+      });
+
+      if (error) {
+        showToast({
+          title: 'Erreur Base de Données',
+          message: `Échec de l'enregistrement du réseau Wi-Fi dans Supabase : ${error.message}`,
+          type: 'error'
+        });
+        return;
+      }
+
+      setWifiNetworks(prev => [newNet, ...prev]);
+      showToast({
+        title: 'Réseau Wi-Fi Ajouté',
+        message: `Le réseau ${newNet.ssid} pour ${newNet.establishment} a été créé dans Supabase.`,
+        type: 'success'
+      });
+    } catch (err: any) {
+      showToast({
+        title: 'Erreur Base de Données',
+        message: `Erreur lors de l'ajout du réseau Wi-Fi : ${err.message || 'Connexion Supabase impossible'}`,
+        type: 'error'
+      });
+    }
   };
 
-  const updateWifiNetwork = (id: string, updates: Partial<WifiNetwork>) => {
-    setWifiNetworks(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
-    showToast({
-      title: 'Réseau Wi-Fi Mis à Jour',
-      message: 'La configuration Wi-Fi a été enregistrée avec succès.',
-      type: 'info'
-    });
+  const updateWifiNetwork = async (id: string, updates: Partial<WifiNetwork>) => {
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.establishment !== undefined) payload.establishment = updates.establishment;
+      if (updates.company !== undefined) payload.company = updates.company;
+      if (updates.ssid !== undefined) payload.ssid = updates.ssid;
+      if (updates.password !== undefined) payload.password = updates.password;
+      if (updates.providerType !== undefined) payload.provider_type = updates.providerType;
+      if (updates.frequencyBand !== undefined) payload.frequency_band = updates.frequencyBand;
+      if (updates.security !== undefined) payload.security = updates.security;
+      if (updates.locationDetail !== undefined) payload.location_detail = updates.locationDetail;
+      if (updates.isGuestNetwork !== undefined) payload.is_guest_network = updates.isGuestNetwork;
+      if (updates.notes !== undefined) payload.notes = updates.notes;
+      if (updates.starlinkDetails !== undefined) payload.starlink_details = updates.starlinkDetails;
+
+      const { error } = await supabase.from('wifi_networks').update(payload).eq('wifi_id', id);
+
+      if (error) {
+        showToast({
+          title: 'Erreur Base de Données',
+          message: `Échec de la mise à jour du réseau Wi-Fi dans Supabase : ${error.message}`,
+          type: 'error'
+        });
+        return;
+      }
+
+      setWifiNetworks(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+      showToast({
+        title: 'Réseau Wi-Fi Mis à Jour',
+        message: 'La configuration Wi-Fi a été enregistrée avec succès dans Supabase.',
+        type: 'success'
+      });
+    } catch (err: any) {
+      showToast({
+        title: 'Erreur Base de Données',
+        message: `Erreur lors de la modification du réseau Wi-Fi : ${err.message || 'Connexion Supabase impossible'}`,
+        type: 'error'
+      });
+    }
   };
 
-  const deleteWifiNetwork = (id: string) => {
-    setWifiNetworks(prev => prev.filter(item => item.id !== id));
-    showToast({
-      title: 'Réseau Wi-Fi Supprimé',
-      message: "Le réseau a été retiré de l'affiche.",
-      type: 'warning'
-    });
+  const deleteWifiNetwork = async (id: string) => {
+    try {
+      const { error } = await supabase.from('wifi_networks').delete().eq('wifi_id', id);
+
+      if (error) {
+        showToast({
+          title: 'Erreur Base de Données',
+          message: `Échec de la suppression du réseau Wi-Fi dans Supabase : ${error.message}`,
+          type: 'error'
+        });
+        return;
+      }
+
+      setWifiNetworks(prev => prev.filter(item => item.id !== id));
+      showToast({
+        title: 'Réseau Wi-Fi Supprimé',
+        message: "Le réseau a été retiré de la base de données Supabase.",
+        type: 'warning'
+      });
+    } catch (err: any) {
+      showToast({
+        title: 'Erreur Base de Données',
+        message: `Erreur lors de la suppression du réseau Wi-Fi : ${err.message || 'Connexion Supabase impossible'}`,
+        type: 'error'
+      });
+    }
   };
 
   // Save to localStorage on change
@@ -726,64 +811,100 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   }, [applicationAccounts]);
 
   // Chargement et synchronisation avec Supabase
+  // Chargement et synchronisation avec Supabase
   useEffect(() => {
     async function loadFromSupabase() {
       try {
+        // 1. Load Printers from Supabase
         const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*');
         if (!prnErr && dbPrinters && dbPrinters.length > 0) {
           setPrinters(prev => {
-            return prev.map(initP => {
-              const row = dbPrinters.find((r: any) => 
-                (r.numero_serie && r.numero_serie !== 'N/A' && r.numero_serie === initP.serialNumber) ||
-                (r.printer_id && r.printer_id === initP.assetTag)
-              );
-              if (!row) return initP;
+            const mappedFromDb: PrinterAsset[] = dbPrinters.map((r: any, idx: number) => {
+              const tag = r.printer_id ? String(r.printer_id) : `PRN-HP-${(r.id || idx + 1).toString().padStart(3, '0')}`;
+              const existingLocal = prev.find(p => (r.numero_serie && r.numero_serie !== 'N/A' && p.serialNumber === r.numero_serie) || p.assetTag === tag);
+
               return {
-                ...initP,
-                status: row.etat || initP.status,
-                ipAddress: row.adresse_ip || initP.ipAddress,
-                observations: row.observations || initP.observations
+                id: existingLocal?.id || (r.printer_id ? String(r.printer_id) : `prn-db-${r.id || idx + 1}`),
+                assetTag: tag,
+                company: r.entreprise || existingLocal?.company || 'Lebrun S.A.',
+                site: r.site || existingLocal?.site || 'Delmas 52',
+                name: r.nom_imprimante || r.nom || existingLocal?.name || 'Hp LaserJet Pro',
+                brand: r.marque || existingLocal?.brand || 'HP',
+                model: r.modele || existingLocal?.model || '',
+                serialNumber: r.numero_serie || existingLocal?.serialNumber || 'N/A',
+                ipAddress: r.adresse_ip || existingLocal?.ipAddress || 'N/A',
+                type: r.type || existingLocal?.type || 'Multifonction',
+                status: r.etat || existingLocal?.status || 'Fonctionnel',
+                observations: r.observations || existingLocal?.observations || 'Good',
+                createdAt: r.created_at || existingLocal?.createdAt || new Date().toISOString(),
+                updatedAt: r.created_at || existingLocal?.updatedAt || new Date().toISOString()
               };
             });
+
+            const localOnly = prev.filter(p => !mappedFromDb.some(dbP => dbP.serialNumber === p.serialNumber || dbP.assetTag === p.assetTag));
+            return [...mappedFromDb, ...localOnly];
           });
         }
 
+        // 2. Load Users / Employees from Supabase
         const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
         if (!usrErr && dbUsers && dbUsers.length > 0) {
           setEmployees(prev => {
-            return prev.map(currentEmp => {
-              const u = dbUsers.find((r: any) => 
-                (r.user_id && (r.user_id === currentEmp.employeeId || r.user_id === currentEmp.id)) ||
-                (r.username && currentEmp.accounts?.appUsername && r.username.toLowerCase() === currentEmp.accounts.appUsername.toLowerCase()) ||
-                (r.email && currentEmp.email && r.email.toLowerCase() === currentEmp.email.toLowerCase())
+            const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
+              const firstName = r.prenom || '';
+              const lastName = r.nom || '';
+              const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
+              const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
+
+              const existingLocal = prev.find(e => 
+                e.employeeId === empId || 
+                e.id === empId ||
+                (r.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === r.username.toLowerCase()) ||
+                (r.email && r.email !== 'NOT' && e.email && r.email.toLowerCase() === e.email.toLowerCase())
               );
-              if (!u) return currentEmp;
-              const mappedFullName = u.nom_complet || (u.prenom && u.nom ? `${u.prenom} ${u.nom}` : (u.nom || u.prenom || currentEmp.fullName));
+
               return {
-                ...currentEmp,
-                fullName: mappedFullName || currentEmp.fullName,
-                lastName: u.nom || currentEmp.lastName,
-                firstName: u.prenom || currentEmp.firstName,
-                email: u.email && u.email !== 'NOT' ? u.email : currentEmp.email,
-                phone: u.telephone || currentEmp.phone,
-                company: u.entreprise || currentEmp.company,
-                site: u.site || currentEmp.site,
-                location: u.site || currentEmp.location,
-                status: u.statut === 'Actif' ? 'active' : u.statut === 'En mission' ? 'on_leave' : (u.statut === 'Inactif' ? 'inactive' : currentEmp.status)
+                id: existingLocal?.id || empId,
+                employeeId: empId,
+                fullName: fullName || existingLocal?.fullName || 'Collaborateur',
+                firstName: firstName || existingLocal?.firstName || '',
+                lastName: lastName || existingLocal?.lastName || '',
+                email: (r.email && r.email !== 'NOT' ? r.email : existingLocal?.email) || '',
+                phone: r.telephone || existingLocal?.phone || '',
+                company: (r.entreprise as Employee['company']) || existingLocal?.company || 'Lebrun S.A.',
+                site: r.site || existingLocal?.site || 'Delmas 52',
+                location: r.site || existingLocal?.location || 'Delmas 52',
+                department: r.departement || existingLocal?.department || '',
+                jobTitle: r.poste || existingLocal?.jobTitle || '',
+                hireDate: r.created_at ? r.created_at.slice(0, 10) : (existingLocal?.hireDate || '2024-01-15'),
+                status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : existingLocal?.status || 'active') as Employee['status'],
+                createdAt: r.created_at || existingLocal?.createdAt || new Date().toISOString(),
+                workstation: existingLocal?.workstation,
+                accounts: {
+                  windowsUsername: r.username || existingLocal?.accounts?.windowsUsername || fullName,
+                  windowsPassword: existingLocal?.accounts?.windowsPassword || '1234',
+                  appUsername: r.username || existingLocal?.accounts?.appUsername || '',
+                  appPassword: existingLocal?.accounts?.appPassword || '',
+                  applications: existingLocal?.accounts?.applications || 'Microsoft GP',
+                  organization: r.entreprise || existingLocal?.accounts?.organization || 'Lebrun S.A.'
+                }
               };
             });
+
+            const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || (dbE.email && dbE.email === e.email)));
+            return [...mappedFromDb, ...localOnly];
           });
         }
 
-        // Load Network Equipment from Supabase
+        // 3. Load Network Equipment from Supabase
         const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*');
         if (!netErr && dbNet && dbNet.length > 0) {
           const mappedNet: NetworkAsset[] = dbNet.map((row: any, idx: number) => ({
-            id: row.id ? row.id.toString() : `net-${idx + 1}`,
-            assetTag: `NET-${row.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(row.id || idx + 1).toString().padStart(3, '0')}`,
+            id: row.network_equipment_id ? String(row.network_equipment_id) : (row.id ? row.id.toString() : `net-${idx + 1}`),
+            assetTag: row.network_equipment_id || `NET-${row.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(row.id || idx + 1).toString().padStart(3, '0')}`,
             company: row.entreprise || 'Lebrun S.A.',
             site: row.site || 'Delmas 52',
-            deviceType: row.type_equipement || 'Switch Gigabit',
+            deviceType: row.type_equipement_reseau || row.type_equipement || 'Switch Gigabit',
             brand: row.marque || 'TP-Link',
             model: row.modele || '',
             hostname: row.hostname || '',
@@ -798,19 +919,19 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           setNetworkAssets(mappedNet);
         }
 
-        // Load UPS from Supabase
+        // 4. Load UPS from Supabase
         const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*');
         if (!upsErr && dbUps && dbUps.length > 0) {
           const mappedUps: UPSAsset[] = dbUps.map((row: any, idx: number) => ({
-            id: row.id ? row.id.toString() : `ups-${idx + 1}`,
-            assetTag: `UPS-${row.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(row.id || idx + 1).toString().padStart(3, '0')}`,
+            id: row.ups_id ? String(row.ups_id) : (row.id ? row.id.toString() : `ups-${idx + 1}`),
+            assetTag: row.ups_id || `UPS-${row.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(row.id || idx + 1).toString().padStart(3, '0')}`,
             company: row.entreprise || 'Lebrun S.A.',
             site: row.site || 'Delmas 52',
-            name: row.nom || `UPS ${idx + 1}`,
+            name: row.ups || row.nom || `UPS ${idx + 1}`,
             brand: row.marque || 'Forza',
             model: row.modele || '',
-            capacity: row.capacite || '',
-            reference: row.reference || row.modele || '',
+            capacity: row.capacite_va || row.capacite || '',
+            reference: row.nom_reference || row.reference || row.modele || '',
             status: row.etat || 'En fonctionnement',
             observations: row.observations || '',
             createdAt: row.created_at || new Date().toISOString(),
@@ -819,7 +940,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           setUpsAssets(mappedUps);
         }
 
-        // Load User Applications from Supabase
+        // 5. Load User Applications from Supabase
         const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*');
         if (!appsErr && dbApps && dbApps.length > 0) {
           setApplicationAccounts(prev => {
@@ -852,7 +973,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            // Keep any local-only new accounts that haven't been assigned an id in DB yet
             const localOnly = prev.filter(localAcc => 
               localAcc.id.startsWith('app-1') && 
               !dbApps.some((r: any) => r.username?.toLowerCase() === localAcc.username.toLowerCase())
@@ -861,7 +981,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             return [...syncedFromDb, ...localOnly];
           });
 
-          // Also synchronize employees' accounts field with Supabase applications
           setEmployees(prevEmp => {
             return prevEmp.map(emp => {
               const appRow = dbApps.find((r: any) => 
@@ -884,39 +1003,109 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           });
         }
 
-        // Load IT Equipment from Supabase
+        // 6. Load IT Equipment from Supabase (Merging DB and local)
         const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
         if (!itErr && dbIT && dbIT.length > 0) {
           setItAssets(prev => {
-            return prev.map(asset => {
-              // Match by unique hardware serial number first, then equipment_id, then nom_pc
-              const row = dbIT.find((r: any) => 
-                (r.numero_serie_pc && r.numero_serie_pc !== 'N/A' && r.numero_serie_pc === asset.serialNumber) ||
-                (r.equipment_id && r.equipment_id === asset.assetTag) ||
-                (r.nom_pc && r.nom_pc === asset.name)
+            const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
+              const tag = r.equipment_id ? String(r.equipment_id) : `AST-PC-${(r.id || idx + 1).toString().padStart(3, '0')}`;
+              const existingLocal = prev.find(a => 
+                (r.numero_serie_pc && r.numero_serie_pc !== 'N/A' && a.serialNumber === r.numero_serie_pc) ||
+                (a.assetTag === tag)
               );
-              if (!row) return asset;
-              const rowPerson = (row.prenom && row.nom) ? `${row.prenom} ${row.nom}` : (row.nom || row.prenom);
+
+              const rowPerson = (r.prenom && r.nom) ? `${r.prenom} ${r.nom}` : (r.nom || r.prenom || r.assigne_a);
+              const pcSerial = r.numero_serie_pc || r.numero_serie || existingLocal?.serialNumber || 'N/A';
+              const pcName = r.nom_pc || r.nom || existingLocal?.name || `Poste ${tag}`;
+
               return {
-                ...asset,
-                assetTag: row.equipment_id || asset.assetTag,
-                serialNumber: row.numero_serie_pc || asset.serialNumber,
-                company: row.entreprise || asset.company,
-                location: row.site || asset.location,
-                assignedTo: rowPerson || asset.assignedTo,
-                assignedPersonnelId: row.user_id || asset.assignedPersonnelId,
-                notes: row.observations || asset.notes,
-                workstation: asset.workstation ? {
-                  ...asset.workstation,
-                  pcName: row.nom_pc || asset.workstation.pcName,
-                  pcSerial: row.numero_serie_pc || asset.workstation.pcSerial,
-                  monitorSerial: (row.numero_serie_ecran && row.numero_serie_ecran !== 'N/A') ? row.numero_serie_ecran : asset.workstation.monitorSerial,
-                  keyboard: row.clavier || asset.workstation.keyboard,
-                  mouse: row.souris || asset.workstation.mouse
-                } : asset.workstation
+                id: existingLocal?.id || (r.equipment_id ? String(r.equipment_id) : `it-db-${r.id || idx + 1}`),
+                assetTag: tag,
+                name: pcName,
+                brand: r.marque || existingLocal?.brand || 'Dell',
+                model: r.modele || existingLocal?.model || 'OptiPlex Workstation',
+                serialNumber: pcSerial,
+                category: 'it' as const,
+                subCategory: (r.type_poste?.toLowerCase().includes('laptop') ? 'laptop' : existingLocal?.subCategory || 'desktop') as ITAsset['subCategory'],
+                cpu: r.cpu || existingLocal?.cpu || 'Intel Core i5',
+                ram: r.ram || existingLocal?.ram || '8 GB RAM',
+                storage: r.stockage || existingLocal?.storage || '500 GB SSD',
+                assignedTo: rowPerson || existingLocal?.assignedTo,
+                assignedPersonnelId: r.user_id || existingLocal?.assignedPersonnelId,
+                assignedDepartment: r.departement || existingLocal?.assignedDepartment,
+                company: r.entreprise || existingLocal?.company || 'Lebrun S.A.',
+                location: r.site || existingLocal?.location || 'Delmas 52',
+                status: (r.etat_general === 'En service' || r.statut === 'in_use' ? 'in_use' : r.etat_general === 'Maintenance' || r.statut === 'maintenance' ? 'maintenance' : existingLocal?.status || 'available') as ITAsset['status'],
+                notes: r.observations || r.notes || existingLocal?.notes || '',
+                purchaseDate: r.created_at ? r.created_at.slice(0, 10) : (existingLocal?.purchaseDate || '2024-01-15'),
+                warrantyExpiry: existingLocal?.warrantyExpiry || '2027-01-15',
+                purchaseCost: existingLocal?.purchaseCost || 850,
+                workstation: {
+                  type: r.type_poste?.toLowerCase().includes('laptop') ? 'Laptop' : (existingLocal?.workstation?.type || 'Desktop'),
+                  pcName: pcName,
+                  pcSerial: pcSerial,
+                  pcSpecs: r.details_pc || existingLocal?.workstation?.pcSpecs || '',
+                  monitorModel: r.ecran || existingLocal?.workstation?.monitorModel || '',
+                  monitorSerial: r.numero_serie_ecran || existingLocal?.workstation?.monitorSerial || '',
+                  monitorObs: r.observation_ecran || existingLocal?.workstation?.monitorObs || 'Good',
+                  keyboard: r.clavier || existingLocal?.workstation?.keyboard || '',
+                  keyboardDetails: r.details_clavier || existingLocal?.workstation?.keyboardDetails || '',
+                  keyboardObs: r.observation_clavier || existingLocal?.workstation?.keyboardObs || 'Good',
+                  mouse: r.souris || existingLocal?.workstation?.mouse || '',
+                  mouseDetails: r.details_souris || existingLocal?.workstation?.mouseDetails || '',
+                  mouseObs: r.observation_souris || existingLocal?.workstation?.mouseObs || 'Good',
+                  generalState: r.etat_general || existingLocal?.workstation?.generalState || 'Good',
+                  observations: r.observations || existingLocal?.workstation?.observations || ''
+                },
+                createdAt: r.created_at || existingLocal?.createdAt || new Date().toISOString(),
+                updatedAt: r.created_at || existingLocal?.updatedAt || new Date().toISOString()
               };
             });
+
+            const localOnly = prev.filter(a => !mappedFromDb.some(dbA => dbA.serialNumber === a.serialNumber || dbA.assetTag === a.assetTag));
+            return [...mappedFromDb, ...localOnly];
           });
+        }
+
+        // 7. Load Wi-Fi Networks from Supabase
+        const { data: dbWifi, error: wifiErr } = await supabase.from('wifi_networks').select('*');
+        if (!wifiErr && dbWifi && dbWifi.length > 0) {
+          const mappedWifi: WifiNetwork[] = dbWifi.map((row: any, idx: number) => ({
+            id: row.wifi_id || `wifi-${idx + 1}`,
+            establishment: row.establishment || 'Delmas 52',
+            company: row.company || 'Lebrun S.A.',
+            ssid: row.ssid || '',
+            password: row.password || '',
+            providerType: row.provider_type || 'Fibre Dédiée',
+            frequencyBand: row.frequency_band || 'Dual-Band (2.4 / 5 GHz)',
+            security: row.security || 'WPA2-Personal',
+            locationDetail: row.location_detail || '',
+            isGuestNetwork: Boolean(row.is_guest_network),
+            notes: row.notes || '',
+            starlinkDetails: row.starlink_details || undefined
+          }));
+          setWifiNetworks(mappedWifi);
+        }
+
+        // 8. Load Documents from Supabase
+        const { data: dbDocs, error: docErr } = await supabase.from('documents').select('*');
+        if (!docErr && dbDocs && dbDocs.length > 0) {
+          const mappedDocs: DocumentItem[] = dbDocs.map((row: any, idx: number) => ({
+            id: row.document_id || `doc-${idx + 1}`,
+            title: row.title || '',
+            category: row.category || 'Procédures & Guides IT',
+            reference: row.reference || '',
+            fileType: row.file_type || 'pdf',
+            author: row.author || 'Direction IT',
+            company: row.company || 'Lebrun S.A.',
+            status: row.status || 'valide',
+            lastUpdated: row.last_updated || row.created_at || new Date().toISOString().slice(0, 10),
+            fileUrl: row.file_url || '',
+            description: row.description || '',
+            createdAt: row.created_at || new Date().toISOString(),
+            updatedAt: row.created_at || new Date().toISOString()
+          }));
+          setDocuments(mappedDocs);
         }
       } catch (err) {
         console.error('Erreur synchronisation Supabase:', err);
@@ -998,12 +1187,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await supabase.from('users').insert({
+        user_id: emp.employeeId,
         username: emp.accounts?.appUsername || emp.employeeId.toLowerCase().replace(/[^a-z0-9]/g, ''),
         email: emp.email,
         nom: emp.lastName,
         prenom: emp.firstName,
         entreprise: emp.company,
-        site: emp.site
+        site: emp.site,
+        telephone: emp.phone || '',
+        departement: emp.department || '',
+        poste: emp.jobTitle || '',
+        statut: emp.status === 'active' ? 'Actif' : emp.status === 'on_leave' ? 'En mission' : 'Inactif'
       });
     } catch (err) {
       console.warn('Sync Supabase addEmployee error:', err);
@@ -1100,6 +1294,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.phone !== undefined) payload.telephone = updates.phone;
       if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.department !== undefined) payload.departement = updates.department;
+      if (updates.jobTitle !== undefined) payload.poste = updates.jobTitle;
       if (updates.status !== undefined) {
         payload.statut = updates.status === 'active' ? 'Actif' : updates.status === 'on_leave' ? 'En mission' : 'Inactif';
       }
