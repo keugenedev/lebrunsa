@@ -10,7 +10,7 @@ export default function ToastNotification() {
   if (!toasts || toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-3 sm:px-0">
+    <div className="fixed top-5 right-5 z-[99999] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-3 sm:px-0">
       {toasts.map((toast) => {
         const isSuccess = toast.type === 'success' || !toast.type;
         const isWarning = toast.type === 'warning';
@@ -19,15 +19,25 @@ export default function ToastNotification() {
         return (
           <div
             key={toast.id}
-            className="pointer-events-auto bg-white rounded-2xl border border-slate-200/90 shadow-2xl p-4 flex items-start gap-3 transition-all duration-200 animate-in slide-in-from-top-3 fade-in"
+            className={`pointer-events-auto bg-white rounded-2xl border shadow-2xl p-4 flex items-start gap-3 transition-all duration-200 animate-in slide-in-from-top-3 fade-in ${
+              isSuccess ? 'border-emerald-200 ring-2 ring-emerald-500/10' :
+              isWarning ? 'border-amber-200 ring-2 ring-amber-500/10' :
+              isError ? 'border-red-200 ring-2 ring-red-500/10' :
+              'border-blue-200 ring-2 ring-blue-500/10'
+            }`}
             role="alert"
           >
             {/* Icon Box matching the user modal's rounded-xl slate box */}
-            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-800 shrink-0">
-              {isSuccess && <CheckCircle2 className="w-4 h-4 text-slate-800" />}
-              {isWarning && <AlertTriangle className="w-4 h-4 text-slate-800" />}
-              {isError && <AlertCircle className="w-4 h-4 text-slate-800" />}
-              {toast.type === 'info' && <Info className="w-4 h-4 text-slate-800" />}
+            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
+              isSuccess ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+              isWarning ? 'bg-amber-50 border-amber-200 text-amber-600' :
+              isError ? 'bg-red-50 border-red-200 text-red-600' :
+              'bg-blue-50 border-blue-200 text-blue-600'
+            }`}>
+              {isSuccess && <CheckCircle2 className="w-4 h-4" />}
+              {isWarning && <AlertTriangle className="w-4 h-4" />}
+              {isError && <AlertCircle className="w-4 h-4" />}
+              {toast.type === 'info' && <Info className="w-4 h-4" />}
             </div>
 
             {/* Content */}

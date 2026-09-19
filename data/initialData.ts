@@ -1049,7 +1049,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB858",
+    "assetTag": "AST-PC-LEB859",
     "name": "Poste Dell CARG7S10C2",
     "brand": "Dell",
     "model": "OptiPlex 5040",

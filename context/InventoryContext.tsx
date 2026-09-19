@@ -361,7 +361,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - forces immediate cache sync across clients
-  const CURRENT_DATA_VERSION = '2026-09-19-v13-online-sync';
+  const CURRENT_DATA_VERSION = '2026-09-19-v14-fix-carl-sync';
 
   if (typeof window !== 'undefined') {
     const version = localStorage.getItem('lebron_inv_data_version');
@@ -381,7 +381,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === 23) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed;
           }
         } catch (e) { console.error(e); }
@@ -396,7 +396,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === 23) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed;
           }
         } catch (e) { console.error(e); }
@@ -481,7 +481,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === 23) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed;
           }
         } catch (e) { console.error(e); }
@@ -496,7 +496,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length === 30) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             return parsed;
           }
         } catch (e) { console.error(e); }
@@ -731,29 +731,45 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*');
         if (!prnErr && dbPrinters && dbPrinters.length > 0) {
-          const mapped: PrinterAsset[] = INITIAL_PRINTERS.map(initP => {
-            const row = dbPrinters.find((r: any) => r.printer_id === initP.assetTag || (r.numero_serie && r.numero_serie !== 'N/A' && r.numero_serie === initP.serialNumber));
-            if (!row) return initP;
-            return {
-              ...initP,
-              status: row.etat || initP.status,
-              ipAddress: row.adresse_ip || initP.ipAddress,
-              observations: row.observations || initP.observations
-            };
+          setPrinters(prev => {
+            return prev.map(initP => {
+              const row = dbPrinters.find((r: any) => 
+                (r.numero_serie && r.numero_serie !== 'N/A' && r.numero_serie === initP.serialNumber) ||
+                (r.printer_id && r.printer_id === initP.assetTag)
+              );
+              if (!row) return initP;
+              return {
+                ...initP,
+                status: row.etat || initP.status,
+                ipAddress: row.adresse_ip || initP.ipAddress,
+                observations: row.observations || initP.observations
+              };
+            });
           });
-          setPrinters(mapped);
         }
 
         const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
         if (!usrErr && dbUsers && dbUsers.length > 0) {
-          setEmployees(() => {
-            return INITIAL_EMPLOYEES.map(initEmp => {
-              const u = dbUsers.find((r: any) => r.user_id === initEmp.employeeId || r.username === initEmp.accounts?.appUsername);
-              if (!u) return initEmp;
+          setEmployees(prev => {
+            return prev.map(currentEmp => {
+              const u = dbUsers.find((r: any) => 
+                (r.user_id && (r.user_id === currentEmp.employeeId || r.user_id === currentEmp.id)) ||
+                (r.username && currentEmp.accounts?.appUsername && r.username.toLowerCase() === currentEmp.accounts.appUsername.toLowerCase()) ||
+                (r.email && currentEmp.email && r.email.toLowerCase() === currentEmp.email.toLowerCase())
+              );
+              if (!u) return currentEmp;
+              const mappedFullName = u.nom_complet || (u.prenom && u.nom ? `${u.prenom} ${u.nom}` : (u.nom || u.prenom || currentEmp.fullName));
               return {
-                ...initEmp,
-                email: u.email && u.email !== 'NOT' ? u.email : initEmp.email,
-                phone: u.telephone || initEmp.phone
+                ...currentEmp,
+                fullName: mappedFullName || currentEmp.fullName,
+                lastName: u.nom || currentEmp.lastName,
+                firstName: u.prenom || currentEmp.firstName,
+                email: u.email && u.email !== 'NOT' ? u.email : currentEmp.email,
+                phone: u.telephone || currentEmp.phone,
+                company: u.entreprise || currentEmp.company,
+                site: u.site || currentEmp.site,
+                location: u.site || currentEmp.location,
+                status: u.statut === 'Actif' ? 'active' : u.statut === 'En mission' ? 'on_leave' : (u.statut === 'Inactif' ? 'inactive' : currentEmp.status)
               };
             });
           });
@@ -805,48 +821,65 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
         // Load User Applications from Supabase
         const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*');
-        if (!appsErr && dbApps && dbApps.length > 0) {
-          const mappedApps: ApplicationAccount[] = INITIAL_APPLICATIONS.map(initApp => {
-            const row = dbApps.find((r: any) => r.username && r.username.toLowerCase() === initApp.username.toLowerCase());
-            if (!row) return initApp;
-            return {
-              ...initApp,
-              password: row.password_source || row.password || initApp.password,
-              applications: row.application || initApp.applications,
-              organization: row.organisation || initApp.organization
-            };
+        if (!appsErr && dbApps) {
+          setApplicationAccounts(prev => {
+            return prev
+              .filter(initApp => {
+                const inDb = dbApps.some((r: any) => 
+                  (r.username && initApp.username && r.username.toLowerCase() === initApp.username.toLowerCase()) ||
+                  (r.user_id && initApp.employeeId && r.user_id === initApp.employeeId)
+                );
+                return inDb || initApp.id.startsWith('app-' + Date.now().toString().slice(0, 4));
+              })
+              .map(initApp => {
+                const row = dbApps.find((r: any) => 
+                  (r.username && initApp.username && r.username.toLowerCase() === initApp.username.toLowerCase()) ||
+                  (r.user_id && initApp.employeeId && r.user_id === initApp.employeeId)
+                );
+                if (!row) return initApp;
+                return {
+                  ...initApp,
+                  password: row.password_source || row.password || initApp.password,
+                  applications: row.application || initApp.applications,
+                  organization: row.organisation || initApp.organization
+                };
+              });
           });
-          setApplicationAccounts(mappedApps);
         }
 
         // Load IT Equipment from Supabase
         const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
         if (!itErr && dbIT && dbIT.length > 0) {
-          const mappedIT: ITAsset[] = INITIAL_IT_ASSETS.map(initA => {
-            const row = dbIT.find((r: any) => 
-              r.equipment_id === initA.assetTag || 
-              (r.numero_serie_pc && r.numero_serie_pc !== 'N/A' && r.numero_serie_pc === initA.serialNumber) ||
-              (r.nom_pc && r.nom_pc === initA.name)
-            );
-            if (!row) return initA;
-            const rowPerson = (row.prenom && row.nom) ? `${row.prenom} ${row.nom}` : (row.nom || row.prenom);
-            return {
-              ...initA,
-              serialNumber: row.numero_serie_pc || initA.serialNumber,
-              assignedTo: initA.assignedTo || rowPerson,
-              assignedPersonnelId: initA.assignedPersonnelId || row.user_id,
-              notes: row.observations || initA.notes,
-              workstation: initA.workstation ? {
-                ...initA.workstation,
-                pcName: row.nom_pc || initA.workstation.pcName,
-                pcSerial: row.numero_serie_pc || initA.workstation.pcSerial,
-                monitorSerial: (row.numero_serie_ecran && row.numero_serie_ecran !== 'N/A') ? row.numero_serie_ecran : initA.workstation.monitorSerial,
-                keyboard: row.clavier || initA.workstation.keyboard,
-                mouse: row.souris || initA.workstation.mouse
-              } : initA.workstation
-            };
+          setItAssets(prev => {
+            return prev.map(asset => {
+              // Match by unique hardware serial number first, then equipment_id, then nom_pc
+              const row = dbIT.find((r: any) => 
+                (r.numero_serie_pc && r.numero_serie_pc !== 'N/A' && r.numero_serie_pc === asset.serialNumber) ||
+                (r.equipment_id && r.equipment_id === asset.assetTag) ||
+                (r.nom_pc && r.nom_pc === asset.name)
+              );
+              if (!row) return asset;
+              const rowPerson = (row.prenom && row.nom) ? `${row.prenom} ${row.nom}` : (row.nom || row.prenom);
+              return {
+                ...asset,
+                assetTag: row.equipment_id || asset.assetTag,
+                serialNumber: row.numero_serie_pc || asset.serialNumber,
+                company: row.entreprise || asset.company,
+                location: row.site || asset.location,
+                assignedTo: rowPerson || asset.assignedTo,
+                assignedPersonnelId: row.user_id || asset.assignedPersonnelId,
+                notes: row.observations || asset.notes,
+                workstation: asset.workstation ? {
+                  ...asset.workstation,
+                  pcName: row.nom_pc || asset.workstation.pcName,
+                  pcSerial: row.numero_serie_pc || asset.workstation.pcSerial,
+                  monitorSerial: (row.numero_serie_ecran && row.numero_serie_ecran !== 'N/A') ? row.numero_serie_ecran : asset.workstation.monitorSerial,
+                  keyboard: row.clavier || asset.workstation.keyboard,
+                  mouse: row.souris || asset.workstation.mouse
+                } : asset.workstation
+              };
+            });
           });
-          setItAssets(mappedIT);
         }
       } catch (err) {
         console.error('Erreur synchronisation Supabase:', err);
@@ -947,6 +980,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
     setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
 
+    showToast({
+      title: 'Fiche Collaborateur Modifiée',
+      message: `Les informations de ${updates.fullName || targetEmp?.fullName || 'l\'employé'} ont été enregistrées avec succès.`,
+      type: 'success'
+    });
+
     // Connect and synchronize in real-time with Poste IT (itAssets), plans, and Starlink
     if (updates.fullName || updates.department !== undefined || updates.site !== undefined || updates.company !== undefined) {
       setItAssets(prev => prev.map(asset => {
@@ -1019,11 +1058,23 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const payload: Record<string, any> = {};
       if (updates.lastName !== undefined) payload.nom = updates.lastName;
       if (updates.firstName !== undefined) payload.prenom = updates.firstName;
+      if (updates.fullName !== undefined) payload.nom_complet = updates.fullName;
       if (updates.email !== undefined) payload.email = updates.email;
+      if (updates.phone !== undefined) payload.telephone = updates.phone;
       if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.site !== undefined) payload.site = updates.site;
-      if (updates.email) {
-        await supabase.from('users').update(payload).eq('email', updates.email);
+      if (updates.status !== undefined) {
+        payload.statut = updates.status === 'active' ? 'Actif' : updates.status === 'on_leave' ? 'En mission' : 'Inactif';
+      }
+
+      const targetEmpId = updates.employeeId || targetEmp?.employeeId;
+      if (targetEmpId) {
+        const { error: updErr } = await supabase.from('users').update(payload).eq('user_id', targetEmpId);
+        if (updErr && (updates.email || targetEmp?.email)) {
+          await supabase.from('users').update(payload).eq('email', updates.email || targetEmp?.email);
+        }
+      } else if (updates.email || targetEmp?.email) {
+        await supabase.from('users').update(payload).eq('email', updates.email || targetEmp?.email);
       }
     } catch (err) {
       console.warn('Sync Supabase updateEmployee error:', err);
@@ -1036,6 +1087,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const oldEmployeeId = target?.employeeId;
 
     setEmployees(prev => prev.filter(e => e.id !== id));
+
+    showToast({
+      title: 'Collaborateur Supprimé',
+      message: `${oldFullName || 'Le collaborateur'} a été retiré de la base de données.`,
+      type: 'warning'
+    });
 
     // Automatically unassign Poste IT assets when employee is removed
     setItAssets(prev => prev.map(asset => {
@@ -1072,7 +1129,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }));
 
     try {
-      if (target?.email) {
+      if (target?.employeeId) {
+        await supabase.from('users').delete().eq('user_id', target.employeeId);
+      } else if (target?.email) {
         await supabase.from('users').delete().eq('email', target.email);
       }
     } catch (err) {
@@ -1320,6 +1379,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateITAsset = async (id: string, updates: Partial<ITAsset>) => {
+    const targetAsset = itAssets.find(item => item.id === id);
+    const oldTag = targetAsset?.assetTag;
+    const oldSerial = targetAsset?.serialNumber;
+
     setItAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
 
     showToast({
@@ -1344,36 +1407,66 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const payload: Record<string, any> = {};
-      if (updates.name !== undefined) payload.nom = updates.name;
+      if (updates.name !== undefined) payload.nom_pc = updates.name;
+      if (updates.serialNumber !== undefined) payload.numero_serie_pc = updates.serialNumber;
       if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.location !== undefined) payload.site = updates.location;
-      
+      if (updates.subCategory !== undefined) payload.type_poste = updates.subCategory === 'laptop' ? 'Poste Laptop' : 'Poste Desktop';
+
+      const specsStr = [updates.os, updates.cpu, updates.ram, updates.storage].filter(Boolean).join(' ');
+      if (specsStr) payload.details_pc = specsStr;
+
       const kb = updates.workstation?.keyboard || updates.keyboard;
       const kbObs = updates.workstation?.keyboardObs || updates.keyboardObs;
-      if (kb) {
-        payload.clavier = kbObs && kbObs !== 'Good' ? `${kb} [${kbObs}]` : kb;
-      }
+      if (kb) payload.clavier = kb;
+      if (kbObs) payload.observation_clavier = kbObs;
 
       const m = updates.workstation?.mouse || updates.mouse;
       const mObs = updates.workstation?.mouseObs || updates.mouseObs;
-      if (m) {
-        payload.souris = mObs && mObs !== 'Good' ? `${m} [${mObs}]` : m;
+      if (m) payload.souris = m;
+      if (mObs) payload.observation_souris = mObs;
+
+      if (updates.workstation?.monitorModel) payload.ecran = updates.workstation.monitorModel;
+      if (updates.workstation?.monitorSerial) payload.numero_serie_ecran = updates.workstation.monitorSerial;
+      if (updates.workstation?.monitorObs) payload.observation_ecran = updates.workstation.monitorObs;
+
+      if (updates.status !== undefined) {
+        payload.etat_general = updates.status === 'in_use' ? 'En service' : updates.status === 'maintenance' ? 'Maintenance' : 'En réserve';
       }
 
-      if (updates.workstation?.monitorModel) {
-        payload.ecran = updates.workstation.monitorModel;
+      if (updates.notes !== undefined) payload.observations = updates.notes;
+
+      // Assignee sync with it_equipment columns
+      if (updates.assignedPersonnelId !== undefined || updates.assignedTo !== undefined) {
+        const assignedEmp = employees.find(e => 
+          (updates.assignedPersonnelId && (e.id === updates.assignedPersonnelId || e.employeeId === updates.assignedPersonnelId)) ||
+          (updates.assignedTo && e.fullName.toLowerCase() === updates.assignedTo.toLowerCase())
+        );
+        if (assignedEmp) {
+          payload.user_id = assignedEmp.employeeId;
+          payload.nom = assignedEmp.lastName;
+          payload.prenom = assignedEmp.firstName;
+          payload.email = assignedEmp.email;
+          payload.telephone = assignedEmp.phone;
+        } else if (updates.assignedTo === '' || updates.assignedTo === null) {
+          payload.user_id = null;
+          payload.nom = null;
+          payload.prenom = null;
+          payload.email = null;
+          payload.telephone = null;
+        }
       }
 
-      if (updates.notes !== undefined || kbObs || mObs) {
-        payload.observations = [
-          kbObs && kbObs !== 'Good' ? `Clavier: ${kbObs}` : '',
-          mObs && mObs !== 'Good' ? `Souris: ${mObs}` : '',
-          updates.notes
-        ].filter(Boolean).join(' • ');
-      }
+      const targetEquipmentId = targetAsset?.assetTag || updates.assetTag || oldTag;
+      const targetSerial = targetAsset?.serialNumber || updates.serialNumber || oldSerial;
 
-      if (updates.name) {
-        await supabase.from('it_equipment').update(payload).eq('nom', updates.name);
+      if (targetEquipmentId) {
+        const { error } = await supabase.from('it_equipment').update(payload).eq('equipment_id', targetEquipmentId);
+        if (error && targetSerial) {
+          await supabase.from('it_equipment').update(payload).eq('numero_serie_pc', targetSerial);
+        }
+      } else if (targetSerial) {
+        await supabase.from('it_equipment').update(payload).eq('numero_serie_pc', targetSerial);
       }
     } catch (err) {
       console.warn('Sync Supabase updateITAsset error:', err);
@@ -1384,9 +1477,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const target = itAssets.find(item => item.id === id);
     setItAssets(prev => prev.filter(item => item.id !== id));
 
+    showToast({
+      title: 'Matériel IT Supprimé',
+      message: `L'équipement ${target?.name || ''} (${target?.serialNumber || ''}) a été supprimé de l'inventaire.`,
+      type: 'warning'
+    });
+
     try {
-      if (target?.serialNumber) {
-        await supabase.from('it_equipment').delete().eq('numero_serie', target.serialNumber);
+      if (target?.assetTag) {
+        await supabase.from('it_equipment').delete().eq('equipment_id', target.assetTag);
+      } else if (target?.serialNumber) {
+        await supabase.from('it_equipment').delete().eq('numero_serie_pc', target.serialNumber);
       }
     } catch (err) {
       console.warn('Sync Supabase deleteITAsset error:', err);
@@ -1574,9 +1675,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await supabase.from('user_applications').insert({
+        user_id: account.employeeId || null,
         username: account.username,
-        nom: account.lastName,
-        prenom: account.firstName,
         password_source: account.password,
         application: account.applications,
         organisation: account.organization
@@ -1587,10 +1687,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateApplicationAccount = async (id: string, updates: Partial<ApplicationAccount>) => {
-    setApplicationAccounts(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
-
     const target = applicationAccounts.find(item => item.id === id);
     const empId = updates.employeeId || target?.employeeId;
+
+    setApplicationAccounts(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
 
     if (empId) {
       setEmployees(prev => prev.map(emp => {
@@ -1613,22 +1713,28 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
 
     showToast({
-      title: 'Accès & Session Mis à Jour',
-      message: 'Les modifications de session et logiciel ont été enregistrées.',
-      type: 'info'
+      title: 'Logiciel & Accès Modifiés',
+      message: `Compte ${updates.username || target?.username || ''} : logiciel (${updates.applications || target?.applications || ''}) et accès enregistrés avec succès.`,
+      type: 'success'
     });
 
     try {
       const payload: Record<string, any> = {};
       if (updates.username !== undefined) payload.username = updates.username;
-      if (updates.lastName !== undefined) payload.nom = updates.lastName;
-      if (updates.firstName !== undefined) payload.prenom = updates.firstName;
       if (updates.password !== undefined) payload.password_source = updates.password;
       if (updates.applications !== undefined) payload.application = updates.applications;
       if (updates.organization !== undefined) payload.organisation = updates.organization;
 
-      if (updates.username) {
-        await supabase.from('user_applications').update(payload).eq('username', updates.username);
+      const targetUser = updates.username || target?.username;
+      const targetEmpId = updates.employeeId || target?.employeeId;
+
+      if (targetUser) {
+        const { error } = await supabase.from('user_applications').update(payload).ilike('username', targetUser);
+        if (error && targetEmpId) {
+          await supabase.from('user_applications').update(payload).eq('user_id', targetEmpId);
+        }
+      } else if (targetEmpId) {
+        await supabase.from('user_applications').update(payload).eq('user_id', targetEmpId);
       }
     } catch (err) {
       console.warn('Sync Supabase updateApplicationAccount error:', err);
@@ -1639,15 +1745,33 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const target = applicationAccounts.find(a => a.id === id);
     setApplicationAccounts(prev => prev.filter(item => item.id !== id));
 
+    if (target?.employeeId) {
+      setEmployees(prev => prev.map(emp => {
+        if (emp.id === target.employeeId || emp.employeeId === target.employeeId) {
+          return {
+            ...emp,
+            accounts: emp.accounts ? {
+              ...emp.accounts,
+              applications: 'Aucun'
+            } : undefined
+          };
+        }
+        return emp;
+      }));
+    }
+
     showToast({
-      title: 'Accès Supprimé',
-      message: 'Le compte a été retiré de la liste.',
+      title: 'Compte Applicatif Supprimé',
+      message: `Le compte ${target?.username || ''} a été définitivement supprimé.`,
       type: 'warning'
     });
 
     try {
       if (target?.username) {
-        await supabase.from('user_applications').delete().eq('username', target.username);
+        await supabase.from('user_applications').delete().ilike('username', target.username);
+      }
+      if (target?.employeeId) {
+        await supabase.from('user_applications').delete().eq('user_id', target.employeeId);
       }
     } catch (err) {
       console.warn('Sync Supabase deleteApplicationAccount error:', err);
@@ -1690,7 +1814,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePrinter = async (id: string, updates: Partial<PrinterAsset>) => {
+    const target = printers.find(p => p.id === id);
     setPrinters(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+
+    showToast({
+      title: 'Imprimante Modifiée',
+      message: `${updates.name || target?.name || 'L\'imprimante'} a été mise à jour avec succès.`,
+      type: 'success'
+    });
 
     try {
       const payload: Record<string, any> = {};
@@ -1705,11 +1836,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.status !== undefined) payload.etat = updates.status;
       if (updates.observations !== undefined) payload.observations = updates.observations;
 
-      const numId = parseInt(id, 10);
-      if (!isNaN(numId)) {
-        await supabase.from('printers').update(payload).eq('printer_id', numId);
-      } else if (updates.serialNumber) {
-        await supabase.from('printers').update(payload).eq('numero_serie', updates.serialNumber);
+      const targetTag = updates.assetTag || target?.assetTag;
+      const targetSerial = updates.serialNumber || target?.serialNumber;
+
+      if (targetTag) {
+        const { error } = await supabase.from('printers').update(payload).eq('printer_id', targetTag);
+        if (error && targetSerial) {
+          await supabase.from('printers').update(payload).eq('numero_serie', targetSerial);
+        }
+      } else if (targetSerial) {
+        await supabase.from('printers').update(payload).eq('numero_serie', targetSerial);
       }
     } catch (err) {
       console.warn('Sync Supabase updatePrinter error:', err);
@@ -1720,12 +1856,23 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const target = printers.find(p => p.id === id);
     setPrinters(prev => prev.filter(item => item.id !== id));
 
+    showToast({
+      title: 'Imprimante Supprimée',
+      message: `${target?.name || 'L\'imprimante'} a été retirée de l'inventaire.`,
+      type: 'warning'
+    });
+
     try {
-      const numId = parseInt(id, 10);
-      if (!isNaN(numId)) {
-        await supabase.from('printers').delete().eq('printer_id', numId);
-      } else if (target?.serialNumber) {
-        await supabase.from('printers').delete().eq('numero_serie', target.serialNumber);
+      const targetTag = target?.assetTag;
+      const targetSerial = target?.serialNumber;
+
+      if (targetTag) {
+        const { error } = await supabase.from('printers').delete().eq('printer_id', targetTag);
+        if (error && targetSerial) {
+          await supabase.from('printers').delete().eq('numero_serie', targetSerial);
+        }
+      } else if (targetSerial) {
+        await supabase.from('printers').delete().eq('numero_serie', targetSerial);
       }
     } catch (err) {
       console.warn('Sync Supabase deletePrinter error:', err);
