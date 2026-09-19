@@ -67,7 +67,7 @@ export default function SettingsView() {
 
           <div className="space-y-3 text-xs 2xl:text-sm text-slate-700">
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
-              <span className="text-slate-500">Groupe & Filiales :</span>
+              <span className="text-slate-500">Entreprises & Filiales :</span>
               <span className="font-bold text-slate-900">LEBRUN S.A. • Autobiz • Caribe • Leader Foods</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">

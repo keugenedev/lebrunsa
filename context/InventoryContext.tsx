@@ -360,6 +360,20 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Master data versioning - forces immediate cache sync across clients
+  const CURRENT_DATA_VERSION = '2026-09-19-v13-online-sync';
+
+  if (typeof window !== 'undefined') {
+    const version = localStorage.getItem('lebron_inv_data_version');
+    if (version !== CURRENT_DATA_VERSION) {
+      localStorage.setItem('lebron_inv_data_version', CURRENT_DATA_VERSION);
+      localStorage.setItem('lebron_inv_employees', JSON.stringify(INITIAL_EMPLOYEES));
+      localStorage.setItem('lebron_inv_it', JSON.stringify(INITIAL_IT_ASSETS));
+      localStorage.setItem('lebron_inv_applications', JSON.stringify(INITIAL_APPLICATIONS));
+      localStorage.setItem('lebron_inv_printers', JSON.stringify(INITIAL_PRINTERS));
+    }
+  }
+
   // Entities state with lazy localStorage initialization
   const [employees, setEmployees] = useState<Employee[]>(() => {
     if (typeof window !== 'undefined') {
@@ -367,10 +381,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // Respect and preserve all user-entered job positions (jobTitle), departments, workstations, etc.
-            const missing = INITIAL_EMPLOYEES.filter(initEmp => !parsed.some((p: any) => p.id === initEmp.id || p.employeeId === initEmp.employeeId));
-            return [...parsed, ...missing];
+          if (Array.isArray(parsed) && parsed.length === 23) {
+            return parsed;
           }
         } catch (e) { console.error(e); }
       }
@@ -384,41 +396,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length >= INITIAL_IT_ASSETS.length) {
-            return parsed.map((item: any) => {
-              const initMatch = INITIAL_IT_ASSETS.find(i => i.id === item.id || i.assetTag === item.assetTag);
-              const company = item.company || initMatch?.company || (item.assetTag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
-              const os = item.os || initMatch?.os || (item.notes?.includes('10') ? 'Windows 10 Pro' : 'Windows 11 Pro');
-              const workstation = item.workstation || initMatch?.workstation;
-              const isUserAsset = item.assignedPersonnelId === 'emp-14' || item.assignedTo?.toLowerCase().includes('kensly');
-              const assignedDepartment = isUserAsset 
-                ? (item.assignedDepartment || 'Informatique & Systèmes (IT)') 
-                : '';
-              const keyboard = item.keyboard || item.clavier || workstation?.keyboard;
-              const keyboardObs = item.keyboardObs || workstation?.keyboardObs || 'Good';
-              const mouse = item.mouse || item.souris || workstation?.mouse;
-              const mouseObs = item.mouseObs || workstation?.mouseObs || 'Good';
-
-              return {
-                ...item,
-                company,
-                os,
-                workstation: workstation ? {
-                  ...workstation,
-                  keyboard: keyboard || workstation.keyboard,
-                  keyboardObs: keyboardObs || workstation.keyboardObs,
-                  mouse: mouse || workstation.mouse,
-                  mouseObs: mouseObs || workstation.mouseObs
-                } : workstation,
-                keyboard,
-                clavier: keyboard,
-                keyboardObs,
-                mouse,
-                souris: mouse,
-                mouseObs,
-                assignedDepartment
-              };
-            });
+          if (Array.isArray(parsed) && parsed.length === 23) {
+            return parsed;
           }
         } catch (e) { console.error(e); }
       }
@@ -502,26 +481,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // Enrich with employee link & windows session data if missing
-            const enriched = parsed.map((app: ApplicationAccount) => {
-              const initMatch = INITIAL_APPLICATIONS.find(i => i.id === app.id || i.username === app.username);
-              const empMatch = INITIAL_EMPLOYEES.find(e => 
-                (app.employeeId && (e.id === app.employeeId || e.employeeId === app.employeeId)) ||
-                (e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === app.username.toLowerCase()) ||
-                (e.lastName.toLowerCase() === app.lastName.toLowerCase())
-              );
-              return {
-                ...app,
-                employeeId: app.employeeId || initMatch?.employeeId || empMatch?.id,
-                windowsUsername: app.windowsUsername !== undefined ? app.windowsUsername : (initMatch?.windowsUsername || empMatch?.accounts?.windowsUsername || ''),
-                windowsPassword: app.windowsPassword !== undefined ? app.windowsPassword : (initMatch?.windowsPassword || empMatch?.accounts?.windowsPassword || '')
-              };
-            });
-            const missing = INITIAL_APPLICATIONS.filter(initApp => !enriched.some(e => e.id === initApp.id || e.username.toLowerCase() === initApp.username.toLowerCase()));
-            const merged = [...enriched, ...missing];
-            localStorage.setItem('lebron_inv_applications', JSON.stringify(merged));
-            return merged;
+          if (Array.isArray(parsed) && parsed.length === 23) {
+            return parsed;
           }
         } catch (e) { console.error(e); }
       }
@@ -535,7 +496,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length >= INITIAL_PRINTERS.length) {
+          if (Array.isArray(parsed) && parsed.length === 30) {
             return parsed;
           }
         } catch (e) { console.error(e); }
@@ -770,57 +731,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*');
         if (!prnErr && dbPrinters && dbPrinters.length > 0) {
-          const mapped: PrinterAsset[] = dbPrinters.map((row: any) => ({
-            id: row.printer_id ? row.printer_id.toString() : `prn-${row.numero_serie || Date.now()}`,
-            assetTag: `PRN-${row.entreprise?.startsWith('Auto') ? 'AUT' : row.entreprise?.startsWith('Caribe') ? 'CAR' : row.entreprise?.startsWith('Leader') ? 'LFD' : 'LEB'}-${(row.printer_id || 1).toString().padStart(3, '0')}`,
-            company: row.entreprise || 'Lebrun S.A.',
-            site: row.site || 'Delmas 52',
-            name: row.nom_imprimante || 'Imprimante',
-            brand: row.marque || 'Hp',
-            model: row.modele || '',
-            serialNumber: row.numero_serie || 'N/A',
-            ipAddress: row.adresse_ip || 'N/A',
-            type: row.type || 'Multifonction',
-            status: row.etat || 'Fonctionnel',
-            observations: row.observations || 'Good',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }));
+          const mapped: PrinterAsset[] = INITIAL_PRINTERS.map(initP => {
+            const row = dbPrinters.find((r: any) => r.printer_id === initP.assetTag || (r.numero_serie && r.numero_serie !== 'N/A' && r.numero_serie === initP.serialNumber));
+            if (!row) return initP;
+            return {
+              ...initP,
+              status: row.etat || initP.status,
+              ipAddress: row.adresse_ip || initP.ipAddress,
+              observations: row.observations || initP.observations
+            };
+          });
           setPrinters(mapped);
         }
 
         const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
         if (!usrErr && dbUsers && dbUsers.length > 0) {
-          setEmployees(prev => {
-            const list = [...prev];
-            dbUsers.forEach((u: any, idx: number) => {
-              const fullName = `${u.prenom || ''} ${u.nom || ''}`.trim() || u.username;
-              const exists = list.some(e => e.email === u.email || e.accounts?.appUsername === u.username);
-              if (!exists) {
-                list.push({
-                  id: `emp-db-${u.user_id || idx + 1}`,
-                  employeeId: `EMP-${u.entreprise?.startsWith('Auto') ? 'AUT' : 'LEB'}-${(idx + 1).toString().padStart(3, '0')}`,
-                  company: u.entreprise || 'Lebrun S.A.',
-                  site: u.site || 'Delmas 52',
-                  lastName: u.nom || '',
-                  firstName: u.prenom || '',
-                  fullName: fullName,
-                  email: u.email || `${u.username}@lebrunsa.com`,
-                  department: 'Opérations',
-                  jobTitle: 'Collaborateur',
-                  location: u.site || 'Delmas 52',
-                  status: 'active',
-                  hireDate: new Date().toISOString().slice(0, 10),
-                  accounts: {
-                    windowsUsername: fullName,
-                    appUsername: u.username,
-                    applications: 'Microsoft GP',
-                    organization: u.entreprise || 'Lebrun s.a'
-                  }
-                });
-              }
+          setEmployees(() => {
+            return INITIAL_EMPLOYEES.map(initEmp => {
+              const u = dbUsers.find((r: any) => r.user_id === initEmp.employeeId || r.username === initEmp.accounts?.appUsername);
+              if (!u) return initEmp;
+              return {
+                ...initEmp,
+                email: u.email && u.email !== 'NOT' ? u.email : initEmp.email,
+                phone: u.telephone || initEmp.phone
+              };
             });
-            return list;
           });
         }
 
@@ -871,80 +806,44 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         // Load User Applications from Supabase
         const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*');
         if (!appsErr && dbApps && dbApps.length > 0) {
-          const mappedApps: ApplicationAccount[] = dbApps.map((row: any, idx: number) => ({
-            id: row.id ? row.id.toString() : `app-${idx + 1}`,
-            username: row.username || `user${idx + 1}`,
-            lastName: row.nom || '',
-            firstName: row.prenom || '',
-            password: row.password || 'N/A',
-            applications: row.applications || 'Microsoft GP',
-            organization: row.organisation || 'Lebrun S.A.'
-          }));
+          const mappedApps: ApplicationAccount[] = INITIAL_APPLICATIONS.map(initApp => {
+            const row = dbApps.find((r: any) => r.username && r.username.toLowerCase() === initApp.username.toLowerCase());
+            if (!row) return initApp;
+            return {
+              ...initApp,
+              password: row.password_source || row.password || initApp.password,
+              applications: row.application || initApp.applications,
+              organization: row.organisation || initApp.organization
+            };
+          });
           setApplicationAccounts(mappedApps);
         }
 
         // Load IT Equipment from Supabase
         const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
         if (!itErr && dbIT && dbIT.length > 0) {
-          const mappedIT: ITAsset[] = dbIT.map((row: any, idx: number) => {
-            const kbRaw = row.clavier || '';
-            const isKbDefect = kbRaw.toLowerCase().includes('defect') || kbRaw.toLowerCase().includes('défect') || (row.observations && (row.observations.toLowerCase().includes('clavier: défect') || row.observations.toLowerCase().includes('clavier: defect')));
-            const isKbNeed = kbRaw.toLowerCase().includes('need') || (row.observations && row.observations.toLowerCase().includes('clavier: need'));
-            const kbClean = kbRaw.replace(/\[.*?\]/g, '').trim() || 'Clavier Dell cable';
-            const kbObs = isKbDefect ? 'Défectueux' : isKbNeed ? 'Need' : 'Good';
-
-            const mouseRaw = row.souris || '';
-            const isMouseDefect = mouseRaw.toLowerCase().includes('defect') || mouseRaw.toLowerCase().includes('défect') || (row.observations && (row.observations.toLowerCase().includes('souris: défect') || row.observations.toLowerCase().includes('souris: defect')));
-            const isMouseNeed = mouseRaw.toLowerCase().includes('need') || (row.observations && row.observations.toLowerCase().includes('souris: need'));
-            const mouseClean = mouseRaw.replace(/\[.*?\]/g, '').trim() || 'Dell';
-            const mObs = isMouseDefect ? 'Défectueux' : isMouseNeed ? 'Need' : 'Good';
-
+          const mappedIT: ITAsset[] = INITIAL_IT_ASSETS.map(initA => {
+            const row = dbIT.find((r: any) => 
+              r.equipment_id === initA.assetTag || 
+              (r.numero_serie_pc && r.numero_serie_pc !== 'N/A' && r.numero_serie_pc === initA.serialNumber) ||
+              (r.nom_pc && r.nom_pc === initA.name)
+            );
+            if (!row) return initA;
+            const rowPerson = (row.prenom && row.nom) ? `${row.prenom} ${row.nom}` : (row.nom || row.prenom);
             return {
-              id: row.equipment_id ? row.equipment_id.toString() : (row.id ? row.id.toString() : `it-${idx + 1}`),
-              category: 'it' as const,
-              company: row.entreprise || row.company || (row.asset_tag?.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.'),
-              subCategory: 'desktop' as const,
-              assetTag: row.asset_tag || `AST-PC-LEB${(idx + 1).toString().padStart(2, '0')}`,
-              name: row.nom || `Poste Desktop ${row.modele || ''}`,
-              brand: row.marque || 'Dell',
-              model: row.modele || 'OptiPlex Workstation',
-              serialNumber: row.numero_serie || 'N/A',
-              cpu: row.cpu || 'Intel Core i5',
-              ram: row.ram || '8 GB RAM',
-              storage: row.stockage || '500 GB SSD',
-              assignedTo: row.assigne_a || undefined,
-              assignedDepartment: row.departement || undefined,
-              location: row.site || 'Delmas 52',
-              status: row.statut || (isKbDefect || isMouseDefect ? 'maintenance' : 'in_use'),
-              notes: row.observations || row.notes || '',
-              keyboard: kbClean,
-              clavier: kbClean,
-              keyboardObs: kbObs,
-              mouse: mouseClean,
-              souris: mouseClean,
-              mouseObs: mObs,
-              workstation: {
-                type: 'Desktop',
-                pcName: row.nom || 'Poste Desktop',
-                pcSerial: row.numero_serie || 'N/A',
-                pcSpecs: `${row.cpu || 'Intel Core i5'} ${row.ram || '8 GB RAM'}`,
-                monitorModel: row.ecran || 'Dell standard',
-                monitorSerial: 'N/A',
-                monitorObs: 'Good',
-                keyboard: kbClean,
-                keyboardDetails: 'Clavier Alpha numerique',
-                keyboardObs: kbObs,
-                mouse: mouseClean,
-                mouseDetails: 'Souris Bureau (Cable)',
-                mouseObs: mObs,
-                generalState: (isKbDefect || isMouseDefect) ? 'Maintenance' : 'Good',
-                observations: row.observations || 'Good'
-              },
-              purchaseDate: new Date().toISOString().slice(0, 10),
-              warrantyExpiry: new Date(Date.now() + 365*24*3600*1000*3).toISOString().slice(0, 10),
-              purchaseCost: 900,
-              createdAt: row.created_at || new Date().toISOString(),
-              updatedAt: row.created_at || new Date().toISOString()
+              ...initA,
+              serialNumber: row.numero_serie_pc || initA.serialNumber,
+              assignedTo: initA.assignedTo || rowPerson,
+              assignedPersonnelId: initA.assignedPersonnelId || row.user_id,
+              notes: row.observations || initA.notes,
+              workstation: initA.workstation ? {
+                ...initA.workstation,
+                pcName: row.nom_pc || initA.workstation.pcName,
+                pcSerial: row.numero_serie_pc || initA.workstation.pcSerial,
+                monitorSerial: (row.numero_serie_ecran && row.numero_serie_ecran !== 'N/A') ? row.numero_serie_ecran : initA.workstation.monitorSerial,
+                keyboard: row.clavier || initA.workstation.keyboard,
+                mouse: row.souris || initA.workstation.mouse
+              } : initA.workstation
             };
           });
           setItAssets(mappedIT);
@@ -1019,7 +918,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       ...emp,
       id: `emp-${Date.now()}`
     };
-    setEmployees(prev => [newEmp, ...prev]);
+    setEmployees(prev => [...prev, newEmp]);
 
     showToast({
       title: 'Collaborateur Enregistré',
@@ -1182,9 +1081,41 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getEmployeeAssignedAssets = (empIdOrName: string) => {
-    const it = itAssets.filter(i => i.assignedPersonnelId === empIdOrName || i.assignedTo === empIdOrName);
-    const pl = plans.filter(p => p.assignedPersonnelId === empIdOrName || p.assignedTo === empIdOrName);
-    const sl = starlinkKits.filter(s => s.assignedPersonnelId === empIdOrName || s.assignedTo === empIdOrName);
+    const emp = employees.find(e => 
+      e.id === empIdOrName || 
+      e.employeeId === empIdOrName || 
+      e.fullName.toLowerCase() === empIdOrName.toLowerCase() ||
+      `${e.lastName} ${e.firstName}`.toLowerCase() === empIdOrName.toLowerCase()
+    );
+
+    const validIds = new Set<string>([empIdOrName]);
+    const validNames = new Set<string>();
+
+    if (emp) {
+      validIds.add(emp.id);
+      validIds.add(emp.employeeId);
+      validNames.add(emp.fullName.toLowerCase());
+      if (emp.firstName && emp.lastName) {
+        validNames.add(`${emp.lastName} ${emp.firstName}`.toLowerCase());
+        validNames.add(`${emp.firstName} ${emp.lastName}`.toLowerCase());
+      }
+    } else {
+      validNames.add(empIdOrName.toLowerCase());
+    }
+
+    const it = itAssets.filter(i => 
+      (i.assignedPersonnelId && validIds.has(i.assignedPersonnelId)) ||
+      (i.assignedTo && (validIds.has(i.assignedTo) || validNames.has(i.assignedTo.toLowerCase()))) ||
+      (emp?.workstation?.pcSerial && (i.serialNumber === emp.workstation.pcSerial || i.workstation?.pcSerial === emp.workstation.pcSerial))
+    );
+    const pl = plans.filter(p => 
+      (p.assignedPersonnelId && validIds.has(p.assignedPersonnelId)) ||
+      (p.assignedTo && (validIds.has(p.assignedTo) || validNames.has(p.assignedTo.toLowerCase())))
+    );
+    const sl = starlinkKits.filter(s => 
+      (s.assignedPersonnelId && validIds.has(s.assignedPersonnelId)) ||
+      (s.assignedTo && (validIds.has(s.assignedTo) || validNames.has(s.assignedTo.toLowerCase())))
+    );
     const totalVal = it.reduce((acc, curr) => acc + (curr.purchaseCost || 0), 0);
     return {
       it,
@@ -1279,7 +1210,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setDocuments(prev => [newDoc, ...prev]);
+    setDocuments(prev => [...prev, newDoc]);
 
     showToast({
       title: 'Document Ajouté',
@@ -1318,7 +1249,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setItAssets(prev => [newAsset, ...prev]);
+    setItAssets(prev => [...prev, newAsset]);
 
     showToast({
       title: 'Poste de Travail IT Ajouté',
@@ -1612,7 +1543,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       ...account,
       id: `app-${Date.now()}`
     };
-    setApplicationAccounts(prev => [newAcc, ...prev]);
+    setApplicationAccounts(prev => [...prev, newAcc]);
 
     // Sync to employee accounts in real time
     if (account.employeeId) {
@@ -1646,8 +1577,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         username: account.username,
         nom: account.lastName,
         prenom: account.firstName,
-        password: account.password,
-        applications: account.applications,
+        password_source: account.password,
+        application: account.applications,
         organisation: account.organization
       });
     } catch (err) {
@@ -1692,8 +1623,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.username !== undefined) payload.username = updates.username;
       if (updates.lastName !== undefined) payload.nom = updates.lastName;
       if (updates.firstName !== undefined) payload.prenom = updates.firstName;
-      if (updates.password !== undefined) payload.password = updates.password;
-      if (updates.applications !== undefined) payload.applications = updates.applications;
+      if (updates.password !== undefined) payload.password_source = updates.password;
+      if (updates.applications !== undefined) payload.application = updates.applications;
       if (updates.organization !== undefined) payload.organisation = updates.organization;
 
       if (updates.username) {
@@ -1732,7 +1663,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setPrinters(prev => [newPrinter, ...prev]);
+    setPrinters(prev => [...prev, newPrinter]);
 
     showToast({
       title: 'Imprimante Ajoutée',

@@ -18,12 +18,15 @@ import {
   Laptop,
   Monitor,
   Keyboard,
-  Mouse
+  Mouse,
+  Loader2
 } from 'lucide-react';
 import AssignmentSheetModal from './AssignmentSheetModal';
 import { 
   printSingleAssignmentSheet, 
-  printAllAssignmentSheets
+  printAllAssignmentSheets,
+  downloadSingleAssignmentSheetPDF,
+  downloadAllAssignmentSheetsPDF
 } from '@/lib/printAssignmentSheet';
 
 const CATEGORIES: DocumentCategory[] = [
@@ -52,6 +55,11 @@ export default function DocumentsView() {
 
   // Sheet Modal State
   const [selectedEmpForSheet, setSelectedEmpForSheet] = useState<Employee | null>(null);
+
+  // PDF Download States
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Search & Filters for Fiches
   const [sheetSearch, setSheetSearch] = useState('');
@@ -153,6 +161,53 @@ export default function DocumentsView() {
     }
   };
 
+  const handleDownloadSingle = async (emp: Employee) => {
+    try {
+      setDownloadingId(emp.id);
+      await downloadSingleAssignmentSheetPDF(emp);
+      showToast?.({
+        title: 'Téléchargement terminé',
+        message: `Fiche d'affectation téléchargée pour ${emp.fullName}`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('Erreur téléchargement PDF:', err);
+      showToast?.({
+        title: 'Erreur',
+        message: 'Erreur lors du téléchargement du PDF',
+        type: 'error'
+      });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (filteredEmployees.length === 0) return;
+    try {
+      setIsDownloadingAll(true);
+      setBatchProgress({ current: 0, total: filteredEmployees.length });
+      await downloadAllAssignmentSheetsPDF(filteredEmployees, (current, total) => {
+        setBatchProgress({ current, total });
+      });
+      showToast?.({
+        title: 'Téléchargement groupé terminé',
+        message: `${filteredEmployees.length} fiches d'affectation téléchargées en PDF`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('Erreur téléchargement groupé PDF:', err);
+      showToast?.({
+        title: 'Erreur',
+        message: 'Erreur lors du téléchargement groupé des fiches',
+        type: 'error'
+      });
+    } finally {
+      setIsDownloadingAll(false);
+      setBatchProgress(null);
+    }
+  };
+
   const handleDelete = (doc: DocumentItem) => {
     if (confirm(`Êtes-vous certain de vouloir supprimer le document "${doc.title}" ?`)) {
       deleteDocument(doc.id);
@@ -161,7 +216,7 @@ export default function DocumentsView() {
 
   const handleDownloadDoc = (doc: DocumentItem) => {
     const content = `========================================================
-GROUPE LEBRUN S.A. - DOCUMENT OFFICIEL IT
+LEBRUN S.A. - DOCUMENT OFFICIEL IT
 ========================================================
 Titre       : ${doc.title}
 Référence   : ${doc.reference || 'N/A'}
@@ -242,12 +297,29 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
           {activeSubTab === 'assignment_sheets' ? (
             <>
               <button
+                onClick={handleDownloadAll}
+                disabled={isDownloadingAll || filteredEmployees.length === 0}
+                className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-white hover:bg-slate-50 text-xs font-semibold text-slate-900 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95 disabled:opacity-50"
+                title="Télécharger un PDF unique contenant les fiches de tous les collaborateurs filtrés"
+              >
+                {isDownloadingAll ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-800" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-slate-800" />
+                )}
+                <span>
+                  {isDownloadingAll && batchProgress 
+                    ? `Génération (${batchProgress.current}/${batchProgress.total})...` 
+                    : 'Télécharger Tout (PDF)'}
+                </span>
+              </button>
+              <button
                 onClick={() => printAllAssignmentSheets(filteredEmployees)}
                 className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
-                title="Imprimer ou enregistrer toutes les fiches d'affectation en PDF"
+                title="Imprimer directement toutes les fiches d'affectation"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>Imprimer Toutes les Fiches (PDF)</span>
+                <span>Imprimer Tout</span>
               </button>
               <button
                 onClick={() => exportCSV('personnel')}
@@ -341,7 +413,7 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
 
             <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <p className="text-xs font-medium text-slate-500">Fiches Prêtes à Imprimer</p>
-              <p className="text-xl font-bold text-emerald-700 mt-1">100% (13/13)</p>
+              <p className="text-xl font-bold text-slate-900 mt-1">100% ({sheetStats.total}/{sheetStats.total})</p>
             </div>
           </div>
 
@@ -372,7 +444,6 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                   <option value="Caribe Motors">Caribe Motors</option>
                   <option value="Autobiz">Autobiz</option>
                   <option value="Leader Foods">Leader Foods</option>
-                  <option value="Groupe Lebrun">Groupe Lebrun</option>
                 </select>
               </div>
             </div>
@@ -396,9 +467,9 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                     <th className="py-3 px-3.5 text-center" style={{ width: '10%' }}>
                       Statut Fiche
                     </th>
-                    {/* Actions / Impression PDF */}
-                    <th className="py-3 px-3.5 text-right" style={{ width: '10%' }}>
-                      Fiche PDF
+                    {/* Actions / Téléchargement & Impression PDF */}
+                    <th className="py-3 px-3.5 text-right" style={{ width: '15%' }}>
+                      Fiches PDF & Actions
                     </th>
                   </tr>
                 </thead>
@@ -463,8 +534,8 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                                     <span className="font-medium text-slate-800">{ws.monitorModel}</span>
                                     <span className="text-slate-400 mx-1">•</span>
                                     <span className="font-mono text-slate-500">S/N: {ws.monitorSerial}</span>
-                                    {ws.monitorObs && ws.monitorObs !== 'Good' && (
-                                      <span className="ml-1.5 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 font-semibold">
+                                    {ws.monitorObs && ws.monitorObs !== 'Good' && ws.monitorObs !== 'Conforme' && (
+                                      <span className="ml-1.5 text-[10px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300 font-semibold">
                                         {ws.monitorObs}
                                       </span>
                                     )}
@@ -481,8 +552,8 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                                     </span>
                                     <span className={`text-[9.5px] font-semibold px-1 rounded ${
                                       ws.keyboardObs?.toLowerCase().includes('deffect')
-                                        ? 'bg-amber-100 text-amber-800'
-                                        : 'bg-slate-100 text-slate-600'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
                                     }`}>
                                       {ws.keyboardObs || 'Good'}
                                     </span>
@@ -496,8 +567,8 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                                     <span className="text-slate-700">{ws.mouse} ({ws.mouseDetails})</span>
                                     <span className={`text-[9.5px] font-semibold px-1 rounded ${
                                       ws.mouseObs?.toLowerCase().includes('deffect')
-                                        ? 'bg-amber-100 text-amber-800'
-                                        : 'bg-slate-100 text-slate-600'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
                                     }`}>
                                       {ws.mouseObs || 'Good'}
                                     </span>
@@ -509,26 +580,40 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                             )}
                           </td>
 
-                          {/* 3. Statut & Visas de signatures */}
+                          {/* 3. Statut & Visas de signatures (Monochrome & Sobre) */}
                           <td className="py-3.5 px-3.5 align-middle text-center">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border border-slate-700 bg-white text-slate-900 uppercase tracking-wide">
                               Conforme
                             </span>
-                            <div className="text-[9px] text-slate-400 mt-0.5">Visas prêts</div>
+                            <div className="text-[9px] text-slate-500 mt-0.5">Visas prêts</div>
                           </td>
 
-                          {/* 4. Actions / PDF */}
+                          {/* 4. Actions / Télécharger PDF, Imprimer, Aperçu */}
                           <td className="py-3.5 px-3.5 align-middle text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1.5">
-                              {/* Direct Print PDF */}
+                              {/* Direct Download PDF */}
+                              <button
+                                onClick={() => handleDownloadSingle(emp)}
+                                disabled={downloadingId === emp.id}
+                                className="h-7 flex items-center gap-1 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 text-[11px] font-bold shadow-2xs transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                title="Télécharger directement la fiche PDF"
+                              >
+                                {downloadingId === emp.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin text-slate-800" />
+                                ) : (
+                                  <Download className="w-3 h-3 text-slate-800" />
+                                )}
+                                <span>PDF</span>
+                              </button>
+
+                              {/* Direct Print */}
                               <button
                                 onClick={() => printSingleAssignmentSheet(emp)}
                                 className="h-7 flex items-center gap-1 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold shadow-2xs transition-all cursor-pointer active:scale-95"
-                                title="Imprimer ou enregistrer en PDF cette fiche individuelle avec double logo et signatures"
+                                title="Imprimer la fiche individuelle"
                               >
                                 <Printer className="w-3 h-3" />
-                                <span>PDF</span>
+                                <span>Imprimer</span>
                               </button>
 
                               {/* Preview Sheet Modal */}
@@ -629,7 +714,6 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                   <option value="Caribe Motors">Caribe Motors</option>
                   <option value="Autobiz">Autobiz</option>
                   <option value="Leader Foods">Leader Foods</option>
-                  <option value="Groupe Lebrun">Groupe Lebrun</option>
                 </select>
               </div>
 

@@ -217,7 +217,7 @@ export default function OverviewView() {
         </div>
       </div>
 
-      {/* Row 2: Filiales du Groupe Lebrun S.A. Breakdown */}
+      {/* Row 2: Filiales de Lebrun S.A. Breakdown */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
@@ -235,10 +235,8 @@ export default function OverviewView() {
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="h-8 flex items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={c.logo} 
-                      alt={c.name} 
+                    <CompanyLogo 
+                      company={c.name} 
                       className="h-7 max-w-[105px] w-auto object-contain object-left" 
                     />
                   </div>
@@ -355,17 +353,22 @@ export default function OverviewView() {
               {employees.slice(0, 5).map((emp) => (
                 <div key={emp.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <CompanyLogo company={emp.company} className="h-4 max-w-[65px] w-auto object-contain shrink-0" />
+                    <div className="h-7 w-7 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px] shrink-0 shadow-2xs">
+                      {emp.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
                     <div className="min-w-0">
                       <div className="font-semibold text-slate-900 truncate text-xs">{emp.fullName}</div>
                       <div className="text-slate-500 text-[10px] truncate">{emp.department}</div>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 whitespace-nowrap">
-                    <span className="text-[11px] text-slate-500 font-normal block">
-                      {emp.accounts?.appUsername ? `@${emp.accounts.appUsername}` : emp.employeeId}
-                    </span>
-                    <span className="text-[10px] text-slate-500">{emp.workstation?.pcName || 'PC Assigné'}</span>
+                  <div className="text-right shrink-0 whitespace-nowrap flex items-center gap-2.5">
+                    <CompanyLogo company={emp.company} className="h-4 max-w-[60px] w-auto object-contain shrink-0" />
+                    <div>
+                      <span className="text-[11px] text-slate-500 font-normal block">
+                        {emp.accounts?.appUsername ? `@${emp.accounts.appUsername}` : emp.employeeId}
+                      </span>
+                      <span className="text-[10px] text-slate-500">{emp.workstation?.pcName || 'PC Assigné'}</span>
+                    </div>
                   </div>
                 </div>
               ))}

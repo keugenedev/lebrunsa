@@ -166,7 +166,7 @@ ON CONFLICT (username) DO UPDATE SET
   applications = EXCLUDED.applications,
   organisation = EXCLUDED.organisation;
 
--- 6. INSERTION DES 16 VRAIS COLLABORATEURS DU GROUPE LEBRUN S.A.
+-- 6. INSERTION DES 16 VRAIS COLLABORATEURS DE LEBRUN S.A.
 INSERT INTO users (username, email, nom, prenom, entreprise, site)
 VALUES
 ('rmdguerrier', 'rmdguerrier@lebrunsa.com', 'Guerrier', 'Roody-Max-Dominique', 'Lebrun S.A.', 'Delmas 52'),

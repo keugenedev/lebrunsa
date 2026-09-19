@@ -26,7 +26,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Logos officiels du groupe Lebrun (dossier logo)
+  // Logos officiels de Lebrun S.A. (dossier logo)
   const groupLogos = [
     {
       name: 'Lebrun S.A.',
@@ -35,12 +35,12 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
     },
     {
       name: 'Autobiz',
-      src: '/logos/autobiz.png',
+      src: '/logos/Autobiz.png',
       alt: 'Logo Autobiz'
     },
     {
       name: 'Caribe',
-      src: '/logos/caribe.png',
+      src: '/logos/Caribe.png',
       alt: 'Logo Caribe'
     },
     {

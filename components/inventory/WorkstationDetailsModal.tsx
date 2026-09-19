@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useInventory } from '@/context/InventoryContext';
 import { ITAsset, Employee } from '@/types/inventory';
 import Barcode from '@/components/common/Barcode';
 import CompanyLogo from '@/components/common/CompanyLogo';
@@ -35,15 +36,39 @@ export default function WorkstationDetailsModal({
   onClose,
   onOpenEdit
 }: WorkstationDetailsModalProps) {
+  const { applicationAccounts, employees } = useInventory();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [showPasswords, setShowPasswords] = useState(false);
 
   if (!asset) return null;
 
+  // Resolve linked employee
+  const linkedEmp = employee || employees.find(e => 
+    (asset.assignedPersonnelId && (e.id === asset.assignedPersonnelId || e.employeeId === asset.assignedPersonnelId)) ||
+    (asset.assignedTo && e.fullName.toLowerCase() === asset.assignedTo.toLowerCase()) ||
+    (asset.serialNumber && e.workstation?.pcSerial === asset.serialNumber)
+  );
+
   // Resolve workstation info from asset or linked employee
-  const ws = asset.workstation || employee?.workstation;
-  const accounts = employee?.accounts;
-  const companyName = (asset as any).company || employee?.company || 'Lebrun S.A.';
+  const ws = asset.workstation || linkedEmp?.workstation;
+
+  // Resolve accounts
+  const appAcc = applicationAccounts.find(a => 
+    (linkedEmp && (a.employeeId === linkedEmp.id || a.employeeId === linkedEmp.employeeId)) ||
+    (a.username && linkedEmp?.accounts?.appUsername && a.username.toLowerCase() === linkedEmp.accounts.appUsername.toLowerCase()) ||
+    (a.lastName && linkedEmp?.lastName && a.lastName.toLowerCase() === linkedEmp.lastName.toLowerCase())
+  );
+
+  const accounts = linkedEmp?.accounts || (appAcc ? {
+    windowsUsername: appAcc.windowsUsername || linkedEmp?.fullName || 'N/A',
+    windowsPassword: appAcc.windowsPassword || '1234',
+    appUsername: appAcc.username,
+    appPassword: appAcc.password,
+    applications: appAcc.applications,
+    organization: appAcc.organization
+  } : null);
+
+  const companyName = (asset as any).company || linkedEmp?.company || 'Lebrun S.A.';
 
   const handleCopy = (key: string, value: string) => {
     navigator.clipboard.writeText(value);
@@ -388,9 +413,18 @@ export default function WorkstationDetailsModal({
                   </div>
 
                   <div className="p-2 rounded-lg bg-white border border-slate-200">
-                    <div className="text-[10px] text-slate-400 font-medium">Microsoft GP</div>
+                    <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5">
+                      {accounts.applications?.toLowerCase().includes('dealer') ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src="/logos/dealerpro.png" alt="DealerPro" className="h-3.5 w-auto object-contain max-w-[65px]" />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src="/logos/gp.png" alt="GP" className="h-3.5 w-auto object-contain max-w-[60px]" />
+                      )}
+                      <span>{accounts.applications || 'Logiciel Métier'}</span>
+                    </div>
                     <div className="font-mono font-bold text-slate-900 mt-0.5">
-                      {accounts.appUsername}
+                      @{accounts.appUsername}
                     </div>
                     <div className="text-[11px] font-mono text-slate-500">
                       MDP: {showPasswords ? (accounts.appPassword || 'N/A') : '••••••••'}

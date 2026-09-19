@@ -52,8 +52,7 @@ const COMPANIES = [
   'Lebrun S.A.',
   'Caribe Motors',
   'Autobiz',
-  'Leader Foods',
-  'Groupe Lebrun'
+  'Leader Foods'
 ];
 
 export default function AccountModal() {
@@ -203,7 +202,7 @@ export default function AccountModal() {
               <p className="text-xs text-slate-500">
                 {editingAccount 
                   ? `Mise à jour du compte de ${editingAccount.fullName}` 
-                  : 'Création d\'un compte pour le groupe Lebrun S.A.'}
+                  : 'Création d\'un compte pour Lebrun S.A.'}
               </p>
             </div>
           </div>

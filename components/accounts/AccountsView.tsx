@@ -92,7 +92,7 @@ export default function AccountsView() {
             Comptes Utilisateurs & Administrateurs
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
-            Gestion nominative des comptes d&apos;accès, informaticiens et administrateurs du groupe Lebrun S.A.
+            Gestion nominative des comptes d&apos;accès, informaticiens et administrateurs de Lebrun S.A.
           </p>
         </div>
 
@@ -182,7 +182,6 @@ export default function AccountsView() {
               <option value="Caribe Motors">Caribe Motors</option>
               <option value="Autobiz">Autobiz</option>
               <option value="Leader Foods">Leader Foods</option>
-              <option value="Groupe Lebrun">Groupe Lebrun</option>
             </select>
           </div>
 

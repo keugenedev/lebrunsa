@@ -30,8 +30,7 @@ const COMPANIES = [
   'Lebrun S.A.',
   'Caribe Motors',
   'Autobiz',
-  'Leader Foods',
-  'Groupe Lebrun'
+  'Leader Foods'
 ];
 
 export default function DocumentModal() {

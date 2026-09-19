@@ -245,7 +245,7 @@ export interface ITAccount {
   lastName: string;
   email: string;
   role: ITRole;
-  company: string; // Lebrun S.A., Autobiz, Caribe Motors, Groupe Lebrun
+  company: string; // Lebrun S.A., Autobiz, Caribe Motors, Leader Foods
   site: string; // Delmas 52, etc.
   phone?: string;
   status: 'active' | 'inactive';

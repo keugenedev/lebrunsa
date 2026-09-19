@@ -95,26 +95,32 @@ export default function ITEquipmentView() {
     const inUse = itAssets.filter(a => a.status === 'in_use').length;
     const assigned = itAssets.filter(a => a.assignedTo || a.assignedPersonnelId).length;
     const lebrun = itAssets.filter(a => 
-      (a.company && a.company.toLowerCase().includes('lebrun')) ||
-      (a.assetTag && a.assetTag.includes('LEB')) ||
-      (a.location && a.location.toLowerCase().includes('lebrun'))
+      ((a.company && a.company.toLowerCase().includes('lebrun')) || (a.assetTag && a.assetTag.includes('LEB'))) &&
+      !(a.company && a.company.toLowerCase().includes('caribe'))
     ).length;
     const autobiz = itAssets.filter(a => 
       (a.company && a.company.toLowerCase().includes('auto')) ||
-      (a.assetTag && a.assetTag.includes('AUT')) ||
-      (a.location && a.location.toLowerCase().includes('auto'))
+      (a.assetTag && a.assetTag.includes('AUT'))
     ).length;
-    return { total, inUse, assigned, lebrun, autobiz };
+    const caribe = itAssets.filter(a => 
+      (a.company && a.company.toLowerCase().includes('caribe')) ||
+      (a.location && a.location.toLowerCase().includes('pétion'))
+    ).length;
+    return { total, inUse, assigned, lebrun, autobiz, caribe };
   }, [itAssets]);
 
   // Filtered Assets
   const filteredAssets = useMemo(() => {
     return itAssets.filter(a => {
-      const isLebrun = (a.company && a.company.toLowerCase().includes('lebrun')) || a.assetTag.includes('LEB');
+      const isCaribe = (a.company && a.company.toLowerCase().includes('caribe')) || a.location?.toLowerCase().includes('pétion');
+      const isLebrun = ((a.company && a.company.toLowerCase().includes('lebrun')) || a.assetTag.includes('LEB')) && !isCaribe;
       const isAutobiz = (a.company && a.company.toLowerCase().includes('auto')) || a.assetTag.includes('AUT');
+      const isLeader = (a.company && a.company.toLowerCase().includes('leader')) || a.assetTag.includes('LFD');
       
       if (companyFilter === 'Lebrun' && !isLebrun) return false;
       if (companyFilter === 'Autobiz' && !isAutobiz) return false;
+      if (companyFilter === 'Caribe Motors' && !isCaribe) return false;
+      if (companyFilter === 'Leader Foods' && !isLeader) return false;
       
       if (siteFilter !== 'all' && a.location !== siteFilter) return false;
       if (statusFilter !== 'all' && a.status !== statusFilter) return false;
@@ -227,18 +233,29 @@ export default function ITEquipmentView() {
       label: 'Collaborateur Assigné',
       sortable: true,
       render: (asset) => {
+        const assetUserId = (asset as any).user_id || asset.assignedPersonnelId;
+        const rawAssignedName = asset.assignedTo || 
+          (((asset as any).prenom || (asset as any).nom) ? `${(asset as any).prenom || ''} ${(asset as any).nom || ''}`.trim() : '');
+
         const liveEmp = employees.find(e => 
-          (asset.assignedPersonnelId && (e.id === asset.assignedPersonnelId || e.employeeId === asset.assignedPersonnelId)) ||
-          (asset.assignedTo && e.fullName.toLowerCase() === asset.assignedTo.toLowerCase())
+          (assetUserId && (e.id === assetUserId || e.employeeId === assetUserId)) ||
+          (rawAssignedName && (
+            e.fullName.toLowerCase() === rawAssignedName.toLowerCase() ||
+            `${e.lastName} ${e.firstName}`.toLowerCase() === rawAssignedName.toLowerCase() ||
+            `${e.firstName} ${e.lastName}`.toLowerCase() === rawAssignedName.toLowerCase()
+          )) ||
+          (asset.serialNumber && e.workstation?.pcSerial && e.workstation.pcSerial === asset.serialNumber) ||
+          (asset.name && e.workstation?.pcName && e.workstation.pcName.toLowerCase() === asset.name.toLowerCase())
         );
-        const displayName = liveEmp ? liveEmp.fullName : asset.assignedTo;
-        const displayDept = liveEmp ? liveEmp.department : asset.assignedDepartment;
+
+        const displayName = liveEmp ? liveEmp.fullName : (rawAssignedName || null);
+        const displayDept = liveEmp ? liveEmp.department : (asset.assignedDepartment || (asset as any).department);
 
         return (
           <div>
             {displayName ? (
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0 shadow-2xs border border-slate-200">
                   {displayName[0]}
                 </div>
                 <div>
@@ -422,8 +439,8 @@ export default function ITEquipmentView() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 2xl:gap-6">
-        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 2xl:gap-4">
+        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-600">Total Postes IT</span>
             <Laptop className="w-4 h-4 text-slate-400 shrink-0" />
@@ -435,31 +452,40 @@ export default function ITEquipmentView() {
           </div>
         </div>
 
-        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-600">Postes Affectés</span>
             <UserCheck className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
           <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.assigned}</div>
-          <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Salariés identifiés</div>
+          <div className="text-[11px] text-slate-500 mt-1">Salariés identifiés</div>
         </div>
 
-        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-600">Parc Lebrun S.A.</span>
             <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
           <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.lebrun}</div>
-          <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Siège Delmas 52</div>
+          <div className="text-[11px] text-slate-500 mt-1">Siège Delmas 52</div>
         </div>
 
-        <div className="p-5 2xl:p-6 rounded-2xl 2xl:rounded-3xl bg-white border border-slate-200/90 shadow-2xs">
+        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-600">Parc Autobiz</span>
             <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
           <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.autobiz}</div>
-          <div className="text-[11px] 2xl:text-xs text-slate-500 mt-1">Filiale Autobiz S.A.</div>
+          <div className="text-[11px] text-slate-500 mt-1">Filiale Autobiz S.A.</div>
+        </div>
+
+        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-600">Caribe Motors</span>
+            <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+          </div>
+          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.caribe}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Site Pétion-Ville</div>
         </div>
       </div>
 
@@ -487,11 +513,13 @@ export default function ITEquipmentView() {
               <select
                 value={companyFilter}
                 onChange={(e) => setCompanyFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer font-medium"
               >
                 <option value="all">Toutes les entreprises</option>
                 <option value="Lebrun">Lebrun S.A.</option>
                 <option value="Autobiz">Autobiz S.A.</option>
+                <option value="Caribe Motors">Caribe Motors</option>
+                <option value="Leader Foods">Leader Foods</option>
               </select>
 
               {/* Site */}
