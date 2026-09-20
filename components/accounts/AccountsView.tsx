@@ -9,7 +9,12 @@ import {
   Download, 
   Edit2, 
   Trash2, 
-  Filter
+  Filter,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+  Key
 } from 'lucide-react';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
@@ -24,10 +29,23 @@ export default function AccountsView() {
   } = useInventory();
 
   const [search, setSearch] = useState('');
-  const [selectedRole, setSelectedRole] = useState<string>('all');
-  const [selectedCompany, setSelectedCompany] = useState<string>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [deletingAccount, setDeletingAccount] = useState<ITAccount | null>(null);
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const togglePasswordVisibility = (id: string) => {
+    setRevealedPasswords(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const copyToClipboard = (id: string, text?: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   // Combined search: header search + view search
   const activeSearch = search || globalSearch || '';
@@ -35,45 +53,25 @@ export default function AccountsView() {
   // KPI Calculations
   const stats = useMemo(() => {
     const total = itAccounts.length;
-    const superAdmins = itAccounts.filter(a => a.role === 'Super Administrateur IT').length;
-    const sysAdmins = itAccounts.filter(a => a.role === 'Administrateur Systèmes & Réseaux').length;
-    const activeCount = itAccounts.filter(a => a.status === 'active').length;
+    const withPassword = itAccounts.filter(a => a.password || a.passwordHint).length;
 
     return {
       total,
-      superAdmins,
-      sysAdmins,
-      activeCount
+      withPassword
     };
   }, [itAccounts]);
 
   // Filtering
   const filteredAccounts = useMemo(() => {
     return itAccounts.filter(account => {
-      // Role filter
-      if (selectedRole !== 'all' && account.role !== selectedRole) {
-        return false;
-      }
-      // Company filter
-      if (selectedCompany !== 'all' && account.company !== selectedCompany) {
-        return false;
-      }
-      // Status filter
-      if (selectedStatus !== 'all' && account.status !== selectedStatus) {
-        return false;
-      }
-      // Text search
       if (activeSearch.trim()) {
         const query = activeSearch.toLowerCase();
         const matchesName = account.fullName.toLowerCase().includes(query);
-        const matchesUsername = account.username.toLowerCase().includes(query);
+        const matchesCode = (account.userId || '').toLowerCase().includes(query) || account.username.toLowerCase().includes(query);
         const matchesEmail = account.email.toLowerCase().includes(query);
-        const matchesRole = account.role.toLowerCase().includes(query);
-        const matchesCompany = account.company.toLowerCase().includes(query);
-        const matchesSpecialty = account.specialty?.toLowerCase().includes(query) || false;
-        const matchesPhone = account.phone?.toLowerCase().includes(query) || false;
+        const matchesPoste = (account.poste || account.specialty || account.role || '').toLowerCase().includes(query);
 
-        return matchesName || matchesUsername || matchesEmail || matchesRole || matchesCompany || matchesSpecialty || matchesPhone;
+        return matchesName || matchesCode || matchesEmail || matchesPoste;
       }
 
       return true;
@@ -82,7 +80,7 @@ export default function AccountsView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [itAccounts, selectedRole, selectedCompany, selectedStatus, activeSearch]);
+  }, [itAccounts, activeSearch]);
 
   const handleDelete = (account: ITAccount) => {
     setDeletingAccount(account);
@@ -94,10 +92,10 @@ export default function AccountsView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
           <h1 className="text-sm font-medium text-slate-800 tracking-tight">
-            Comptes Utilisateurs & Administrateurs
+            Comptes & Mots de Passe Utilisateurs
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
-            Gestion nominative des comptes d&apos;accès, informaticiens et administrateurs de Lebrun S.A.
+            Attribution des accès et mots de passe de connexion pour le personnel de Lebrun S.A.
           </p>
         </div>
 
@@ -120,177 +118,131 @@ export default function AccountsView() {
         </div>
       </div>
 
-      {/* KPI Stats - Clean monochrome slate */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      {/* KPI Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-medium text-slate-500">Total Comptes</p>
+          <p className="text-xs font-medium text-slate-500">Total Comptes Utilisateurs</p>
           <p className="text-xl font-bold text-slate-900 mt-1">{stats.total}</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-medium text-slate-500">Super Admins</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{stats.superAdmins}</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-medium text-slate-500">Admins Systèmes</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{stats.sysAdmins}</p>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-medium text-slate-500">Comptes Actifs</p>
-          <p className="text-xl font-bold text-slate-900 mt-1">{stats.activeCount}</p>
+          <p className="text-xs font-medium text-slate-500">Mots de passe configurés</p>
+          <p className="text-xl font-bold text-emerald-600 mt-1">{stats.withPassword}</p>
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Search */}
-          <div className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Rechercher nom, @user, email, rôle..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-            />
-          </div>
-
-          {/* Role Filter */}
-          <div className="relative flex items-center">
-            <Filter className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-            >
-              <option value="all">Tous les Rôles</option>
-              <option value="Super Administrateur IT">Super Administrateur IT</option>
-              <option value="Administrateur Systèmes & Réseaux">Admin Systèmes & Réseaux</option>
-              <option value="Technicien Support & Maintenance">Technicien Support</option>
-              <option value="Technicien Réseaux & Télécoms">Technicien Réseaux</option>
-              <option value="Gestionnaire Parc Informatique">Gestionnaire Parc IT</option>
-            </select>
-          </div>
-
-          {/* Company Filter */}
-          <div>
-            <select
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-            >
-              <option value="all">Toutes les Entreprises</option>
-              <option value="Lebrun S.A.">Lebrun S.A.</option>
-              <option value="Caribe Motors">Caribe Motors</option>
-              <option value="Autobiz">Autobiz</option>
-              <option value="Leader Foods">Leader Foods</option>
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-            >
-              <option value="all">Tous les Statuts</option>
-              <option value="active">Actifs</option>
-              <option value="inactive">Inactifs</option>
-            </select>
-          </div>
+      {/* Search Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="relative flex items-center">
+          <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Rechercher par code, nom, email ou poste..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+          />
         </div>
       </div>
 
-      {/* Clean Table */}
+      {/* Clean Table : Code | Nom | Email | Poste | Password | Actions */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3 px-3.5">Nom de la personne</th>
-                <th className="py-3 px-3.5">Rôle</th>
-                <th className="py-3 px-3.5">Entreprise</th>
-                <th className="py-3 px-3.5">Site</th>
+                <th className="py-3 px-3.5">Code</th>
+                <th className="py-3 px-3.5">Nom</th>
                 <th className="py-3 px-3.5">Email</th>
-                <th className="py-3 px-3.5">Téléphone</th>
-                <th className="py-3 px-3.5">Statut</th>
+                <th className="py-3 px-3.5">Poste</th>
+                <th className="py-3 px-3.5">Password</th>
                 <th className="py-3 px-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-slate-400">
+                  <td colSpan={6} className="py-10 text-center text-slate-400">
                     <p className="text-sm font-semibold text-slate-600">Aucun compte trouvé</p>
-                    <p className="text-xs text-slate-400 mt-1">Modifiez vos filtres ou ajoutez un nouveau compte.</p>
+                    <p className="text-xs text-slate-400 mt-1">Attribuez un mot de passe à un collaborateur pour lui donner accès.</p>
                     <button
                       onClick={() => openAccountModal()}
                       className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Ajouter un compte
+                      Attribuer un mot de passe
                     </button>
                   </td>
                 </tr>
               ) : (
                 filteredAccounts.map((account, idx) => (
                   <tr key={`${account.id || account.username || 'acc'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Person Name - Plain, clean text */}
-                    <td className="py-3 px-3.5 font-semibold text-slate-900 whitespace-nowrap">
-                      {account.fullName}
-                    </td>
-
-                    {/* Role - Sober slate badge */}
+                    {/* Code */}
                     <td className="py-3 px-3.5 whitespace-nowrap">
-                      <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                        {account.role}
+                      <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                        {account.userId || account.username || '-'}
                       </span>
                     </td>
 
-                    {/* Company - Plain text */}
-                    <td className="py-3 px-3.5 font-medium text-slate-800 whitespace-nowrap">
-                      {account.company}
+                    {/* Nom */}
+                    <td className="py-3 px-3.5 whitespace-nowrap font-semibold text-slate-900">
+                      {account.fullName}
                     </td>
 
-                    {/* Site - Plain text */}
-                    <td className="py-3 px-3.5 text-slate-600 whitespace-nowrap">
-                      {account.site}
-                    </td>
-
-                    {/* Email - Plain text / link */}
+                    {/* Email */}
                     <td className="py-3 px-3.5 whitespace-nowrap">
                       <a
                         href={`mailto:${account.email}`}
-                        className="text-slate-700 hover:text-slate-900 hover:underline"
+                        className="text-slate-700 hover:text-slate-900 hover:underline font-medium"
                       >
                         {account.email}
                       </a>
                     </td>
 
-                    {/* Phone - Plain text */}
-                    <td className="py-3 px-3.5 text-slate-600 whitespace-nowrap">
-                      {account.phone || '-'}
-                    </td>
-
-                    {/* Status - Clean subtle badge */}
+                    {/* Poste */}
                     <td className="py-3 px-3.5 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                        <span className={`w-1.5 h-1.5 rounded-full ${account.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                        {account.status === 'active' ? 'Actif' : 'Inactif'}
+                      <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                        {account.poste || account.specialty || account.role || '-'}
                       </span>
                     </td>
 
-                    {/* Actions - Matching standard Edit2 & Trash2 */}
+                    {/* Password */}
+                    <td className="py-3 px-3.5 whitespace-nowrap">
+                      {account.password || account.passwordHint ? (
+                        <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                          <Key className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="font-mono text-xs font-semibold text-slate-800 tracking-wider">
+                            {revealedPasswords[account.id] ? (account.password || account.passwordHint) : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility(account.id)}
+                            className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors cursor-pointer"
+                            title={revealedPasswords[account.id] ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                          >
+                            {revealedPasswords[account.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(account.id, account.password || account.passwordHint)}
+                            className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors cursor-pointer"
+                            title="Copier le mot de passe"
+                          >
+                            {copiedId === account.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] italic">Non défini</span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
                     <td className="py-3 px-3.5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openAccountModal(account)}
                           className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                          title="Modifier ce compte"
+                          title="Modifier le mot de passe"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>

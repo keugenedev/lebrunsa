@@ -65,7 +65,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
     setError(null);
 
     if (!email.trim()) {
-      setError('Veuillez saisir votre adresse e-mail professionnelle.');
+      setError('Veuillez saisir votre identifiant (@username) ou email.');
       return;
     }
 
@@ -84,8 +84,10 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
         if (isStandalonePage && typeof window !== 'undefined') {
           window.location.href = '/';
         }
+      } else {
+        setError('Identifiant (@username ou email) ou mot de passe incorrect.');
       }
-    }, 400);
+    }, 300);
   };
 
   return (
@@ -98,35 +100,42 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
       <div className="w-full max-w-[390px] shrink-0 my-auto">
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-7">
           
-          {/* Logo Lebrun Centered */}
+          {/* Brand Header */}
           <div className="flex flex-col items-center text-center mb-6">
-            <div className="flex items-center justify-center">
+            <div className="mb-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logos/lebrun.png"
+                src="/Lebrunog.png"
                 alt="Logo Lebrun S.A."
-                className="h-16 sm:h-18 w-auto object-contain"
+                className="h-16 w-auto object-contain"
               />
             </div>
+            <h1 className="text-base font-bold text-slate-900 tracking-tight">
+              Connexion Parc & Systèmes
+            </h1>
+            <p className="text-[11px] text-slate-500 mt-1 max-w-[280px]">
+              Portail centralisé Lebrun S.A., Autobiz, Caribe Motors & Leader Foods
+            </p>
           </div>
 
-          {/* Error message */}
-          {error && (
-            <div className="mb-3.5 p-2.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2 text-xs text-red-700">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* Email Field */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Error Message */}
+            {error && (
+              <div className="flex items-start gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Email / Username Field */}
             <div>
               <label 
                 htmlFor="email" 
                 className="block text-[11px] font-medium text-slate-700 mb-1"
               >
-                Adresse mail
+                Identifiant IT (@username) ou Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -134,10 +143,10 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
                 </div>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nom@lebrunsa.com"
+                  placeholder="ex: keugene ou it@lebrunsa.com"
                   required
                   className="w-full pl-9 pr-3 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 transition-colors"
                 />

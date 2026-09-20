@@ -1,59 +1,19 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
-import { ITAccount, ITRole } from '@/types/inventory';
-import { 
-  X, 
-  ShieldCheck, 
-  User, 
-  Mail, 
-  Phone, 
-  Building, 
-  MapPin, 
-  Wrench, 
-  Lock, 
-  FileText, 
-  Save, 
-  UserPlus, 
-  CheckCircle2, 
-  AlertCircle 
+import {
+  X,
+  ShieldCheck,
+  UserCheck,
+  Lock,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Save,
+  UserPlus,
+  CheckCircle2
 } from 'lucide-react';
-
-const IT_ROLES: { value: ITRole; label: string; desc: string }[] = [
-  { 
-    value: 'Super Administrateur IT', 
-    label: 'Super Administrateur IT', 
-    desc: 'Accès complet systèmes, serveurs, bases de données et gestion des droits' 
-  },
-  { 
-    value: 'Administrateur Systèmes & Réseaux', 
-    label: 'Admin Systèmes & Réseaux', 
-    desc: 'Gestion des réseaux Starlink/Cisco, serveurs Windows, sauvegardes et sécurité' 
-  },
-  { 
-    value: 'Technicien Support & Maintenance', 
-    label: 'Technicien Support & Maintenance', 
-    desc: 'Assistance utilisateurs, dépannage hardware/software et maintenance préventive' 
-  },
-  { 
-    value: 'Technicien Réseaux & Télécoms', 
-    label: 'Technicien Réseaux & Télécoms', 
-    desc: 'Câblage structuré, points d\'accès Wi-Fi, liaisons satellites et téléphonie' 
-  },
-  { 
-    value: 'Gestionnaire Parc Informatique', 
-    label: 'Gestionnaire Parc Informatique', 
-    desc: 'Suivi des stocks, affectations de postes, licences et mouvements de matériel' 
-  }
-];
-
-const COMPANIES = [
-  'Lebrun S.A.',
-  'Caribe Motors',
-  'Autobiz',
-  'Leader Foods'
-];
 
 export default function AccountModal() {
   const {
@@ -62,158 +22,134 @@ export default function AccountModal() {
     editingAccount,
     addITAccount,
     updateITAccount,
-    itAccounts
+    employees,
+    applicationAccounts
   } = useInventory();
 
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [code, setCode] = useState('');
   const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<ITRole>('Technicien Support & Maintenance');
-  const [company, setCompany] = useState('Lebrun S.A.');
-  const [site, setSite] = useState('Delmas 52');
-  const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState<'active' | 'inactive'>('active');
-  const [specialty, setSpecialty] = useState('');
-  const [passwordHint, setPasswordHint] = useState('');
-  const [notes, setNotes] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [poste, setPoste] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (editingAccount) {
+      setSelectedUserId(editingAccount.userId || '');
+      setCode(editingAccount.userId || editingAccount.username || '');
       setFullName(editingAccount.fullName || '');
-      setUsername(editingAccount.username || '');
       setEmail(editingAccount.email || '');
-      setRole(editingAccount.role || 'Technicien Support & Maintenance');
-      setCompany(editingAccount.company || 'Lebrun S.A.');
-      setSite(editingAccount.site || 'Delmas 52');
-      setPhone(editingAccount.phone || '');
-      setStatus(editingAccount.status || 'active');
-      setSpecialty(editingAccount.specialty || '');
-      setPasswordHint(editingAccount.passwordHint || '');
-      setNotes(editingAccount.notes || '');
-      setErrors({});
+      setPoste(editingAccount.poste || editingAccount.specialty || editingAccount.role || '');
+      setPassword(editingAccount.password || editingAccount.passwordHint || '');
+      setShowPassword(false);
+      setErrorMsg('');
     } else {
+      setSelectedUserId('');
+      setCode('');
       setFullName('');
-      setUsername('');
       setEmail('');
-      setRole('Technicien Support & Maintenance');
-      setCompany('Lebrun S.A.');
-      setSite('Delmas 52');
-      setPhone('');
-      setStatus('active');
-      setSpecialty('');
-      setPasswordHint('');
-      setNotes('');
-      setErrors({});
+      setPoste('');
+      setPassword('');
+      setShowPassword(false);
+      setErrorMsg('');
     }
   }, [editingAccount, isAccountModalOpen]);
 
-  if (!isAccountModalOpen) return null;
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    setErrorMsg('');
 
-  // Auto-generate username when typing full name (if adding new)
-  const handleFullNameChange = (val: string) => {
-    setFullName(val);
-    if (!editingAccount) {
-      const parts = val.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        const firstLetter = parts[0].charAt(0).toLowerCase();
-        const cleanLast = parts.slice(1).join('').toLowerCase().replace(/[^a-z0-9]/g, '');
-        setUsername(`${firstLetter}${cleanLast}`);
-        if (!email || email.includes('@lebrunsa.com')) {
-          setEmail(`${firstLetter}${cleanLast}@lebrunsa.com`);
-        }
-      } else if (parts.length === 1 && parts[0]) {
-        const clean = parts[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-        setUsername(clean);
-      }
+    if (!userId) {
+      setCode(''); setFullName(''); setEmail(''); setPoste(''); setPassword('');
+      return;
+    }
+
+    const emp = employees.find(e => e.employeeId === userId);
+    if (emp) {
+      setCode(emp.employeeId);
+      setFullName(emp.fullName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim());
+      setEmail(emp.email || '');
+      setPoste(emp.jobTitle || emp.position || emp.department || '');
+
+      const appAcc = applicationAccounts.find(a =>
+        (a.employeeId && a.employeeId === emp.employeeId) ||
+        (a.username && emp.email && a.username.toLowerCase() === emp.email.split('@')[0].toLowerCase())
+      );
+      setPassword(appAcc?.password || '');
     }
   };
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!fullName.trim()) newErrors.fullName = 'Le nom complet est obligatoire';
-    if (!username.trim()) newErrors.username = 'L\'identifiant (@username) est obligatoire';
-    if (!email.trim()) newErrors.email = 'L\'adresse email est obligatoire';
-    
-    // Check duplicate username if new or if changed
-    const cleanUser = username.trim().toLowerCase();
-    const duplicate = itAccounts.find(a => 
-      a.username.toLowerCase() === cleanUser && 
-      (!editingAccount || a.id !== editingAccount.id)
-    );
-    if (duplicate) {
-      newErrors.username = `L'identifiant "@${cleanUser}" est déjà utilisé par ${duplicate.fullName}`;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    let res = '';
+    for (let i = 0; i < 10; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+    setPassword(res);
+    setShowPassword(true);
+    setErrorMsg('');
   };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (!validate()) return;
+    if (!selectedUserId && !editingAccount) { setErrorMsg('Veuillez selectionner un collaborateur.'); return; }
+    if (!password.trim()) { setErrorMsg('Le mot de passe est obligatoire.'); return; }
 
     setIsSubmitting(true);
     try {
-      const trimmedFullName = fullName.trim();
-      const parts = trimmedFullName.split(/\s+/);
-      const firstName = parts[0] || '';
-      const lastName = parts.slice(1).join(' ') || parts[0] || '';
-
+      const emp = employees.find(e => e.employeeId === (selectedUserId || editingAccount?.userId));
+      const username = email ? email.split('@')[0].toLowerCase() : (code || '').toLowerCase();
       const accountData = {
-        fullName: trimmedFullName,
-        firstName,
-        lastName,
-        username: username.trim().toLowerCase().replace(/^@/, ''),
+        userId: selectedUserId || editingAccount?.userId || undefined,
+        fullName: fullName.trim(),
+        firstName: fullName.trim().split(/\s+/)[0] || '',
+        lastName: fullName.trim().split(/\s+/).slice(1).join(' ') || '',
+        username,
         email: email.trim().toLowerCase(),
-        role,
-        company,
-        site: site.trim() || 'Delmas 52',
-        phone: phone.trim() || undefined,
-        status,
-        specialty: specialty.trim() || undefined,
-        passwordHint: passwordHint.trim() || undefined,
-        notes: notes.trim() || undefined
+        role: 'Technicien Support & Maintenance' as const,
+        company: emp?.company || 'Lebrun S.A.',
+        site: emp?.site || 'Delmas 52',
+        status: 'active' as const,
+        poste: poste.trim() || undefined,
+        specialty: poste.trim() || undefined,
+        password: password.trim(),
+        passwordHint: password.trim()
       };
 
-      let res;
-      if (editingAccount) {
-        res = await updateITAccount(editingAccount.id, accountData);
-      } else {
-        res = await addITAccount(accountData);
-      }
+      const res = editingAccount
+        ? await updateITAccount(editingAccount.id, accountData)
+        : await addITAccount(accountData);
 
-      if (res?.success !== false) {
-        closeAccountModal();
-      }
+      if (res?.success !== false) closeAccountModal();
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!isAccountModalOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
-      <div 
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden text-slate-900 animate-in zoom-in-95 duration-200"
+      <div
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-md flex flex-col overflow-hidden text-slate-900 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
+        {/* En-tete */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 leading-tight">
-                {editingAccount ? 'Modifier le Compte' : 'Ajouter un Compte'}
+              <h2 className="text-sm font-bold text-slate-900 leading-tight">
+                {editingAccount ? 'Modifier le Compte' : 'Attribuer un Mot de Passe'}
               </h2>
-              <p className="text-xs text-slate-500">
-                {editingAccount 
-                  ? `Mise à jour du compte de ${editingAccount.fullName}` 
-                  : 'Création d\'un compte pour Lebrun S.A.'}
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {editingAccount
+                  ? `Mise a jour — ${editingAccount.fullName}`
+                  : 'Selectionnez un collaborateur et definissez son acces'}
               </p>
             </div>
           </div>
@@ -222,268 +158,115 @@ export default function AccountModal() {
             onClick={closeAccountModal}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* Identity Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <User className="w-3.5 h-3.5 text-slate-700" />
-              <span>Identité & Coordonnées</span>
-            </div>
+        {/* Formulaire */}
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Full Name */}
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                  <span>Nom de la personne <span className="text-rose-500">*</span></span>
-                  {errors.fullName && <span className="text-[11px] text-rose-500 font-normal">{errors.fullName}</span>}
-                </label>
+          {/* Selecteur */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <UserCheck className="w-3.5 h-3.5 text-blue-600" />
+              Choisir le collaborateur
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => handleUserSelect(e.target.value)}
+              disabled={!!editingAccount}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all disabled:bg-slate-50 disabled:text-slate-500"
+            >
+              <option value="">— Selectionner un collaborateur —</option>
+              {employees.map((emp) => (
+                <option key={emp.employeeId} value={emp.employeeId}>
+                  [{emp.employeeId}] {emp.fullName} — {emp.company || 'Lebrun S.A.'}
+                </option>
+              ))}
+            </select>
+            {selectedUserId && (
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                Matricule : <span className="font-mono font-bold text-emerald-900 ml-1">{selectedUserId}</span>
+                <span className="ml-1">— Informations chargees.</span>
+              </div>
+            )}
+          </div>
+
+          {/* Carte informations */}
+          {(selectedUserId || editingAccount) && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Code</p>
+                <p className="text-xs font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-1.5 rounded-lg">
+                  {code || '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Poste</p>
+                <p className="text-xs font-medium text-slate-700 bg-white border border-slate-200 px-2 py-1.5 rounded-lg truncate" title={poste}>
+                  {poste || '—'}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nom complet</p>
+                <p className="text-xs font-semibold text-slate-900 bg-white border border-slate-200 px-2 py-1.5 rounded-lg">
+                  {fullName || '—'}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email</p>
+                <p className="text-xs text-slate-700 bg-white border border-slate-200 px-2 py-1.5 rounded-lg">
+                  {email || '—'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Mot de passe */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-slate-500" />
+                Mot de passe <span className="text-rose-500 ml-0.5">*</span>
+              </span>
+              {errorMsg && <span className="text-[11px] text-rose-500 font-normal">{errorMsg}</span>}
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
                 <input
-                  type="text"
-                  required
-                  placeholder="ex: Kensly Eugene, Roody-Max Guerrier..."
-                  value={fullName}
-                  onChange={(e) => handleFullNameChange(e.target.value)}
-                  className={`w-full px-3 py-2 text-xs rounded-xl border bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all ${
-                    errors.fullName ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Saisissez ou generez un mot de passe..."
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
+                  className={`w-full pr-10 pl-3 py-2 text-xs rounded-xl border font-mono bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all ${
+                    errorMsg && !password ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
                   }`}
                 />
-              </div>
-
-              {/* Username */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                  <span>Identifiant IT (@username) <span className="text-rose-500">*</span></span>
-                  {errors.username && <span className="text-[11px] text-rose-500 font-normal">{errors.username}</span>}
-                </label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-3 text-xs font-bold text-slate-400">@</span>
-                  <input
-                    type="text"
-                    required
-                    placeholder="keugene, rguerrier..."
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
-                    className={`w-full pl-7 pr-3 py-2 text-xs rounded-xl border bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono transition-all ${
-                      errors.username ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                  <span>Email Professionnel <span className="text-rose-500">*</span></span>
-                  {errors.email && <span className="text-[11px] text-rose-500 font-normal">{errors.email}</span>}
-                </label>
-                <div className="relative flex items-center">
-                  <Mail className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
-                  <input
-                    type="email"
-                    required
-                    placeholder="it@lebrunsa.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all ${
-                      errors.email ? 'border-rose-400 bg-rose-50/30' : 'border-slate-300'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Téléphone / Contact Direct</label>
-                <div className="relative flex items-center">
-                  <Phone className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="+509 3700-0000"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Statut du Compte</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStatus('active')}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                      status === 'active'
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-2xs'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${status === 'active' ? 'text-emerald-600' : 'text-slate-400'}`} />
-                    <span>Actif</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStatus('inactive')}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                      status === 'inactive'
-                        ? 'bg-rose-50 border-rose-400 text-rose-700 shadow-2xs'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <AlertCircle className={`w-3.5 h-3.5 ${status === 'inactive' ? 'text-rose-600' : 'text-slate-400'}`} />
-                    <span>Inactif</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <hr className="border-slate-100" />
-
-          {/* Role & Privileges */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <ShieldCheck className="w-3.5 h-3.5 text-slate-700" />
-              <span>Rôle & Responsabilités IT</span>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-700">Sélectionnez le Rôle IT</label>
-              <div className="grid grid-cols-1 gap-2">
-                {IT_ROLES.map((r) => {
-                  const isSelected = role === r.value;
-                  return (
-                    <div
-                      key={r.value}
-                      onClick={() => setRole(r.value)}
-                      className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-start gap-3 ${
-                        isSelected
-                          ? 'border-slate-900 bg-slate-900 text-white shadow-2xs'
-                          : 'border-slate-200 bg-slate-50/40 hover:bg-slate-100/70 text-slate-700'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        checked={isSelected}
-                        onChange={() => setRole(r.value)}
-                        className="mt-0.5 text-slate-900 focus:ring-slate-900"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold flex items-center gap-2">
-                          <span>{r.label}</span>
-                          {r.value === 'Super Administrateur IT' && (
-                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
-                              isSelected ? 'bg-amber-400 text-slate-950' : 'bg-amber-100 text-amber-800'
-                            }`}>
-                              Full Root
-                            </span>
-                          )}
-                        </div>
-                        <p className={`text-[11px] mt-0.5 ${isSelected ? 'text-slate-300' : 'text-slate-500'}`}>
-                          {r.desc}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-              {/* Company */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Entreprise / Entité</span>
-                </label>
-                <select
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
                 >
-                  {COMPANIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-
-              {/* Site */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Site / Implantation</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Delmas 52"
-                  value={site}
-                  onChange={(e) => setSite(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-                />
-              </div>
-
-              {/* Specialty */}
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Wrench className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Spécialité & Compétences Techniques</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="ex: Sécurité & Active Directory, Starlink & Câblage Réseau, Microsoft GP..."
-                  value={specialty}
-                  onChange={(e) => setSpecialty(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={generatePassword}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all cursor-pointer whitespace-nowrap active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Generer
+              </button>
             </div>
+            <p className="text-[11px] text-slate-400">
+              Connexion via <span className="font-medium text-slate-500">email + mot de passe</span> uniquement.
+            </p>
           </div>
 
-          <hr className="border-slate-100" />
-
-          {/* Access / Security & Notes */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-              <Lock className="w-3.5 h-3.5 text-slate-700" />
-              <span>Accès & Notes d&apos;Administration</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Clé d&apos;accès / Mot de passe provisoire</label>
-                <input
-                  type="text"
-                  placeholder="ex: Session admin sécurisée, badge #IT-01..."
-                  value={passwordHint}
-                  onChange={(e) => setPasswordHint(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-                />
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Notes Internes IT</span>
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Informations complémentaires sur l'informaticien, astreinte, matériels confiés..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          {/* Boutons */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={closeAccountModal}
@@ -494,22 +277,22 @@ export default function AccountModal() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-xl shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-xl shadow-sm transition-all cursor-pointer disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Enregistrement en cours...</span>
+                  Enregistrement...
                 </>
               ) : editingAccount ? (
                 <>
                   <Save className="w-3.5 h-3.5" />
-                  <span>Enregistrer les modifications</span>
+                  Enregistrer
                 </>
               ) : (
                 <>
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>Créer le compte</span>
+                  Attribuer le Mot de Passe
                 </>
               )}
             </button>

@@ -223,6 +223,8 @@ export interface Employee {
   phone?: string;
   department: string;
   jobTitle: string;
+  position?: string;
+  username?: string;
   location: string;
   status: 'active' | 'on_leave' | 'inactive';
   hireDate: string;
@@ -241,6 +243,7 @@ export type ITRole =
 
 export interface ITAccount {
   id: string;
+  userId?: string; // ID unique du collaborateur dans la table users (ex: EMP-LEB-014)
   username: string; // e.g. keugene
   fullName: string; // Kensly Eugene
   firstName: string;
@@ -252,6 +255,8 @@ export interface ITAccount {
   phone?: string;
   status: 'active' | 'inactive';
   specialty?: string; // Infrastructure, Windows Server, Réseau, Helpdesk, GP
+  poste?: string; // Poste réel du collaborateur conservé (ex: Administrateur, Informaticien, etc.)
+  password?: string; // Mot de passe réel stocké dans la base de données Supabase
   passwordHint?: string; // Mot de passe / Session
   notes?: string;
   createdAt: string;

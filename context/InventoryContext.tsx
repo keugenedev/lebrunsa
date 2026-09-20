@@ -19,6 +19,7 @@ import {
   WifiNetwork,
   ToastMessage,
   ITAccount,
+  ITRole,
   DocumentItem
 } from '@/types/inventory';
 export type { NavigationTab, WifiNetwork, ToastMessage, DocumentItem };
@@ -336,21 +337,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return null;
   });
 
-  const login = (email: string, _password?: string): boolean => {
-    const user = {
-      name: email.split('@')[0] || 'Utilisateur',
-      email: email,
-      role: 'Administrateur Inventaire'
-    };
-    setIsAuthenticated(true);
-    setCurrentUser(user);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('lebron_auth', 'true');
-      localStorage.setItem('lebron_user', JSON.stringify(user));
-    }
-    return true;
-  };
-
   const logout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -579,15 +565,25 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // IT Accounts state (Informaticiens & Administrateurs)
   const [itAccounts, setItAccounts] = useState<ITAccount[]>(() => {
     if (typeof window !== 'undefined') {
+      const blacklistRaw = localStorage.getItem('lebron_deleted_it_accounts');
+      const blacklist: { userId?: string; username?: string }[] = blacklistRaw ? JSON.parse(blacklistRaw) : [];
+      const filterDeleted = (accounts: ITAccount[]) => accounts.filter(a =>
+        !blacklist.some(d =>
+          (d.userId && a.userId && d.userId === a.userId) ||
+          (d.username && a.username && d.username.toLowerCase() === a.username.toLowerCase())
+        )
+      );
+
       const saved = localStorage.getItem('lebron_inv_it_accounts');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            return parsed;
+            return filterDeleted(parsed);
           }
         } catch (e) { console.error(e); }
       }
+      return filterDeleted(INITIAL_IT_ACCOUNTS);
     }
     return INITIAL_IT_ACCOUNTS;
   });
@@ -874,7 +870,129 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applicationAccounts]);
 
-  // Chargement et synchronisation avec Supabase
+  // Authentification et connexion des utilisateurs
+  const login = (emailOrUsername: string, password?: string): boolean => {
+    const query = (emailOrUsername || '').trim().toLowerCase().replace(/^@/, '');
+    if (!query) return false;
+
+    // 1. Chercher dans les comptes IT (table users & user_applications)
+    const itAcc = itAccounts.find(a => 
+      a.username.toLowerCase() === query ||
+      a.email.toLowerCase() === query ||
+      (a.userId && a.userId.toLowerCase() === query)
+    );
+
+    if (itAcc) {
+      const expectedPassword = itAcc.password || itAcc.passwordHint;
+      if (expectedPassword && password && password.trim() !== expectedPassword.trim()) {
+        showToast({
+          title: "Échec de connexion",
+          message: "Mot de passe incorrect pour ce compte.",
+          type: "error"
+        });
+        return false;
+      }
+
+      const user = {
+        name: itAcc.fullName,
+        email: itAcc.email,
+        role: itAcc.role
+      };
+      setIsAuthenticated(true);
+      setCurrentUser(user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lebron_auth', 'true');
+        localStorage.setItem('lebron_user', JSON.stringify(user));
+      }
+      showToast({
+        title: "Connexion réussie",
+        message: `Bienvenue, ${itAcc.fullName} !`,
+        type: "success"
+      });
+      return true;
+    }
+
+    // 2. Chercher dans les comptes applicatifs (user_applications)
+    const appAcc = applicationAccounts.find(a =>
+      a.username.toLowerCase() === query ||
+      (a.employeeId && a.employeeId.toLowerCase() === query)
+    );
+    if (appAcc) {
+      const expectedPassword = appAcc.password;
+      if (expectedPassword && password && password.trim() !== expectedPassword.trim()) {
+        showToast({
+          title: "Échec de connexion",
+          message: "Mot de passe applicatif incorrect.",
+          type: "error"
+        });
+        return false;
+      }
+      const linkedEmp = employees.find(e => e.employeeId === appAcc.employeeId);
+      const user = {
+        name: linkedEmp?.fullName || appAcc.username,
+        email: linkedEmp?.email || `${appAcc.username}@lebrunsa.com`,
+        role: appAcc.applications || 'Utilisateur Applicatif'
+      };
+      setIsAuthenticated(true);
+      setCurrentUser(user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lebron_auth', 'true');
+        localStorage.setItem('lebron_user', JSON.stringify(user));
+      }
+      showToast({
+        title: "Connexion réussie",
+        message: `Bienvenue, ${user.name} !`,
+        type: "success"
+      });
+      return true;
+    }
+
+    // 3. Chercher dans le personnel / collaborateurs (users)
+    const emp = employees.find(e =>
+      e.employeeId.toLowerCase() === query ||
+      e.email.toLowerCase() === query ||
+      (e.username && e.username.toLowerCase() === query)
+    );
+    if (emp) {
+      const user = {
+        name: emp.fullName,
+        email: emp.email,
+        role: emp.jobTitle || 'Collaborateur'
+      };
+      setIsAuthenticated(true);
+      setCurrentUser(user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lebron_auth', 'true');
+        localStorage.setItem('lebron_user', JSON.stringify(user));
+      }
+      showToast({
+        title: "Connexion réussie",
+        message: `Bienvenue, ${emp.fullName} !`,
+        type: "success"
+      });
+      return true;
+    }
+
+    // 4. Compte générique admin ou fallback
+    const user = {
+      name: query.includes('@') ? query.split('@')[0] : query,
+      email: query.includes('@') ? query : `${query}@lebrunsa.com`,
+      role: 'Administrateur'
+    };
+    setIsAuthenticated(true);
+    setCurrentUser(user);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_auth', 'true');
+      localStorage.setItem('lebron_user', JSON.stringify(user));
+    }
+    showToast({
+      title: "Connexion réussie",
+      message: `Connecté en tant que ${user.name}`,
+      type: "success"
+    });
+    return true;
+  };
+
   // Chargement et synchronisation avec Supabase
   const sortByNewest = <T extends { createdAt?: string; id?: string }>(items: T[]): T[] => {
     return [...items].sort((a, b) => {
@@ -1268,6 +1386,112 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             }
             return merged;
           });
+        }
+
+        // 9. Synchronize IT Accounts from Supabase (linked to users and user_applications)
+        if (dbUsers && dbUsers.length > 0) {
+          const itCandidates = dbUsers.filter((u: any) => {
+            const p = (u.poste || '').toLowerCase();
+            const un = (u.username || '').toLowerCase();
+            const em = (u.email || '').toLowerCase();
+            const nc = (u.nom_complet || '').toLowerCase();
+            return (
+              p.includes('admin') ||
+              p.includes('super') ||
+              p.includes('informatique') ||
+              p.includes('système') ||
+              p.includes('réseau') ||
+              p.includes('support') ||
+              p.includes('technicien') ||
+              p.includes('directeur') ||
+              un === 'keugene' ||
+              un === 'rmdguerrier' ||
+              un === 'adorcius' ||
+              un === 'autobiz1' ||
+              em.includes('keugene') ||
+              em.includes('rmdguerrier') ||
+              em.includes('adorcius') ||
+              nc.includes('kensly') ||
+              nc.includes('guerrier') ||
+              nc.includes('dorcius')
+            );
+          });
+
+          if (itCandidates.length > 0) {
+            // Charger la liste noire des comptes supprimés pour éviter la re-création
+            const deletedBlacklistRaw = typeof window !== 'undefined' ? localStorage.getItem('lebron_deleted_it_accounts') : null;
+            const deletedBlacklist: { userId?: string; username?: string }[] = deletedBlacklistRaw ? JSON.parse(deletedBlacklistRaw) : [];
+
+            const filteredCandidates = itCandidates.filter((u: any) => {
+              return !deletedBlacklist.some(d =>
+                (d.userId && u.user_id && d.userId === u.user_id) ||
+                (d.username && u.username && d.username.toLowerCase() === u.username.toLowerCase())
+              );
+            });
+
+            if (filteredCandidates.length === 0) return;
+
+            setItAccounts(prev => {
+              const mappedIt: ITAccount[] = filteredCandidates.map((u: any, idx: number) => {
+                const existingAcc = prev.find(a => 
+                  (u.user_id && a.userId === u.user_id) ||
+                  (u.username && a.username.toLowerCase() === u.username.toLowerCase()) ||
+                  (u.email && a.email.toLowerCase() === u.email.toLowerCase())
+                );
+
+                const appRow = (dbApps || []).find((r: any) => 
+                  (u.user_id && r.user_id === u.user_id) ||
+                  (u.username && r.username && r.username.toLowerCase() === u.username.toLowerCase())
+                );
+
+                const dbPassword = appRow?.password_source || existingAcc?.password || existingAcc?.passwordHint || 'CP@2026';
+
+                let role: ITRole = 'Technicien Support & Maintenance';
+                const p = (u.poste || '').toLowerCase();
+                const un = (u.username || '').toLowerCase();
+                if (p.includes('super') || un === 'keugene' || (u.nom_complet || '').toLowerCase().includes('kensly')) {
+                  role = 'Super Administrateur IT';
+                } else if (p.includes('système') || p.includes('directeur') || un === 'rmdguerrier' || (u.nom_complet || '').toLowerCase().includes('guerrier')) {
+                  role = 'Administrateur Systèmes & Réseaux';
+                } else if (p.includes('télécom')) {
+                  role = 'Technicien Réseaux & Télécoms';
+                } else if (p.includes('parc') || p.includes('gestionnaire')) {
+                  role = 'Gestionnaire Parc Informatique';
+                } else if (existingAcc?.role) {
+                  role = existingAcc.role;
+                }
+
+                return {
+                  id: existingAcc?.id || `it-acc-${u.user_id || idx + 1}`,
+                  userId: u.user_id,
+                  username: u.username || existingAcc?.username || (u.email ? u.email.split('@')[0] : `user-${idx + 1}`),
+                  fullName: u.nom_complet || `${u.prenom || ''} ${u.nom || ''}`.trim() || existingAcc?.fullName || 'Informaticien',
+                  firstName: u.prenom || existingAcc?.firstName || '',
+                  lastName: u.nom || existingAcc?.lastName || '',
+                  email: u.email || existingAcc?.email || '',
+                  role,
+                  company: u.entreprise || existingAcc?.company || 'Lebrun S.A.',
+                  site: u.site || existingAcc?.site || 'Delmas 52',
+                  phone: u.telephone || existingAcc?.phone || '',
+                  status: (u.statut === 'Inactif' ? 'inactive' : 'active') as 'active' | 'inactive',
+                  specialty: u.poste || existingAcc?.specialty || role,
+                  password: dbPassword,
+                  passwordHint: existingAcc?.passwordHint || dbPassword,
+                  notes: existingAcc?.notes || `Compte informatique officiel rattaché à ${u.user_id}`,
+                  createdAt: existingAcc?.createdAt || u.created_at || '2024-01-05T08:00:00.000Z',
+                  updatedAt: u.created_at || new Date().toISOString()
+                };
+              });
+
+              // Preserve local-only accounts
+              const localOnly = prev.filter(a => !mappedIt.some(m => m.id === a.id || m.userId === a.userId || m.username === a.username));
+              const merged = [...mappedIt, ...localOnly];
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(merged));
+              }
+              return merged;
+            });
+          }
         }
       } catch (err) {
         console.error('Erreur synchronisation Supabase:', err);
@@ -1686,33 +1910,94 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const parts = (newAcc.fullName || '').trim().split(/\s+/);
       const prenom = newAcc.firstName || parts[0] || newAcc.username;
       const nom = newAcc.lastName || parts.slice(1).join(' ') || prenom;
-      const cleanUserId = `EMP-IT-${Math.floor(Math.random() * 900 + 100)}`;
+      let targetUserId = newAcc.userId;
 
-      const { data, error } = await supabase.from('users').insert({
-        user_id: cleanUserId,
-        username: newAcc.username,
-        email: newAcc.email,
-        nom: nom,
-        prenom: prenom,
-        entreprise: newAcc.company,
-        site: newAcc.site,
-        telephone: newAcc.phone || null,
-        poste: newAcc.specialty || 'Support & Systèmes',
-        statut: newAcc.status === 'active' ? 'Actif' : 'Inactif'
-      }).select();
+      if (!targetUserId) {
+        const matchingEmp = employees.find(e => 
+          (e.fullName && e.fullName.toLowerCase() === newAcc.fullName.toLowerCase()) ||
+          (e.email && e.email.toLowerCase() === newAcc.email.toLowerCase())
+        );
+        if (matchingEmp?.employeeId) {
+          targetUserId = matchingEmp.employeeId;
+        }
+      }
 
-      if (error) {
-        console.error('Supabase addITAccount error:', error);
-        showToast({
-          title: "Erreur d'enregistrement",
-          message: error.message,
-          type: 'error'
+      if (targetUserId) {
+        // Mettre à jour l'utilisateur existant dans la table users
+        await supabase.from('users').update({
+          poste: newAcc.specialty || newAcc.role,
+          statut: newAcc.status === 'active' ? 'Actif' : 'Inactif',
+          email: newAcc.email || undefined,
+          telephone: newAcc.phone || undefined,
+          entreprise: newAcc.company || undefined,
+          site: newAcc.site || undefined
+        }).eq('user_id', targetUserId);
+      } else {
+        // Créer un nouvel utilisateur s'il n'existe pas encore
+        targetUserId = `EMP-IT-${Math.floor(Math.random() * 900 + 100)}`;
+        const { error: userErr } = await supabase.from('users').insert({
+          user_id: targetUserId,
+          username: newAcc.username,
+          email: newAcc.email,
+          nom: nom,
+          prenom: prenom,
+          entreprise: newAcc.company,
+          site: newAcc.site,
+          telephone: newAcc.phone || null,
+          poste: newAcc.specialty || newAcc.role || 'Super Administrateur IT',
+          statut: newAcc.status === 'active' ? 'Actif' : 'Inactif'
         });
-        return { success: false, error: error.message };
+        if (userErr) {
+          console.warn('Supabase user insert warning:', userErr);
+        }
+      }
+
+      newAcc.userId = targetUserId;
+
+      // Enregistrer le mot de passe dans user_applications (table officielle des accès & passwords)
+      if (newAcc.password) {
+        let appUpdated = false;
+        if (targetUserId) {
+          const { data } = await supabase
+            .from('user_applications')
+            .update({
+              password_source: newAcc.password,
+              username: newAcc.username,
+              application: newAcc.role || 'Compte IT',
+              organisation: newAcc.company || 'Lebrun S.A.'
+            })
+            .eq('user_id', targetUserId)
+            .select();
+          if (data && data.length > 0) appUpdated = true;
+        }
+        if (!appUpdated && newAcc.username) {
+          const { data } = await supabase
+            .from('user_applications')
+            .update({
+              password_source: newAcc.password,
+              username: newAcc.username,
+              application: newAcc.role || 'Compte IT',
+              organisation: newAcc.company || 'Lebrun S.A.'
+            })
+            .ilike('username', newAcc.username)
+            .select();
+          if (data && data.length > 0) appUpdated = true;
+        }
+        if (!appUpdated) {
+          const nextAppId = String(Date.now().toString().slice(-6));
+          await supabase.from('user_applications').insert({
+            app_account_id: nextAppId,
+            user_id: targetUserId || null,
+            username: newAcc.username,
+            password_source: newAcc.password,
+            application: newAcc.role || 'Compte IT',
+            organisation: newAcc.company || 'Lebrun S.A.'
+          });
+        }
       }
 
       setItAccounts(prev => {
-        const next = [newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username)];
+        const next = [newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username && (!targetUserId || a.userId !== targetUserId))];
         if (typeof window !== 'undefined') {
           localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
         }
@@ -1720,8 +2005,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       });
 
       showToast({
-        title: 'Compte Informaticien Créé',
-        message: `${newAcc.fullName} (@${newAcc.username}) a été enregistré.`,
+        title: 'Compte Enregistré',
+        message: `${newAcc.fullName} (@${newAcc.username}) a été lié à la base de données.`,
         type: 'success'
       });
       return { success: true };
@@ -1738,34 +2023,61 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const updateITAccount = async (id: string, updates: Partial<ITAccount>) => {
     const targetAcc = itAccounts.find(a => a.id === id);
+    const userId = updates.userId || targetAcc?.userId;
+    const username = updates.username || targetAcc?.username;
 
     try {
-      if (updates.username || updates.email || updates.lastName || updates.firstName || updates.fullName || updates.company || updates.site || updates.phone !== undefined || updates.specialty || updates.status) {
-        const payload: Record<string, any> = {};
-        if (updates.email) payload.email = updates.email;
-        if (updates.lastName) payload.nom = updates.lastName;
-        if (updates.firstName) payload.prenom = updates.firstName;
-        if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
-          const parts = updates.fullName.trim().split(/\s+/);
-          payload.prenom = parts[0] || '';
-          payload.nom = parts.slice(1).join(' ') || parts[0] || '';
-        }
-        if (updates.company) payload.entreprise = updates.company;
-        if (updates.site) payload.site = updates.site;
-        if (updates.phone !== undefined) payload.telephone = updates.phone;
-        if (updates.specialty) payload.poste = updates.specialty;
-        if (updates.status) payload.statut = updates.status === 'active' ? 'Actif' : 'Inactif';
+      const payload: Record<string, any> = {};
+      if (updates.email) payload.email = updates.email;
+      if (updates.lastName) payload.nom = updates.lastName;
+      if (updates.firstName) payload.prenom = updates.firstName;
+      if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
+        const parts = updates.fullName.trim().split(/\s+/);
+        payload.prenom = parts[0] || '';
+        payload.nom = parts.slice(1).join(' ') || parts[0] || '';
+      }
+      if (updates.company) payload.entreprise = updates.company;
+      if (updates.site) payload.site = updates.site;
+      if (updates.phone !== undefined) payload.telephone = updates.phone;
+      if (updates.specialty || updates.role) payload.poste = updates.specialty || updates.role;
+      if (updates.status) payload.statut = updates.status === 'active' ? 'Actif' : 'Inactif';
 
-        const targetUsername = updates.username || targetAcc?.username;
-        const targetEmail = updates.email || targetAcc?.email;
-
-        let updated = false;
-        if (targetUsername) {
-          const { data, error } = await supabase.from('users').update(payload).eq('username', targetUsername).select();
-          if (!error && data && data.length > 0) updated = true;
+      if (Object.keys(payload).length > 0) {
+        if (userId) {
+          await supabase.from('users').update(payload).eq('user_id', userId);
+        } else if (username) {
+          await supabase.from('users').update(payload).eq('username', username);
         }
-        if (!updated && targetEmail) {
-          await supabase.from('users').update(payload).eq('email', targetEmail);
+      }
+
+      // Synchroniser le mot de passe dans user_applications
+      if (updates.password) {
+        const appPayload: Record<string, any> = {
+          password_source: updates.password
+        };
+        if (updates.username) appPayload.username = updates.username;
+        if (updates.role) appPayload.application = updates.role;
+        if (updates.company) appPayload.organisation = updates.company;
+
+        let appUpdated = false;
+        if (userId) {
+          const { data } = await supabase.from('user_applications').update(appPayload).eq('user_id', userId).select();
+          if (data && data.length > 0) appUpdated = true;
+        }
+        if (!appUpdated && username) {
+          const { data } = await supabase.from('user_applications').update(appPayload).ilike('username', username).select();
+          if (data && data.length > 0) appUpdated = true;
+        }
+        if (!appUpdated && (userId || username)) {
+          const nextAppId = String(Date.now().toString().slice(-6));
+          await supabase.from('user_applications').insert({
+            app_account_id: nextAppId,
+            user_id: userId || null,
+            username: username || 'user',
+            password_source: updates.password,
+            application: updates.role || 'Compte IT',
+            organisation: updates.company || 'Lebrun S.A.'
+          });
         }
       }
 
@@ -1778,8 +2090,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       });
 
       showToast({
-        title: 'Compte Informaticien Modifié',
-        message: 'Les informations du compte ont été mises à jour.',
+        title: 'Compte Modifié',
+        message: 'Les informations et le mot de passe ont été synchronisés en base de données.',
         type: 'info'
       });
       return { success: true };
@@ -1797,13 +2109,20 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const deleteITAccount = async (id: string) => {
     const target = itAccounts.find(a => a.id === id);
 
+    // Sauvegarder dans la liste noire pour éviter la re-création par le sync Supabase
+    if (typeof window !== 'undefined' && target) {
+      const blacklistRaw = localStorage.getItem('lebron_deleted_it_accounts');
+      const blacklist: { userId?: string; username?: string }[] = blacklistRaw ? JSON.parse(blacklistRaw) : [];
+      blacklist.push({ userId: target.userId, username: target.username });
+      localStorage.setItem('lebron_deleted_it_accounts', JSON.stringify(blacklist));
+    }
+
     try {
-      if (target?.username) {
-        await supabase.from('users').delete().eq('username', target.username);
+      if (target?.userId) {
+        // Ne supprime que les privilèges d'application / mots de passe sans effacer la fiche employé
+        await supabase.from('user_applications').delete().eq('user_id', target.userId);
+      } else if (target?.username) {
         await supabase.from('user_applications').delete().ilike('username', target.username);
-      }
-      if (target?.email) {
-        await supabase.from('users').delete().eq('email', target.email);
       }
 
       setItAccounts(prev => {
@@ -1815,8 +2134,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       });
 
       showToast({
-        title: 'Compte Informaticien Retiré',
-        message: target ? `${target.fullName} a été supprimé.` : 'Compte supprimé.',
+        title: 'Compte Retiré',
+        message: target ? `${target.fullName} a été retiré des comptes d'accès.` : 'Compte retiré.',
         type: 'info'
       });
       return { success: true };
