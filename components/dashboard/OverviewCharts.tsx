@@ -332,29 +332,29 @@ export default function OverviewCharts() {
     const chart = new ChartJS(ctx, {
       type: 'bar',
       data: {
-        labels: ['Delmas 52 (Siège)', 'Aéroport Depot'],
+        labels: ['Delmas 52 (Siège)', 'Pétion-Ville', 'Aéroport Depot'],
         datasets: [
           {
             label: 'Postes IT',
-            data: [delmasIT, aeroIT],
+            data: [delmasIT, petionIT, aeroIT],
             backgroundColor: '#0f172a',
             borderRadius: 4
           },
           {
             label: 'Imprimantes',
-            data: [delmasPrn, aeroPrn],
+            data: [delmasPrn, petionPrn, aeroPrn],
             backgroundColor: '#334155',
             borderRadius: 4
           },
           {
             label: 'Réseau & UPS',
-            data: [delmasNet + delmasUPS, aeroNet + aeroUPS],
+            data: [delmasNet + delmasUPS, petionNet + petionUPS, aeroNet + aeroUPS],
             backgroundColor: '#64748b',
             borderRadius: 4
           },
           {
             label: 'Personnel',
-            data: [delmasEmp, aeroEmp],
+            data: [delmasEmp, petionEmp, aeroEmp],
             backgroundColor: '#cbd5e1',
             borderRadius: 4
           }
@@ -401,7 +401,7 @@ export default function OverviewCharts() {
     });
 
     return () => chart.destroy();
-  }, [delmasIT, aeroIT, delmasPrn, aeroPrn, delmasNet, delmasUPS, aeroNet, aeroUPS, delmasEmp, aeroEmp, inView.chart2, animationKey]);
+  }, [delmasIT, petionIT, aeroIT, delmasPrn, petionPrn, aeroPrn, delmasNet, delmasUPS, petionNet, petionUPS, aeroNet, aeroUPS, delmasEmp, petionEmp, aeroEmp, inView.chart2, animationKey]);
 
   // --- CHART 3: Volume by Company (Stacked Bar) ---
   useEffect(() => {
@@ -735,7 +735,7 @@ export default function OverviewCharts() {
                   <p className="text-[11px] text-slate-400 font-normal">Volume d&apos;équipements par centre opérationnel</p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 font-normal">Delmas 52 vs Aéroport</span>
+              <span className="text-xs text-slate-400 font-normal">Delmas 52 • Pétion-Ville • Aéroport</span>
             </div>
 
             <div className="relative h-64 w-full pt-2">
@@ -743,8 +743,9 @@ export default function OverviewCharts() {
             </div>
           </div>
 
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-normal">
+          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-400 font-normal">
             <span>Siège : <span className="text-slate-600 font-medium">Delmas 52</span> ({delmasIT + delmasPrn + delmasNet + delmasUPS} équipements)</span>
+            <span>Succursale : <span className="text-slate-600 font-medium">Pétion-Ville</span> ({petionIT + petionPrn + petionNet + petionUPS} équipements)</span>
             <span>Dépôt : <span className="text-slate-600 font-medium">Aéroport</span> ({aeroIT + aeroPrn + aeroNet + aeroUPS} équipements)</span>
           </div>
         </div>
