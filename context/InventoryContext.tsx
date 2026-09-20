@@ -1477,6 +1477,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 cpu: r.cpu || existingLocal?.cpu || 'Intel Core i5',
                 ram: r.ram || existingLocal?.ram || '8 GB RAM',
                 storage: r.stockage || existingLocal?.storage || '500 GB SSD',
+                os: r.windows_os || existingLocal?.os || '',
                 assignedTo: rowPerson || existingLocal?.assignedTo,
                 assignedPersonnelId: r.user_id || existingLocal?.assignedPersonnelId,
                 assignedDepartment: r.departement || existingLocal?.assignedDepartment,
@@ -2433,6 +2434,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         type_poste: newAsset.subCategory === 'laptop' ? 'Poste Laptop' : 'Poste Desktop',
         nom_pc: newAsset.name,
         numero_serie_pc: newAsset.serialNumber || 'N/A',
+        windows_os: newAsset.os || null,
         details_pc: specsStr || 'Windows 11 Pro',
         clavier: newAsset.workstation?.keyboard || newAsset.keyboard || 'N/A',
         details_clavier: newAsset.workstation?.keyboardDetails || 'N/A',
@@ -2564,6 +2566,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.location !== undefined) payload.site = updates.location;
       if (updates.subCategory !== undefined) payload.type_poste = updates.subCategory === 'laptop' ? 'Poste Laptop' : 'Poste Desktop';
+      if (updates.os !== undefined) payload.windows_os = updates.os || null;
 
       const specsStr = [updates.os, updates.cpu, updates.ram, updates.storage].filter(Boolean).join(' ');
       if (specsStr) payload.details_pc = specsStr;

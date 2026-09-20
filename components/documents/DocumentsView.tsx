@@ -219,9 +219,9 @@ export default function DocumentsView() {
     return (
       <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-3.5 px-4 pb-4">
         <div className="text-xs text-slate-500">
-          Affichage de <span className="font-semibold text-slate-800">{totalItems === 0 ? 0 : startIndex + 1}</span> Ã {' '}
+          Affichage de <span className="font-semibold text-slate-800">{totalItems === 0 ? 0 : startIndex + 1}</span> à{' '}
           <span className="font-semibold text-slate-800">{endIndex}</span> sur{' '}
-          <span className="font-semibold text-slate-800">{totalItems}</span> Ã©lÃ©ment(s)
+          <span className="font-semibold text-slate-800">{totalItems}</span> élément(s)
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -248,7 +248,7 @@ export default function DocumentsView() {
               onClick={() => onPageChange(1)}
               disabled={currentPage === 1}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
-              title="PremiÃ¨re page"
+              title="Première page"
             >
               <i className="ri-arrow-left-double-line text-xs"></i>
             </button>
@@ -257,7 +257,7 @@ export default function DocumentsView() {
               onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
-              title="PrÃ©cÃ©dent"
+              title="Précédent"
             >
               <i className="ri-arrow-left-s-line text-xs"></i>
             </button>
@@ -280,7 +280,7 @@ export default function DocumentsView() {
               onClick={() => onPageChange(totalPages)}
               disabled={currentPage === totalPages || totalItems === 0}
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
-              title="DerniÃ¨re page"
+              title="Dernière page"
             >
               <i className="ri-arrow-right-double-line text-xs"></i>
             </button>
