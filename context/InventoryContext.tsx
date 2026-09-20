@@ -190,6 +190,9 @@ interface InventoryContextType {
   toasts: ToastMessage[];
   showToast: (toast: Omit<ToastMessage, 'id'>) => void;
   dismissToast: (id: string) => void;
+  insertSuccess: { id: number } | null;
+  showInsertSuccess: (info?: unknown) => void;
+  dismissInsertSuccess: () => void;
 
   // Actions IT
   addITAsset: (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
@@ -752,6 +755,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const showToast = (toast: Omit<ToastMessage, 'id'>) => {
+    // Modification ou suppression réussie : animation seule, au centre de l'écran, sans texte
+    if (
+      toast.type !== 'error' &&
+      !/^erreur/i.test(toast.title) &&
+      /(modifi|mis à jour|supprim|retiré)/i.test(toast.title)
+    ) {
+      showInsertSuccess();
+      return;
+    }
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const newToast: ToastMessage = {
       ...toast,
@@ -762,6 +774,21 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 4500);
+  };
+
+  // Confirmation animée après une insertion réussie (voir SuccessAnimation)
+  const [insertSuccess, setInsertSuccess] = useState<{ id: number } | null>(null);
+  const insertSuccessTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dismissInsertSuccess = () => {
+    if (insertSuccessTimer.current) clearTimeout(insertSuccessTimer.current);
+    setInsertSuccess(null);
+  };
+  // Le texte éventuellement passé n'est pas affiché : l'animation s'affiche seule.
+  const showInsertSuccess = (info?: unknown) => {
+    void info;
+    if (insertSuccessTimer.current) clearTimeout(insertSuccessTimer.current);
+    setInsertSuccess({ id: Date.now() });
+    insertSuccessTimer.current = setTimeout(() => setInsertSuccess(null), 2600);
   };
 
   const dismissToast = (id: string) => {
@@ -808,8 +835,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Réseau Wi-Fi Ajouté',
+      showInsertSuccess({
+        title: 'Réseau Wi-Fi ajouté avec succès',
         message: `Le réseau ${newNet.ssid} pour ${newNet.establishment} a été créé dans Supabase.`,
         type: 'success'
       });
@@ -1701,8 +1728,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Collaborateur Enregistré',
+      showInsertSuccess({
+        title: 'Collaborateur ajouté avec succès',
         message: `${newEmp.fullName} (${newEmp.company}) a été ajouté dans la base de données.`,
         type: 'success'
       });
@@ -2110,8 +2137,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Compte Enregistré',
+      showInsertSuccess({
+        title: 'Compte ajouté avec succès',
         message: `${newAcc.fullName} (@${newAcc.username}) a été lié à la base de données.`,
         type: 'success'
       });
@@ -2288,8 +2315,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Document Ajouté',
+      showInsertSuccess({
+        title: 'Document ajouté avec succès',
         message: `"${newDoc.title}" a été ajouté dans la base de données.`,
         type: 'success'
       });
@@ -2503,18 +2530,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // (référence recherchable). Le PDF se télécharge à la demande.
   const createAssignmentDocument = async (emp: Employee, asset: ITAsset) => {
     try {
-      const now = new Date();
+      // La fiche est enregistrée dans Documents ; le PDF se télécharge à la demande
       await registerAssignmentSheets([{ emp, asset, force: true }]);
-
-      // Le PDF n'est pas généré automatiquement : il se télécharge depuis Documents
-      const sheetEmployee: Employee = { ...emp, workstation: asset.workstation || emp.workstation };
-      const options: AssignmentSheetOptions = { assetTag: asset.assetTag, date: now };
-
-      showToast({
-        title: "Fiche d'affectation enregistrée",
-        message: `Référence ${buildAssignmentDocRef(sheetEmployee, options)} ajoutée dans Documents.`,
-        type: 'success'
-      });
     } catch (err) {
       console.warn("Création de la fiche d'affectation impossible:", err);
       showToast({
@@ -2635,8 +2652,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         notes: `Ajout au catalogue : ${newAsset.assetTag}`
       });
 
-      showToast({
-        title: 'Poste de Travail IT Ajouté',
+      showInsertSuccess({
+        title: 'Poste IT ajouté avec succès',
         message: `${newAsset.name} (${newAsset.assetTag}) a été enregistré avec succès.`,
         type: 'success'
       });
@@ -2826,8 +2843,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Équipement Réseau Ajouté',
+      showInsertSuccess({
+        title: 'Équipement réseau ajouté avec succès',
         message: `${newNet.deviceType} (${newNet.assetTag}) a été enregistré dans la base de données.`,
         type: 'success'
       });
@@ -2968,8 +2985,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Onduleur UPS Ajouté',
+      showInsertSuccess({
+        title: 'Onduleur ajouté avec succès',
         message: `${newUPS.name} (${newUPS.assetTag}) a été enregistré dans la base de données.`,
         type: 'success'
       });
@@ -3148,16 +3165,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // Téléphone remis à une personne : nouvelle fiche enregistrée dans documents (PDF à la demande)
   const createPhoneDocument = async (phone: PhoneAsset) => {
     try {
-      const now = new Date();
+      // La fiche est enregistrée dans Documents ; le PDF se télécharge à la demande
       await registerPhoneSheet(phone, true);
-
-      // Le PDF n'est pas généré automatiquement : il se télécharge depuis Documents ou depuis la liste des téléphones
-      const options: PhoneSheetOptions = { date: now };
-      showToast({
-        title: "Fiche d'affectation enregistrée",
-        message: `Référence ${buildPhoneDocRef(phone, options)} ajoutée dans Documents.`,
-        type: 'success'
-      });
     } catch (err) {
       console.warn("Création de la fiche téléphone impossible:", err);
       showToast({
@@ -3207,8 +3216,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Téléphone Ajouté',
+      showInsertSuccess({
+        title: 'Téléphone ajouté avec succès',
         message: `${newPhone.brand} ${newPhone.model} (${newPhone.assetTag}) a été enregistré dans la base de données.`,
         type: 'success'
       });
@@ -3380,8 +3389,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         }));
       }
 
-      showToast({
-        title: 'Accès & Session Enregistrés',
+      showInsertSuccess({
+        title: 'Accès ajouté avec succès',
         message: `Compte ${newAcc.username} rattaché au personnel avec succès.`,
         type: 'success'
       });
@@ -3600,8 +3609,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return next;
       });
 
-      showToast({
-        title: 'Imprimante Ajoutée',
+      showInsertSuccess({
+        title: 'Imprimante ajoutée avec succès',
         message: `${newPrinter.name} (${newPrinter.assetTag}) a été enregistrée dans la base de données.`,
         type: 'success'
       });
@@ -4336,6 +4345,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         toasts,
         showToast,
         dismissToast,
+        insertSuccess,
+        showInsertSuccess,
+        dismissInsertSuccess,
         itAccounts,
         isAccountModalOpen,
         editingAccount,

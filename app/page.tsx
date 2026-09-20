@@ -29,6 +29,7 @@ import AccountModal from '@/components/accounts/AccountModal';
 import DocumentModal from '@/components/documents/DocumentModal';
 import QuickSearchModal from '@/components/common/QuickSearchModal';
 import ToastNotification from '@/components/common/ToastNotification';
+import SuccessAnimation from '@/components/common/SuccessAnimation';
 import LoginPage from '@/components/auth/LoginPage';
 
 function MainContent() {
@@ -118,6 +119,7 @@ function MainContent() {
       <AccountModal />
       <DocumentModal />
       <QuickSearchModal />
+      <SuccessAnimation />
       <ToastNotification />
     </div>
   );
