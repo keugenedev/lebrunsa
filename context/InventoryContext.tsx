@@ -1232,7 +1232,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           });
         }
 
-        // 3. Load Network Equipment from Supabase (Newest first)
+        // 3. Load Network Equipment from Supabase — Supabase fait foi, pas de merge avec le local
         const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*');
         if (!netErr && dbNet && dbNet.length > 0) {
           const mappedNet: NetworkAsset[] = dbNet.map((row: any, idx: number) => ({
@@ -1252,24 +1252,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setNetworkAssets(prev => {
-            const localOnly = prev.filter(n => !mappedNet.some(dbN => dbN.assetTag === n.assetTag || dbN.id === n.id || (n.serialNumber !== 'N/A' && n.serialNumber !== 'À compléter' && dbN.serialNumber === n.serialNumber)));
-            const seenNet = new Set<string>();
-            const deduplicated = [...localOnly, ...mappedNet].filter(n => {
-              const k = n.assetTag || n.id;
-              if (!k || seenNet.has(k)) return false;
-              seenNet.add(k);
-              return true;
-            });
-            const merged = sortByNewest(deduplicated);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('lebron_inv_network', JSON.stringify(merged));
-            }
-            return merged;
-          });
+          // Supabase est la source de vérité — on remplace tout
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('lebron_inv_network', JSON.stringify(mappedNet));
+          }
+          setNetworkAssets(mappedNet);
         }
 
-        // 4. Load UPS from Supabase (Newest first)
+
+        // 4. Load UPS from Supabase — Supabase fait foi, pas de merge avec le local
         const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*');
         if (!upsErr && dbUps && dbUps.length > 0) {
           const mappedUps: UPSAsset[] = dbUps.map((row: any, idx: number) => ({
@@ -1287,22 +1278,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setUpsAssets(prev => {
-            const localOnly = prev.filter(u => !mappedUps.some(dbU => dbU.assetTag === u.assetTag || dbU.id === u.id));
-            const seenUps = new Set<string>();
-            const deduplicated = [...localOnly, ...mappedUps].filter(u => {
-              const k = u.assetTag || u.id;
-              if (!k || seenUps.has(k)) return false;
-              seenUps.add(k);
-              return true;
-            });
-            const merged = sortByNewest(deduplicated);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('lebron_inv_ups', JSON.stringify(merged));
-            }
-            return merged;
-          });
+          // Supabase est la source de vérité — on remplace tout
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('lebron_inv_ups', JSON.stringify(mappedUps));
+          }
+          setUpsAssets(mappedUps);
         }
+
 
         // 4b. Load Phones from Supabase (la base fait foi ; si la table est absente, on garde le cache local)
         const { data: dbPhones, error: phonesErr } = await supabase.from('phones').select('*');
