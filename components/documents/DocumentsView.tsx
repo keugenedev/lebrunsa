@@ -28,6 +28,7 @@ import {
   downloadSingleAssignmentSheetPDF,
   downloadAllAssignmentSheetsPDF
 } from '@/lib/printAssignmentSheet';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 const CATEGORIES: DocumentCategory[] = [
   'Fiches d\'Affectation',
@@ -46,9 +47,12 @@ export default function DocumentsView() {
     openDocumentModal,
     deleteDocument,
     exportCSV,
+    getEmployeeAssignedAssets,
     searchQuery: globalSearch,
     showToast
   } = useInventory();
+
+  const [deletingDoc, setDeletingDoc] = useState<DocumentItem | null>(null);
 
   // Sub-tab selection: 'assignment_sheets' by default
   const [activeSubTab, setActiveSubTab] = useState<'assignment_sheets' | 'repository'>('assignment_sheets');
@@ -217,9 +221,7 @@ export default function DocumentsView() {
   };
 
   const handleDelete = (doc: DocumentItem) => {
-    if (confirm(`Êtes-vous certain de vouloir supprimer le document "${doc.title}" ?`)) {
-      deleteDocument(doc.id);
-    }
+    setDeletingDoc(doc);
   };
 
   const handleDownloadDoc = (doc: DocumentItem) => {
@@ -890,6 +892,23 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
           totalCount={filteredEmployees.length}
         />
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingDoc)}
+        onClose={() => setDeletingDoc(null)}
+        onConfirm={() => {
+          if (deletingDoc) {
+            deleteDocument(deletingDoc.id);
+            setDeletingDoc(null);
+          }
+        }}
+        title="Supprimer le document"
+        message={`Êtes-vous certain de vouloir supprimer le document "${deletingDoc?.title}" ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

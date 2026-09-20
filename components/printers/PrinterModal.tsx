@@ -69,31 +69,42 @@ export default function PrinterModal() {
     }
   }, [editingPrinter, isPrinterModalOpen]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isPrinterModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.name.trim() || !formData.model.trim()) return;
 
-    if (editingPrinter) {
-      updatePrinter(editingPrinter.id, formData);
-    } else {
-      const code = formData.company.startsWith('Lebrun')
-        ? 'LEB'
-        : formData.company.startsWith('Auto')
-        ? 'AUT'
-        : formData.company.startsWith('Caribe')
-        ? 'CAR'
-        : 'LFD';
-      const count = printers.filter(p => p.company === formData.company).length + 1;
-      const tag = `PRN-${code}-${count.toString().padStart(3, '0')}`;
+    setIsSubmitting(true);
+    try {
+      let res;
+      if (editingPrinter) {
+        res = await updatePrinter(editingPrinter.id, formData);
+      } else {
+        const code = formData.company.startsWith('Lebrun')
+          ? 'LEB'
+          : formData.company.startsWith('Auto')
+          ? 'AUT'
+          : formData.company.startsWith('Caribe')
+          ? 'CAR'
+          : 'LFD';
+        const count = printers.filter(p => p.company === formData.company).length + 1;
+        const tag = `PRN-${code}-${count.toString().padStart(3, '0')}`;
 
-      addPrinter({
-        ...formData,
-        assetTag: tag
-      });
+        res = await addPrinter({
+          ...formData,
+          assetTag: tag
+        });
+      }
+      if (res?.success !== false) {
+        closePrinterModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    closePrinterModal();
   };
 
   return (
@@ -328,9 +339,17 @@ export default function PrinterModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed text-xs flex items-center gap-2"
             >
-              {editingPrinter ? 'Enregistrer les modifications' : "Créer l'Imprimante"}
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Enregistrement en cours...</span>
+                </>
+              ) : (
+                editingPrinter ? 'Enregistrer les modifications' : "Créer l'Imprimante"
+              )}
             </button>
           </div>
         </form>

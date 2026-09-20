@@ -18,6 +18,9 @@ import {
   Package 
 } from 'lucide-react';
 
+import { useState } from 'react';
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function ElectronicsView() {
   const { 
     electronics, 
@@ -28,6 +31,8 @@ export default function ElectronicsView() {
     deleteElectronic, 
     exportCSV 
   } = useInventory();
+
+  const [deletingItem, setDeletingItem] = useState<ElectronicComponent | null>(null);
 
   const lowStockItems = electronics.filter(e => e.quantityInStock <= e.minThreshold);
 
@@ -183,11 +188,7 @@ export default function ElectronicsView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer le composant ${item.name} ?`)) {
-                deleteElectronic(item.id);
-              }
-            }}
+            onClick={() => setDeletingItem(item)}
             title="Supprimer"
             className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
@@ -262,6 +263,23 @@ export default function ElectronicsView() {
             </button>
           </>
         }
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingItem)}
+        onClose={() => setDeletingItem(null)}
+        onConfirm={() => {
+          if (deletingItem) {
+            deleteElectronic(deletingItem.id);
+            setDeletingItem(null);
+          }
+        }}
+        title="Supprimer le composant"
+        message={`Êtes-vous certain de vouloir supprimer le composant ${deletingItem?.name} ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
       />
     </div>
   );

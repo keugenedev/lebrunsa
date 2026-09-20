@@ -87,6 +87,8 @@ export default function ApplicationModal() {
     }
   }, [editingApplicationAccount, isApplicationModalOpen, employees]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isApplicationModalOpen) return null;
 
   const handleSelectSoftware = (type: 'Microsoft GP' | 'DealerPro' | 'custom') => {
@@ -188,40 +190,49 @@ export default function ApplicationModal() {
       )
     : undefined;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!selectedEmployeeId) {
       alert('Veuillez sélectionner un collaborateur du personnel.');
       return;
     }
 
-    const finalApp = softwareType === 'custom' 
-      ? (customSoftware.trim() || 'Autre Logiciel') 
-      : (softwareType === 'DealerPro' ? 'DealerPro DMS' : 'Microsoft GP');
+    setIsSubmitting(true);
+    try {
+      const finalApp = softwareType === 'custom' 
+        ? (customSoftware.trim() || 'Autre Logiciel') 
+        : (softwareType === 'DealerPro' ? 'DealerPro DMS' : 'Microsoft GP');
 
-    const payload: Omit<ApplicationAccount, 'id'> = {
-      employeeId: selectedEmployeeId,
-      username: username.trim().toLowerCase(),
-      firstName: selectedEmployee ? selectedEmployee.firstName : '',
-      lastName: selectedEmployee ? selectedEmployee.lastName : '',
-      password: password.trim() || '1234',
-      applications: finalApp,
-      organization: organization.trim() || selectedEmployee?.company || 'Lebrun S.A.',
-      windowsUsername: windowsUsername.trim(),
-      windowsPassword: windowsPassword.trim()
-    };
+      const payload: Omit<ApplicationAccount, 'id'> = {
+        employeeId: selectedEmployeeId,
+        username: username.trim().toLowerCase(),
+        firstName: selectedEmployee ? selectedEmployee.firstName : '',
+        lastName: selectedEmployee ? selectedEmployee.lastName : '',
+        password: password.trim() || '1234',
+        applications: finalApp,
+        organization: organization.trim() || selectedEmployee?.company || 'Lebrun S.A.',
+        windowsUsername: windowsUsername.trim(),
+        windowsPassword: windowsPassword.trim()
+      };
 
-    if (editingApplicationAccount) {
-      updateApplicationAccount(editingApplicationAccount.id, payload);
-    } else if (existingAccountForSelected) {
-      // 1 person = 1 application account rule: update existing account instead of duplicating
-      updateApplicationAccount(existingAccountForSelected.id, payload);
-    } else {
-      addApplicationAccount(payload);
+      let res;
+      if (editingApplicationAccount) {
+        res = await updateApplicationAccount(editingApplicationAccount.id, payload);
+      } else if (existingAccountForSelected) {
+        // 1 person = 1 application account rule: update existing account instead of duplicating
+        res = await updateApplicationAccount(existingAccountForSelected.id, payload);
+      } else {
+        res = await addApplicationAccount(payload);
+      }
+
+      if (res?.success !== false) {
+        closeApplicationModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeApplicationModal();
   };
 
   return (
@@ -600,13 +611,21 @@ export default function ApplicationModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed text-xs flex items-center gap-2"
             >
-              {editingApplicationAccount 
-                ? "Enregistrer les modifications" 
-                : existingAccountForSelected 
-                  ? "Mettre à jour l'accès du collaborateur" 
-                  : "Ajouter l'Accès"}
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Enregistrement en cours...</span>
+                </>
+              ) : (
+                editingApplicationAccount 
+                  ? "Enregistrer les modifications" 
+                  : existingAccountForSelected 
+                    ? "Mettre à jour l'accès du collaborateur" 
+                    : "Ajouter l'Accès"
+              )}
             </button>
           </div>
         </form>

@@ -24,6 +24,8 @@ import {
   Lock
 } from 'lucide-react';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function ApplicationsView() {
   const { applicationAccounts, openApplicationModal, deleteApplicationAccount, employees, exportCSV } = useInventory();
 
@@ -32,6 +34,7 @@ export default function ApplicationsView() {
   const [appFilter, setAppFilter] = useState('all');
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingAppAccount, setDeletingAppAccount] = useState<ApplicationAccount | null>(null);
 
   const togglePassword = (key: string) => {
     setVisiblePasswords(prev => ({
@@ -349,13 +352,7 @@ export default function ApplicationsView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              const emp = getLinkedEmployee(acc);
-              const label = emp ? emp.fullName : `${acc.firstName} ${acc.lastName}`;
-              if (confirm(`Supprimer le compte applicatif et session pour ${label} (${acc.username}) ?`)) {
-                deleteApplicationAccount(acc.id);
-              }
-            }}
+            onClick={() => setDeletingAppAccount(acc)}
             title="Supprimer cet accès"
             className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
           >
@@ -444,6 +441,23 @@ export default function ApplicationsView() {
             </div>
           </div>
         }
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingAppAccount)}
+        onClose={() => setDeletingAppAccount(null)}
+        onConfirm={() => {
+          if (deletingAppAccount) {
+            deleteApplicationAccount(deletingAppAccount.id);
+            setDeletingAppAccount(null);
+          }
+        }}
+        title="Suppression de compte applicatif"
+        message={`Êtes-vous certain de vouloir supprimer le compte applicatif et session pour ${deletingAppAccount?.username} ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
       />
     </div>
   );

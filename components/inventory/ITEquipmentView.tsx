@@ -30,6 +30,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function ITEquipmentView() {
   const { 
     itAssets, 
@@ -41,6 +43,7 @@ export default function ITEquipmentView() {
   } = useInventory();
 
   const [selectedAssetForView, setSelectedAssetForView] = useState<ITAsset | null>(null);
+  const [deletingAsset, setDeletingAsset] = useState<ITAsset | null>(null);
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -388,11 +391,7 @@ export default function ITEquipmentView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer l'équipement ${asset.name} (${asset.assetTag}) ?`)) {
-                deleteITAsset(asset.id);
-              }
-            }}
+            onClick={() => setDeletingAsset(asset)}
             title="Supprimer"
             className="inline-flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
           >
@@ -575,6 +574,23 @@ export default function ITEquipmentView() {
           onOpenEdit={(asset) => openAddModal('it', asset)}
         />
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingAsset)}
+        onClose={() => setDeletingAsset(null)}
+        onConfirm={() => {
+          if (deletingAsset) {
+            deleteITAsset(deletingAsset.id);
+            setDeletingAsset(null);
+          }
+        }}
+        title="Suppression matériel IT"
+        message={`Êtes-vous certain de vouloir supprimer le poste ${deletingAsset?.name} (${deletingAsset?.assetTag}) ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

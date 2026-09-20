@@ -28,7 +28,10 @@ export default function NetworkModal() {
   const [observations, setObservations] = useState('');
   const [assetTag, setAssetTag] = useState('');
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
+    if (!isNetworkModalOpen) return;
     if (editingNetworkAsset) {
       setCompany(editingNetworkAsset.company || 'Lebrun S.A.');
       setSite(editingNetworkAsset.site || '');
@@ -43,7 +46,7 @@ export default function NetworkModal() {
       setObservations(editingNetworkAsset.observations || '');
       setAssetTag(editingNetworkAsset.assetTag || '');
     } else {
-      const code = company.startsWith('Auto') ? 'AUT' : 'LEB';
+      const code = 'LEB';
       const count = networkAssets.length + 1;
       setAssetTag(`NET-${code}-${count.toString().padStart(3, '0')}`);
       setCompany('Lebrun S.A.');
@@ -58,37 +61,46 @@ export default function NetworkModal() {
       setStatus('En fonctionnement');
       setObservations('');
     }
-  }, [editingNetworkAsset, isNetworkModalOpen, networkAssets.length, company]);
+  }, [editingNetworkAsset, isNetworkModalOpen]);
 
   if (!isNetworkModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const tag = assetTag.trim() || `NET-${company.startsWith('Auto') ? 'AUT' : 'LEB'}-${Date.now().toString().slice(-4)}`;
+    try {
+      const tag = assetTag.trim() || `NET-${company.startsWith('Auto') ? 'AUT' : 'LEB'}-${Date.now().toString().slice(-4)}`;
 
-    const payload: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'> = {
-      assetTag: tag,
-      company,
-      site,
-      deviceType,
-      brand: brand.trim() || 'TP-Link',
-      model: model.trim() || 'TL-Gigabit',
-      hostname: hostname.trim() || 'NET-DEVICE',
-      serialNumber: serialNumber.trim() || `SN-${Date.now().toString().slice(-6)}`,
-      ipAddress: ipAddress.trim() || '192.168.1.1',
-      macAddress: macAddress.trim() || 'N/A',
-      status,
-      observations: observations.trim() || 'Bon état de fonctionnement'
-    };
+      const payload: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'> = {
+        assetTag: tag,
+        company,
+        site,
+        deviceType,
+        brand: brand.trim() || 'TP-Link',
+        model: model.trim() || 'TL-Gigabit',
+        hostname: hostname.trim() || 'NET-DEVICE',
+        serialNumber: serialNumber.trim() || `SN-${Date.now().toString().slice(-6)}`,
+        ipAddress: ipAddress.trim() || '192.168.1.1',
+        macAddress: macAddress.trim() || 'N/A',
+        status,
+        observations: observations.trim() || 'Bon état de fonctionnement'
+      };
 
-    if (editingNetworkAsset) {
-      updateNetworkAsset(editingNetworkAsset.id, payload);
-    } else {
-      addNetworkAsset(payload);
+      let res;
+      if (editingNetworkAsset) {
+        res = await updateNetworkAsset(editingNetworkAsset.id, payload);
+      } else {
+        res = await addNetworkAsset(payload);
+      }
+
+      if (res?.success !== false) {
+        closeNetworkModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeNetworkModal();
   };
 
   return (
@@ -332,9 +344,17 @@ export default function NetworkModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed text-xs flex items-center gap-2"
             >
-              {editingNetworkAsset ? "Enregistrer les modifications" : "Ajouter au Parc Réseau"}
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Enregistrement en cours...</span>
+                </>
+              ) : (
+                editingNetworkAsset ? "Enregistrer les modifications" : "Ajouter au Parc Réseau"
+              )}
             </button>
           </div>
         </form>

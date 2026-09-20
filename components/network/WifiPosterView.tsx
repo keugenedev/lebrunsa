@@ -73,6 +73,8 @@ function WifiQRCode({ ssid, password, security = 'WPA', className = '' }: WifiQR
   );
 }
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function WifiPosterView() {
   const { 
     wifiNetworks, 
@@ -88,6 +90,7 @@ export default function WifiPosterView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingNet, setEditingNet] = useState<WifiNetwork | null>(null);
   const [printableNetwork, setPrintableNetwork] = useState<WifiNetwork | null>(null);
+  const [deletingWifiNet, setDeletingWifiNet] = useState<WifiNetwork | null>(null);
 
   // Form states for add/edit modal
   const [formEst, setFormEst] = useState('');
@@ -100,6 +103,7 @@ export default function WifiPosterView() {
   const [formBand, setFormBand] = useState<'Dual-Band (2.4 / 5 GHz)' | '5 GHz Haute Vitesse' | '2.4 GHz Longue Portée'>('Dual-Band (2.4 / 5 GHz)');
   const [formLocation, setFormLocation] = useState('');
   const [formIsGuest, setFormIsGuest] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const establishments = [
     { id: 'all', label: 'Tous les Réseaux Wi-Fi' },
@@ -154,7 +158,7 @@ export default function WifiPosterView() {
     setIsModalOpen(true);
   };
 
-  const handleSaveNetwork = (e: React.FormEvent) => {
+  const handleSaveNetwork = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formSsid || !formPass) return;
 
@@ -176,12 +180,20 @@ export default function WifiPosterView() {
       isGuestNetwork: formIsGuest
     };
 
-    if (editingNet) {
-      updateWifiNetwork(editingNet.id, payload);
-    } else {
-      addWifiNetwork(payload);
+    setIsSubmitting(true);
+    try {
+      let res;
+      if (editingNet) {
+        res = await updateWifiNetwork(editingNet.id, payload);
+      } else {
+        res = await addWifiNetwork(payload);
+      }
+      if (res?.success !== false) {
+        setIsModalOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsModalOpen(false);
   };
 
   const handlePrintSingle = (net: WifiNetwork) => {
@@ -434,11 +446,7 @@ export default function WifiPosterView() {
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm(`Supprimer le réseau Wi-Fi ${net.ssid} ?`)) {
-                        deleteWifiNetwork(net.id);
-                      }
-                    }}
+                    onClick={() => setDeletingWifiNet(net)}
                     className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-900 transition cursor-pointer"
                     title="Supprimer ce réseau"
                   >
@@ -662,13 +670,21 @@ export default function WifiPosterView() {
               </button>
               <button
                 type="button"
+                disabled={isSubmitting}
                 onClick={(e) => {
                   const form = (e.currentTarget.closest('.bg-white') as HTMLElement)?.querySelector('form');
                   if (form) form.requestSubmit();
                 }}
-                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-xs font-semibold text-white shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {editingNet ? 'Enregistrer les Modifications' : 'Créer le Réseau Wi-Fi'}
+                {isSubmitting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Enregistrement...</span>
+                  </>
+                ) : (
+                  editingNet ? 'Enregistrer les Modifications' : 'Créer le Réseau Wi-Fi'
+                )}
               </button>
             </div>
           </div>
@@ -726,6 +742,23 @@ export default function WifiPosterView() {
           </div>
         ))}
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingWifiNet)}
+        onClose={() => setDeletingWifiNet(null)}
+        onConfirm={() => {
+          if (deletingWifiNet) {
+            deleteWifiNetwork(deletingWifiNet.id);
+            setDeletingWifiNet(null);
+          }
+        }}
+        title="Supprimer le réseau Wi-Fi"
+        message={`Êtes-vous certain de vouloir supprimer le réseau Wi-Fi ${deletingWifiNet?.ssid} ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

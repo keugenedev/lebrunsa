@@ -25,8 +25,10 @@ export default function UPSModal() {
   const [status, setStatus] = useState('En fonctionnement');
   const [observations, setObservations] = useState('');
   const [assetTag, setAssetTag] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!isUPSModalOpen) return;
     if (editingUPSAsset) {
       setCompany(editingUPSAsset.company || 'Lebrun S.A.');
       setSite(editingUPSAsset.site || '');
@@ -39,7 +41,7 @@ export default function UPSModal() {
       setObservations(editingUPSAsset.observations || '');
       setAssetTag(editingUPSAsset.assetTag || '');
     } else {
-      const code = company.startsWith('Auto') ? 'AUT' : 'LEB';
+      const code = 'LEB';
       const count = upsAssets.length + 1;
       setAssetTag(`UPS-${code}-${count.toString().padStart(3, '0')}`);
       setCompany('Lebrun S.A.');
@@ -52,35 +54,44 @@ export default function UPSModal() {
       setStatus('En fonctionnement');
       setObservations('');
     }
-  }, [editingUPSAsset, isUPSModalOpen, upsAssets.length, company]);
+  }, [editingUPSAsset, isUPSModalOpen]);
 
   if (!isUPSModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const tag = assetTag.trim() || `UPS-${company.startsWith('Auto') ? 'AUT' : 'LEB'}-${Date.now().toString().slice(-4)}`;
+    try {
+      const tag = assetTag.trim() || `UPS-${company.startsWith('Auto') ? 'AUT' : 'LEB'}-${Date.now().toString().slice(-4)}`;
 
-    const payload: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'> = {
-      assetTag: tag,
-      company,
-      site,
-      name: name.trim() || `Onduleur ${brand} ${model}`.trim(),
-      brand: brand.trim() || 'Forza',
-      model: model.trim() || 'NT-1011D',
-      capacity: capacity.trim() || '1000 VA',
-      reference: reference.trim() || model.trim() || 'REF-UPS',
-      status,
-      observations: observations.trim() || 'Bon état de fonctionnement'
-    };
+      const payload: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'> = {
+        assetTag: tag,
+        company,
+        site,
+        name: name.trim() || `Onduleur ${brand} ${model}`.trim(),
+        brand: brand.trim() || 'Forza',
+        model: model.trim() || 'NT-1011D',
+        capacity: capacity.trim() || '1000 VA',
+        reference: reference.trim() || model.trim() || 'REF-UPS',
+        status,
+        observations: observations.trim() || 'Bon état de fonctionnement'
+      };
 
-    if (editingUPSAsset) {
-      updateUPSAsset(editingUPSAsset.id, payload);
-    } else {
-      addUPSAsset(payload);
+      let res;
+      if (editingUPSAsset) {
+        res = await updateUPSAsset(editingUPSAsset.id, payload);
+      } else {
+        res = await addUPSAsset(payload);
+      }
+
+      if (res?.success !== false) {
+        closeUPSModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeUPSModal();
   };
 
   return (
@@ -297,9 +308,17 @@ export default function UPSModal() {
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed text-xs flex items-center gap-2"
             >
-              {editingUPSAsset ? "Enregistrer les modifications" : "Ajouter au Parc Onduleurs"}
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Enregistrement en cours...</span>
+                </>
+              ) : (
+                editingUPSAsset ? "Enregistrer les modifications" : "Ajouter au Parc Onduleurs"
+              )}
             </button>
           </div>
         </form>

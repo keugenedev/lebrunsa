@@ -19,12 +19,15 @@ import {
 } from 'lucide-react';
 import UPSDetailsModal from './UPSDetailsModal';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function UPSView() {
   const { upsAssets, openUPSModal, deleteUPSAsset, exportCSV } = useInventory();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<UPSAsset | null>(null);
+  const [deletingAsset, setDeletingAsset] = useState<UPSAsset | null>(null);
 
   const filteredUPS = useMemo(() => {
     return upsAssets.filter(item => {
@@ -150,11 +153,7 @@ export default function UPSView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer l'onduleur ${item.name} (${item.assetTag}) ?`)) {
-                deleteUPSAsset(item.id);
-              }
-            }}
+            onClick={() => setDeletingAsset(item)}
             title="Supprimer cet onduleur"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
           >
@@ -262,9 +261,25 @@ export default function UPSView() {
         <UPSDetailsModal
           asset={selectedAssetForDetails}
           onClose={() => setSelectedAssetForDetails(null)}
-          onOpenEdit={(asset) => openUPSModal(asset)}
         />
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingAsset)}
+        onClose={() => setDeletingAsset(null)}
+        onConfirm={() => {
+          if (deletingAsset) {
+            deleteUPSAsset(deletingAsset.id);
+            setDeletingAsset(null);
+          }
+        }}
+        title="Supprimer l'onduleur UPS"
+        message={`Êtes-vous certain de vouloir supprimer l'onduleur ${deletingAsset?.name} (${deletingAsset?.assetTag}) ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

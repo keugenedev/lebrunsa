@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { downloadSingleAssignmentSheetPDF } from '@/lib/printAssignmentSheet';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function PersonnelView() {
   const { 
     employees, 
@@ -40,6 +42,7 @@ export default function PersonnelView() {
   } = useInventory();
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
 
   const columns: Column<Employee>[] = [
     {
@@ -197,11 +200,7 @@ export default function PersonnelView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer la fiche de ${emp.fullName} (${emp.employeeId}) ?`)) {
-                deleteEmployee(emp.id);
-              }
-            }}
+            onClick={() => setDeletingEmployee(emp)}
             title="Supprimer"
             className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
@@ -626,6 +625,23 @@ export default function PersonnelView() {
           </div>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingEmployee)}
+        onClose={() => setDeletingEmployee(null)}
+        onConfirm={() => {
+          if (deletingEmployee) {
+            deleteEmployee(deletingEmployee.id);
+            setDeletingEmployee(null);
+          }
+        }}
+        title="Supprimer la fiche collaborateur"
+        message={`Êtes-vous certain de vouloir supprimer la fiche de ${deletingEmployee?.fullName} (${deletingEmployee?.employeeId}) ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

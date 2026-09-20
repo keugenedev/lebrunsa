@@ -102,43 +102,54 @@ export default function DocumentModal() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validate()) return;
 
-    const today = new Date().toISOString().slice(0, 10);
+    setIsSubmitting(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
 
-    if (editingDocument) {
-      updateDocument(editingDocument.id, {
-        title: title.trim(),
-        reference: reference.trim().toUpperCase(),
-        category,
-        company,
-        site: site.trim(),
-        fileType,
-        fileSize: fileSize.trim() || '250 KB',
-        author: author.trim(),
-        lastUpdated: today,
-        status,
-        description: description.trim()
-      });
-    } else {
-      addDocument({
-        title: title.trim(),
-        reference: reference.trim().toUpperCase(),
-        category,
-        company,
-        site: site.trim(),
-        fileType,
-        fileSize: fileSize.trim() || '250 KB',
-        author: author.trim(),
-        lastUpdated: today,
-        status,
-        description: description.trim()
-      });
+      let res;
+      if (editingDocument) {
+        res = await updateDocument(editingDocument.id, {
+          title: title.trim(),
+          reference: reference.trim().toUpperCase(),
+          category,
+          company,
+          site: site.trim(),
+          fileType,
+          fileSize: fileSize.trim() || '250 KB',
+          author: author.trim(),
+          lastUpdated: today,
+          status,
+          description: description.trim()
+        });
+      } else {
+        res = await addDocument({
+          title: title.trim(),
+          reference: reference.trim().toUpperCase(),
+          category,
+          company,
+          site: site.trim(),
+          fileType,
+          fileSize: fileSize.trim() || '250 KB',
+          author: author.trim(),
+          lastUpdated: today,
+          status,
+          description: description.trim()
+        });
+      }
+
+      if (res?.success !== false) {
+        closeDocumentModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeDocumentModal();
   };
 
   return (
@@ -367,10 +378,20 @@ export default function DocumentModal() {
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+              disabled={isSubmitting}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-xl shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed active:scale-95"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>{editingDocument ? 'Enregistrer les modifications' : 'Créer le document'}</span>
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Enregistrement en cours...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{editingDocument ? 'Enregistrer les modifications' : 'Créer le document'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>

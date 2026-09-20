@@ -93,9 +93,9 @@ interface InventoryContextType {
 
   // Wi-Fi Posters & Networks
   wifiNetworks: WifiNetwork[];
-  addWifiNetwork: (net: Omit<WifiNetwork, 'id'>) => void;
-  updateWifiNetwork: (id: string, updates: Partial<WifiNetwork>) => void;
-  deleteWifiNetwork: (id: string) => void;
+  addWifiNetwork: (net: Omit<WifiNetwork, 'id'>) => Promise<any>;
+  updateWifiNetwork: (id: string, updates: Partial<WifiNetwork>) => Promise<any>;
+  deleteWifiNetwork: (id: string) => Promise<any>;
   isWifiPosterModalOpen: boolean;
   openWifiPosterModal: (establishment?: string) => void;
   closeWifiPosterModal: () => void;
@@ -108,9 +108,9 @@ interface InventoryContextType {
   dismissToast: (id: string) => void;
 
   // Actions IT
-  addITAsset: (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateITAsset: (id: string, updates: Partial<ITAsset>) => void;
-  deleteITAsset: (id: string) => void;
+  addITAsset: (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updateITAsset: (id: string, updates: Partial<ITAsset>) => Promise<any>;
+  deleteITAsset: (id: string) => Promise<any>;
 
   // Network, UPS & Applications
   networkAssets: NetworkAsset[];
@@ -122,27 +122,27 @@ interface InventoryContextType {
   editingNetworkAsset: NetworkAsset | null;
   openNetworkModal: (asset?: NetworkAsset) => void;
   closeNetworkModal: () => void;
-  addNetworkAsset: (asset: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateNetworkAsset: (id: string, updates: Partial<NetworkAsset>) => void;
-  deleteNetworkAsset: (id: string) => void;
+  addNetworkAsset: (asset: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updateNetworkAsset: (id: string, updates: Partial<NetworkAsset>) => Promise<any>;
+  deleteNetworkAsset: (id: string) => Promise<any>;
 
   // Modals & Actions UPS
   isUPSModalOpen: boolean;
   editingUPSAsset: UPSAsset | null;
   openUPSModal: (asset?: UPSAsset) => void;
   closeUPSModal: () => void;
-  addUPSAsset: (asset: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateUPSAsset: (id: string, updates: Partial<UPSAsset>) => void;
-  deleteUPSAsset: (id: string) => void;
+  addUPSAsset: (asset: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updateUPSAsset: (id: string, updates: Partial<UPSAsset>) => Promise<any>;
+  deleteUPSAsset: (id: string) => Promise<any>;
 
   // Modals & Actions Applications
   isApplicationModalOpen: boolean;
   editingApplicationAccount: ApplicationAccount | null;
   openApplicationModal: (account?: ApplicationAccount) => void;
   closeApplicationModal: () => void;
-  addApplicationAccount: (account: Omit<ApplicationAccount, 'id'>) => void;
-  updateApplicationAccount: (id: string, updates: Partial<ApplicationAccount>) => void;
-  deleteApplicationAccount: (id: string) => void;
+  addApplicationAccount: (account: Omit<ApplicationAccount, 'id'>) => Promise<any>;
+  updateApplicationAccount: (id: string, updates: Partial<ApplicationAccount>) => Promise<any>;
+  deleteApplicationAccount: (id: string) => Promise<any>;
 
   // Modals & Actions Printers
   isPrinterModalOpen: boolean;
@@ -151,9 +151,9 @@ interface InventoryContextType {
   closePrinterModal: () => void;
 
   // Actions Printers
-  addPrinter: (printer: Omit<PrinterAsset, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updatePrinter: (id: string, updates: Partial<PrinterAsset>) => void;
-  deletePrinter: (id: string) => void;
+  addPrinter: (printer: Omit<PrinterAsset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updatePrinter: (id: string, updates: Partial<PrinterAsset>) => Promise<any>;
+  deletePrinter: (id: string) => Promise<any>;
 
   // Actions Plans
   addPlan: (plan: Omit<TelecomPlan, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -172,9 +172,9 @@ interface InventoryContextType {
   deleteElectronic: (id: string) => void;
 
   // Actions Personnel
-  addEmployee: (emp: Omit<Employee, 'id'>) => void;
-  updateEmployee: (id: string, updates: Partial<Employee>) => void;
-  deleteEmployee: (id: string) => void;
+  addEmployee: (emp: Omit<Employee, 'id'>) => Promise<any>;
+  updateEmployee: (id: string, updates: Partial<Employee>) => Promise<any>;
+  deleteEmployee: (id: string) => Promise<any>;
   getEmployeeAssignedAssets: (empIdOrName: string) => {
     it: ITAsset[];
     plans: TelecomPlan[];
@@ -188,9 +188,9 @@ interface InventoryContextType {
   editingAccount: ITAccount | null;
   openAccountModal: (account?: ITAccount) => void;
   closeAccountModal: () => void;
-  addITAccount: (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateITAccount: (id: string, updates: Partial<ITAccount>) => void;
-  deleteITAccount: (id: string) => void;
+  addITAccount: (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updateITAccount: (id: string, updates: Partial<ITAccount>) => Promise<any>;
+  deleteITAccount: (id: string) => Promise<any>;
 
   // Modals & Actions Documents
   documents: DocumentItem[];
@@ -198,9 +198,9 @@ interface InventoryContextType {
   editingDocument: DocumentItem | null;
   openDocumentModal: (doc?: DocumentItem) => void;
   closeDocumentModal: () => void;
-  addDocument: (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateDocument: (id: string, updates: Partial<DocumentItem>) => void;
-  deleteDocument: (id: string) => void;
+  addDocument: (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updateDocument: (id: string, updates: Partial<DocumentItem>) => Promise<any>;
+  deleteDocument: (id: string) => Promise<any>;
 
   // Operations
   recordMovement: (mov: Omit<StockMovement, 'id' | 'date'>) => void;
@@ -360,17 +360,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Master data versioning - forces immediate cache sync across clients
-  const CURRENT_DATA_VERSION = '2026-09-19-v17-apps-online-sync';
+  // Master data versioning - keeps cache synchronized with Supabase
+  const CURRENT_DATA_VERSION = '2026-09-19-v18-supabase-realtime-sync';
 
   if (typeof window !== 'undefined') {
     const version = localStorage.getItem('lebron_inv_data_version');
     if (version !== CURRENT_DATA_VERSION) {
       localStorage.setItem('lebron_inv_data_version', CURRENT_DATA_VERSION);
-      localStorage.setItem('lebron_inv_employees', JSON.stringify(INITIAL_EMPLOYEES));
-      localStorage.setItem('lebron_inv_it', JSON.stringify(INITIAL_IT_ASSETS));
-      localStorage.setItem('lebron_inv_applications', JSON.stringify(INITIAL_APPLICATIONS));
-      localStorage.setItem('lebron_inv_printers', JSON.stringify(INITIAL_PRINTERS));
     }
   }
 
@@ -550,15 +546,20 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const missing = INITIAL_IT_ACCOUNTS.filter(initAcc => !parsed.some((p: any) => p.id === initAcc.id || p.username === initAcc.username));
-            return [...parsed, ...missing];
+          if (Array.isArray(parsed)) {
+            return parsed;
           }
         } catch (e) { console.error(e); }
       }
     }
     return INITIAL_IT_ACCOUNTS;
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(itAccounts));
+    }
+  }, [itAccounts]);
 
   // Documents state
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
@@ -567,9 +568,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const missing = INITIAL_DOCUMENTS.filter(initDoc => !parsed.some((p: any) => p.id === initDoc.id || p.title === initDoc.title));
-            return [...parsed, ...missing];
+          if (Array.isArray(parsed)) {
+            return parsed;
           }
         } catch (e) { console.error(e); }
       }
@@ -639,21 +639,30 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           message: `Échec de l'enregistrement du réseau Wi-Fi dans Supabase : ${error.message}`,
           type: 'error'
         });
-        return;
+        return { success: false, error: error.message };
       }
 
-      setWifiNetworks(prev => [newNet, ...prev]);
+      setWifiNetworks(prev => {
+        const next = [newNet, ...prev.filter(w => w.id !== newId)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_wifi', JSON.stringify(next));
+        }
+        return next;
+      });
+
       showToast({
         title: 'Réseau Wi-Fi Ajouté',
         message: `Le réseau ${newNet.ssid} pour ${newNet.establishment} a été créé dans Supabase.`,
         type: 'success'
       });
+      return { success: true };
     } catch (err: any) {
       showToast({
         title: 'Erreur Base de Données',
         message: `Erreur lors de l'ajout du réseau Wi-Fi : ${err.message || 'Connexion Supabase impossible'}`,
         type: 'error'
       });
+      return { success: false, error: err?.message };
     }
   };
 
@@ -680,21 +689,30 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           message: `Échec de la mise à jour du réseau Wi-Fi dans Supabase : ${error.message}`,
           type: 'error'
         });
-        return;
+        return { success: false, error: error.message };
       }
 
-      setWifiNetworks(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+      setWifiNetworks(prev => {
+        const next = prev.map(item => item.id === id ? { ...item, ...updates } : item);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_wifi', JSON.stringify(next));
+        }
+        return next;
+      });
+
       showToast({
         title: 'Réseau Wi-Fi Mis à Jour',
         message: 'La configuration Wi-Fi a été enregistrée avec succès dans Supabase.',
         type: 'success'
       });
+      return { success: true };
     } catch (err: any) {
       showToast({
         title: 'Erreur Base de Données',
         message: `Erreur lors de la modification du réseau Wi-Fi : ${err.message || 'Connexion Supabase impossible'}`,
         type: 'error'
       });
+      return { success: false, error: err?.message };
     }
   };
 
@@ -708,21 +726,30 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           message: `Échec de la suppression du réseau Wi-Fi dans Supabase : ${error.message}`,
           type: 'error'
         });
-        return;
+        return { success: false, error: error.message };
       }
 
-      setWifiNetworks(prev => prev.filter(item => item.id !== id));
+      setWifiNetworks(prev => {
+        const next = prev.filter(item => item.id !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_wifi', JSON.stringify(next));
+        }
+        return next;
+      });
+
       showToast({
         title: 'Réseau Wi-Fi Supprimé',
         message: "Le réseau a été retiré de la base de données Supabase.",
         type: 'warning'
       });
+      return { success: true };
     } catch (err: any) {
       showToast({
         title: 'Erreur Base de Données',
         message: `Erreur lors de la suppression du réseau Wi-Fi : ${err.message || 'Connexion Supabase impossible'}`,
         type: 'error'
       });
+      return { success: false, error: err?.message };
     }
   };
 
@@ -828,7 +855,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     async function loadFromSupabase() {
       try {
         // 1. Load Printers from Supabase (Newest first)
-        const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*').order('created_at', { ascending: false });
+        const { data: dbPrinters, error: prnErr } = await supabase.from('printers').select('*');
         if (!prnErr && dbPrinters && dbPrinters.length > 0) {
           setPrinters(prev => {
             const mappedFromDb: PrinterAsset[] = dbPrinters.map((r: any, idx: number) => {
@@ -854,12 +881,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
 
             const localOnly = prev.filter(p => !mappedFromDb.some(dbP => dbP.serialNumber === p.serialNumber || dbP.assetTag === p.assetTag));
-            return sortByNewest([...localOnly, ...mappedFromDb]);
+            const merged = sortByNewest([...localOnly, ...mappedFromDb]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_printers', JSON.stringify(merged));
+            }
+            return merged;
           });
         }
 
         // 2. Load Users / Employees from Supabase (Newest first)
-        const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+        const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
         if (!usrErr && dbUsers && dbUsers.length > 0) {
           setEmployees(prev => {
             const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
@@ -904,12 +935,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
 
             const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || (dbE.email && dbE.email === e.email)));
-            return sortByNewest([...localOnly, ...mappedFromDb]);
+            const merged = sortByNewest([...localOnly, ...mappedFromDb]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_employees', JSON.stringify(merged));
+            }
+            return merged;
           });
         }
 
         // 3. Load Network Equipment from Supabase (Newest first)
-        const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*').order('created_at', { ascending: false });
+        const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*');
         if (!netErr && dbNet && dbNet.length > 0) {
           const mappedNet: NetworkAsset[] = dbNet.map((row: any, idx: number) => ({
             id: row.network_equipment_id ? String(row.network_equipment_id) : (row.id ? row.id.toString() : `net-${idx + 1}`),
@@ -928,11 +963,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setNetworkAssets(sortByNewest(mappedNet));
+          setNetworkAssets(prev => {
+            const localOnly = prev.filter(n => !mappedNet.some(dbN => dbN.assetTag === n.assetTag || dbN.id === n.id || (n.serialNumber !== 'N/A' && n.serialNumber !== 'À compléter' && dbN.serialNumber === n.serialNumber)));
+            const merged = sortByNewest([...localOnly, ...mappedNet]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_network', JSON.stringify(merged));
+            }
+            return merged;
+          });
         }
 
         // 4. Load UPS from Supabase (Newest first)
-        const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*').order('created_at', { ascending: false });
+        const { data: dbUps, error: upsErr } = await supabase.from('ups').select('*');
         if (!upsErr && dbUps && dbUps.length > 0) {
           const mappedUps: UPSAsset[] = dbUps.map((row: any, idx: number) => ({
             id: row.ups_id ? String(row.ups_id) : (row.id ? row.id.toString() : `ups-${idx + 1}`),
@@ -949,7 +991,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setUpsAssets(sortByNewest(mappedUps));
+          setUpsAssets(prev => {
+            const localOnly = prev.filter(u => !mappedUps.some(dbU => dbU.assetTag === u.assetTag || dbU.id === u.id));
+            const merged = sortByNewest([...localOnly, ...mappedUps]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_ups', JSON.stringify(merged));
+            }
+            return merged;
+          });
         }
 
         // 5. Load User Applications from Supabase (Newest first)
@@ -990,7 +1039,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               !dbApps.some((r: any) => r.username?.toLowerCase() === localAcc.username.toLowerCase())
             );
 
-            return sortByNewest([...localOnly, ...syncedFromDb]);
+            const merged = sortByNewest([...localOnly, ...syncedFromDb]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_applications', JSON.stringify(merged));
+            }
+            return merged;
           });
 
           setEmployees(prevEmp => {
@@ -1016,7 +1069,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         }
 
         // 6. Load IT Equipment from Supabase (Newest first)
-        const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*').order('created_at', { ascending: false });
+        const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
         if (!itErr && dbIT && dbIT.length > 0) {
           setItAssets(prev => {
             const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
@@ -1075,7 +1128,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             });
 
             const localOnly = prev.filter(a => !mappedFromDb.some(dbA => dbA.serialNumber === a.serialNumber || dbA.assetTag === a.assetTag));
-            return sortByNewest([...localOnly, ...mappedFromDb]);
+            const merged = sortByNewest([...localOnly, ...mappedFromDb]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_it', JSON.stringify(merged));
+            }
+            return merged;
           });
         }
 
@@ -1117,7 +1174,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
           }));
-          setDocuments(sortByNewest(mappedDocs));
+          setDocuments(prev => {
+            const localOnly = prev.filter(d => !mappedDocs.some(dbD => dbD.id === d.id || dbD.reference === d.reference));
+            const merged = sortByNewest([...localOnly, ...mappedDocs]);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_documents', JSON.stringify(merged));
+            }
+            return merged;
+          });
         }
       } catch (err) {
         console.error('Erreur synchronisation Supabase:', err);
@@ -1185,43 +1249,80 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   // Employee Actions
   const addEmployee = async (emp: Omit<Employee, 'id'>) => {
+    const cleanUserId = emp.employeeId || `EMP-LEB-${Math.floor(Math.random() * 900 + 100)}`;
+    const cleanUsername = emp.accounts?.appUsername || cleanUserId.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanEmail = emp.email || `${cleanUsername}@lebrunsa.com`;
+
+    const parts = (emp.fullName || '').trim().split(/\s+/);
+    const prenom = emp.firstName || parts[0] || cleanUsername;
+    const nom = emp.lastName || parts.slice(1).join(' ') || prenom;
+
     const newEmp: Employee = {
       ...emp,
-      id: `emp-${Date.now()}`
+      id: cleanUserId,
+      employeeId: cleanUserId,
+      firstName: prenom,
+      lastName: nom,
+      email: cleanEmail,
+      createdAt: new Date().toISOString()
     };
-    setEmployees(prev => [newEmp, ...prev]);
-
-    showToast({
-      title: 'Collaborateur Enregistré',
-      message: `${newEmp.fullName} (${newEmp.company}) a été ajouté.`,
-      type: 'success'
-    });
 
     try {
-      await supabase.from('users').insert({
-        user_id: emp.employeeId,
-        username: emp.accounts?.appUsername || emp.employeeId.toLowerCase().replace(/[^a-z0-9]/g, ''),
-        email: emp.email,
-        nom: emp.lastName,
-        prenom: emp.firstName,
-        entreprise: emp.company,
-        site: emp.site,
-        telephone: emp.phone || '',
-        departement: emp.department || '',
-        poste: emp.jobTitle || '',
+      const { data, error } = await supabase.from('users').insert({
+        user_id: cleanUserId,
+        username: cleanUsername,
+        email: cleanEmail,
+        nom: nom,
+        prenom: prenom,
+        entreprise: emp.company || 'Lebrun S.A.',
+        site: emp.site || 'Delmas 52',
+        telephone: emp.phone || null,
+        departement: emp.department || null,
+        poste: emp.jobTitle || null,
         statut: emp.status === 'active' ? 'Actif' : emp.status === 'on_leave' ? 'En mission' : 'Inactif'
+      }).select();
+
+      if (error) {
+        console.error('Supabase addEmployee insert error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: `Collaborateur non enregistré: ${error.message}`,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setEmployees(prev => {
+        const next = [newEmp, ...prev.filter(e => e.employeeId !== cleanUserId && e.id !== cleanUserId)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_employees', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addEmployee error:', err);
+
+      showToast({
+        title: 'Collaborateur Enregistré',
+        message: `${newEmp.fullName} (${newEmp.company}) a été ajouté dans la base de données.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addEmployee error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
-    const targetEmp = employees.find(e => e.id === id);
+    const targetEmp = employees.find(e => e.id === id || e.employeeId === id);
     const oldFullName = targetEmp?.fullName;
     const oldEmployeeId = targetEmp?.employeeId;
 
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    setEmployees(prev => prev.map(e => (e.id === id || e.employeeId === id) ? { ...e, ...updates } : e));
 
     showToast({
       title: 'Fiche Collaborateur Modifiée',
@@ -1301,7 +1402,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const payload: Record<string, any> = {};
       if (updates.lastName !== undefined) payload.nom = updates.lastName;
       if (updates.firstName !== undefined) payload.prenom = updates.firstName;
-      if (updates.fullName !== undefined) payload.nom_complet = updates.fullName;
+      if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
+        const parts = updates.fullName.trim().split(/\s+/);
+        payload.prenom = parts[0] || '';
+        payload.nom = parts.slice(1).join(' ') || parts[0] || '';
+      }
       if (updates.email !== undefined) payload.email = updates.email;
       if (updates.phone !== undefined) payload.telephone = updates.phone;
       if (updates.company !== undefined) payload.entreprise = updates.company;
@@ -1312,14 +1417,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         payload.statut = updates.status === 'active' ? 'Actif' : updates.status === 'on_leave' ? 'En mission' : 'Inactif';
       }
 
-      const targetEmpId = updates.employeeId || targetEmp?.employeeId;
+      const targetEmpId = updates.employeeId || targetEmp?.employeeId || id;
+      let updatedInDb = false;
+
       if (targetEmpId) {
-        const { error: updErr } = await supabase.from('users').update(payload).eq('user_id', targetEmpId);
-        if (updErr && (updates.email || targetEmp?.email)) {
-          await supabase.from('users').update(payload).eq('email', updates.email || targetEmp?.email);
+        const { data, error } = await supabase.from('users').update(payload).eq('user_id', targetEmpId).select();
+        if (!error && data && data.length > 0) {
+          updatedInDb = true;
         }
-      } else if (updates.email || targetEmp?.email) {
-        await supabase.from('users').update(payload).eq('email', updates.email || targetEmp?.email);
+      }
+
+      if (!updatedInDb && (updates.email || targetEmp?.email)) {
+        const targetEmail = updates.email || targetEmp?.email;
+        if (targetEmail) {
+          const { data, error } = await supabase.from('users').update(payload).eq('email', targetEmail).select();
+          if (!error && data && data.length > 0) {
+            updatedInDb = true;
+          }
+        }
+      }
+
+      if (!updatedInDb && (updates.fullName || targetEmp?.fullName)) {
+        const targetName = updates.fullName || targetEmp?.fullName;
+        if (targetName) {
+          await supabase.from('users').update(payload).eq('nom_complet', targetName);
+        }
       }
     } catch (err) {
       console.warn('Sync Supabase updateEmployee error:', err);
@@ -1327,60 +1449,95 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteEmployee = async (id: string) => {
-    const target = employees.find(e => e.id === id);
+    const target = employees.find(e => e.id === id || e.employeeId === id);
     const oldFullName = target?.fullName;
-    const oldEmployeeId = target?.employeeId;
-
-    setEmployees(prev => prev.filter(e => e.id !== id));
-
-    showToast({
-      title: 'Collaborateur Supprimé',
-      message: `${oldFullName || 'Le collaborateur'} a été retiré de la base de données.`,
-      type: 'warning'
-    });
-
-    // Automatically unassign Poste IT assets when employee is removed
-    setItAssets(prev => prev.map(asset => {
-      const isAssigned = (asset.assignedPersonnelId && (asset.assignedPersonnelId === id || asset.assignedPersonnelId === oldEmployeeId)) ||
-                         (oldFullName && asset.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
-      if (isAssigned) {
-        return {
-          ...asset,
-          assignedTo: undefined,
-          assignedPersonnelId: undefined,
-          status: 'available',
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return asset;
-    }));
-
-    setPlans(prev => prev.map(plan => {
-      const isAssigned = (plan.assignedPersonnelId && (plan.assignedPersonnelId === id || plan.assignedPersonnelId === oldEmployeeId)) ||
-                         (oldFullName && plan.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
-      if (isAssigned) {
-        return { ...plan, assignedTo: undefined, assignedPersonnelId: undefined };
-      }
-      return plan;
-    }));
-
-    setStarlinkKits(prev => prev.map(kit => {
-      const isAssigned = (kit.assignedPersonnelId && (kit.assignedPersonnelId === id || kit.assignedPersonnelId === oldEmployeeId)) ||
-                         (oldFullName && kit.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
-      if (isAssigned) {
-        return { ...kit, assignedTo: undefined, assignedPersonnelId: undefined };
-      }
-      return kit;
-    }));
+    const empMatricule = target?.employeeId || id;
 
     try {
-      if (target?.employeeId) {
-        await supabase.from('users').delete().eq('user_id', target.employeeId);
-      } else if (target?.email) {
-        await supabase.from('users').delete().eq('email', target.email);
+      if (empMatricule) {
+        // 1. Unlink foreign key in it_equipment so foreign key constraint does not block user deletion
+        await supabase.from('it_equipment').update({
+          user_id: null,
+          nom: null,
+          prenom: null,
+          username: null,
+          email: null,
+          telephone: null
+        }).eq('user_id', empMatricule);
+
+        // 2. Unlink / delete linked application account
+        await supabase.from('user_applications').delete().eq('user_id', empMatricule);
+
+        // 3. Delete user row in users table
+        const { error } = await supabase.from('users').delete().eq('user_id', empMatricule);
+        if (error) {
+          console.error('Supabase deleteEmployee error:', error);
+          showToast({
+            title: "Erreur de suppression",
+            message: `Impossible de supprimer de la base de données: ${error.message}`,
+            type: 'error'
+          });
+          return { success: false, error: error.message };
+        }
       }
-    } catch (err) {
-      console.warn('Sync Supabase deleteEmployee error:', err);
+
+      setEmployees(prev => {
+        const next = prev.filter(e => e.id !== id && e.employeeId !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_employees', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      // Automatically unassign Poste IT assets when employee is removed
+      setItAssets(prev => {
+        const next = prev.map(asset => {
+          const isAssigned = (asset.assignedPersonnelId && (asset.assignedPersonnelId === id || asset.assignedPersonnelId === empMatricule)) ||
+                             (oldFullName && asset.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+          if (isAssigned) {
+            return {
+              ...asset,
+              assignedTo: undefined,
+              assignedPersonnelId: undefined,
+              status: 'available' as const,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return asset;
+        });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_it', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      setPlans(prev => prev.map(plan => {
+        const isAssigned = (plan.assignedPersonnelId && (plan.assignedPersonnelId === id || plan.assignedPersonnelId === empMatricule)) ||
+                           (oldFullName && plan.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        if (isAssigned) {
+          return { ...plan, assignedTo: undefined, assignedPersonnelId: undefined };
+        }
+        return plan;
+      }));
+
+      setStarlinkKits(prev => prev.map(kit => {
+        const isAssigned = (kit.assignedPersonnelId && (kit.assignedPersonnelId === id || kit.assignedPersonnelId === empMatricule)) ||
+                           (oldFullName && kit.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        if (isAssigned) {
+          return { ...kit, assignedTo: undefined, assignedPersonnelId: undefined };
+        }
+        return kit;
+      }));
+
+      showToast({
+        title: 'Collaborateur Supprimé',
+        message: `${oldFullName || 'Le collaborateur'} a été retiré de la base de données.`,
+        type: 'warning'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deleteEmployee error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
@@ -1438,110 +1595,285 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       createdAt: now,
       updatedAt: now
     };
-    setItAccounts(prev => [newAcc, ...prev]);
-
-    showToast({
-      title: 'Compte Informaticien Créé',
-      message: `${newAcc.fullName} (@${newAcc.username}) a été enregistré.`,
-      type: 'success'
-    });
 
     try {
-      await supabase.from('users').insert({
+      const parts = (newAcc.fullName || '').trim().split(/\s+/);
+      const prenom = newAcc.firstName || parts[0] || newAcc.username;
+      const nom = newAcc.lastName || parts.slice(1).join(' ') || prenom;
+      const cleanUserId = `EMP-IT-${Math.floor(Math.random() * 900 + 100)}`;
+
+      const { data, error } = await supabase.from('users').insert({
+        user_id: cleanUserId,
         username: newAcc.username,
         email: newAcc.email,
-        nom: newAcc.lastName,
-        prenom: newAcc.firstName,
+        nom: nom,
+        prenom: prenom,
         entreprise: newAcc.company,
-        site: newAcc.site
+        site: newAcc.site,
+        telephone: newAcc.phone || null,
+        poste: newAcc.specialty || 'Support & Systèmes',
+        statut: newAcc.status === 'active' ? 'Actif' : 'Inactif'
+      }).select();
+
+      if (error) {
+        console.error('Supabase addITAccount error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: error.message,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setItAccounts(prev => {
+        const next = [newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addITAccount error:', err);
+
+      showToast({
+        title: 'Compte Informaticien Créé',
+        message: `${newAcc.fullName} (@${newAcc.username}) a été enregistré.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addITAccount error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   const updateITAccount = async (id: string, updates: Partial<ITAccount>) => {
-    setItAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, ...updates, updatedAt: new Date().toISOString() } : acc));
-
-    showToast({
-      title: 'Compte Informaticien Modifié',
-      message: 'Les informations du compte ont été mises à jour.',
-      type: 'info'
-    });
+    const targetAcc = itAccounts.find(a => a.id === id);
 
     try {
-      if (updates.username || updates.email || updates.lastName || updates.firstName || updates.company || updates.site) {
+      if (updates.username || updates.email || updates.lastName || updates.firstName || updates.fullName || updates.company || updates.site || updates.phone !== undefined || updates.specialty || updates.status) {
         const payload: Record<string, any> = {};
         if (updates.email) payload.email = updates.email;
         if (updates.lastName) payload.nom = updates.lastName;
         if (updates.firstName) payload.prenom = updates.firstName;
+        if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
+          const parts = updates.fullName.trim().split(/\s+/);
+          payload.prenom = parts[0] || '';
+          payload.nom = parts.slice(1).join(' ') || parts[0] || '';
+        }
         if (updates.company) payload.entreprise = updates.company;
         if (updates.site) payload.site = updates.site;
-        if (updates.username) {
-          await supabase.from('users').update(payload).eq('username', updates.username);
+        if (updates.phone !== undefined) payload.telephone = updates.phone;
+        if (updates.specialty) payload.poste = updates.specialty;
+        if (updates.status) payload.statut = updates.status === 'active' ? 'Actif' : 'Inactif';
+
+        const targetUsername = updates.username || targetAcc?.username;
+        const targetEmail = updates.email || targetAcc?.email;
+
+        let updated = false;
+        if (targetUsername) {
+          const { data, error } = await supabase.from('users').update(payload).eq('username', targetUsername).select();
+          if (!error && data && data.length > 0) updated = true;
+        }
+        if (!updated && targetEmail) {
+          await supabase.from('users').update(payload).eq('email', targetEmail);
         }
       }
-    } catch (err) {
-      console.warn('Sync Supabase updateITAccount error:', err);
+
+      setItAccounts(prev => {
+        const updated = prev.map(acc => acc.id === id ? { ...acc, ...updates, updatedAt: new Date().toISOString() } : acc);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      showToast({
+        title: 'Compte Informaticien Modifié',
+        message: 'Les informations du compte ont été mises à jour.',
+        type: 'info'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase updateITAccount error:', err);
+      showToast({
+        title: "Erreur de modification",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   const deleteITAccount = async (id: string) => {
     const target = itAccounts.find(a => a.id === id);
-    setItAccounts(prev => prev.filter(a => a.id !== id));
-
-    showToast({
-      title: 'Compte Informaticien Retiré',
-      message: target ? `${target.fullName} a été supprimé.` : 'Compte supprimé.',
-      type: 'info'
-    });
 
     try {
       if (target?.username) {
         await supabase.from('users').delete().eq('username', target.username);
+        await supabase.from('user_applications').delete().ilike('username', target.username);
       }
-    } catch (err) {
-      console.warn('Sync Supabase deleteITAccount error:', err);
+      if (target?.email) {
+        await supabase.from('users').delete().eq('email', target.email);
+      }
+
+      setItAccounts(prev => {
+        const updated = prev.filter(a => a.id !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      showToast({
+        title: 'Compte Informaticien Retiré',
+        message: target ? `${target.fullName} a été supprimé.` : 'Compte supprimé.',
+        type: 'info'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deleteITAccount error:', err);
+      showToast({
+        title: "Erreur de suppression",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   // Documents Actions
   const addDocument = async (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
+    const docId = doc.reference ? `DOC-${doc.reference.replace(/[^a-zA-Z0-9]/g, '')}` : `doc-${Date.now()}`;
     const newDoc: DocumentItem = {
       ...doc,
-      id: `doc-${Date.now()}`,
+      id: docId,
       createdAt: now,
       updatedAt: now
     };
-    setDocuments(prev => [newDoc, ...prev]);
 
-    showToast({
-      title: 'Document Ajouté',
-      message: `"${newDoc.title}" a été ajouté avec succès.`,
-      type: 'success'
-    });
+    try {
+      const { data, error } = await supabase.from('documents').insert({
+        document_id: docId,
+        title: doc.title,
+        category: doc.category,
+        reference: doc.reference || 'N/A',
+        author: doc.author || 'Direction IT',
+        company: doc.company || 'Lebrun S.A.',
+        status: doc.status || 'valide',
+        file_url: doc.url || null,
+        description: doc.description || null
+      }).select();
+
+      if (error) {
+        console.error('Supabase addDocument error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: error.message,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setDocuments(prev => {
+        const next = [newDoc, ...prev.filter(d => d.id !== docId && d.reference !== newDoc.reference)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_documents', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Document Ajouté',
+        message: `"${newDoc.title}" a été ajouté dans la base de données.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addDocument error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
+    }
   };
 
   const updateDocument = async (id: string, updates: Partial<DocumentItem>) => {
-    setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d));
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.title !== undefined) payload.title = updates.title;
+      if (updates.category !== undefined) payload.category = updates.category;
+      if (updates.reference !== undefined) payload.reference = updates.reference;
+      if (updates.author !== undefined) payload.author = updates.author;
+      if (updates.company !== undefined) payload.company = updates.company;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.url !== undefined) payload.file_url = updates.url;
+      if (updates.description !== undefined) payload.description = updates.description;
 
-    showToast({
-      title: 'Document Mis à Jour',
-      message: 'Les modifications ont été enregistrées.',
-      type: 'info'
-    });
+      if (Object.keys(payload).length > 0) {
+        await supabase.from('documents').update(payload).eq('document_id', id);
+      }
+
+      setDocuments(prev => {
+        const updated = prev.map(d => d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_documents', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      showToast({
+        title: 'Document Mis à Jour',
+        message: 'Les modifications ont été enregistrées.',
+        type: 'info'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase updateDocument error:', err);
+      showToast({
+        title: "Erreur de modification",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
+    }
   };
 
   const deleteDocument = async (id: string) => {
     const target = documents.find(d => d.id === id);
-    setDocuments(prev => prev.filter(d => d.id !== id));
 
-    showToast({
-      title: 'Document Supprimé',
-      message: target ? `"${target.title}" a été retiré.` : 'Document supprimé.',
-      type: 'info'
-    });
+    try {
+      await supabase.from('documents').delete().eq('document_id', id);
+
+      setDocuments(prev => {
+        const updated = prev.filter(d => d.id !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_documents', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      showToast({
+        title: 'Document Supprimé',
+        message: target ? `"${target.title}" a été retiré.` : 'Document supprimé.',
+        type: 'info'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deleteDocument error:', err);
+      showToast({
+        title: "Erreur de suppression",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
+    }
   };
 
   // IT Actions
@@ -1549,58 +1881,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString();
     const newAsset: ITAsset = {
       ...asset,
-      id: `it-${Date.now()}`,
+      id: asset.assetTag || `it-${Date.now()}`,
       createdAt: now,
       updatedAt: now
     };
-    setItAssets(prev => [newAsset, ...prev]);
-
-    showToast({
-      title: 'Poste de Travail IT Ajouté',
-      message: `${newAsset.name} (${newAsset.assetTag}) a été enregistré avec succès.`,
-      type: 'success'
-    });
-
-    // Record movement
-    recordMovement({
-      assetId: newAsset.id,
-      assetName: newAsset.name,
-      assetCategory: 'it',
-      actionType: newAsset.status === 'in_use' ? 'check_out' : 'restock',
-      targetUser: newAsset.assignedTo,
-      employeeId: newAsset.assignedPersonnelId,
-      department: newAsset.assignedDepartment,
-      performedBy: 'Gestionnaire Matériel Lebronsa',
-      notes: `Ajout au catalogue : ${newAsset.assetTag}`
-    });
-
-    // Connect and synchronize in real-time with employee workstation
-    if (newAsset.assignedPersonnelId || newAsset.assignedTo) {
-      setEmployees(prev => prev.map(emp => {
-        const isTarget = (newAsset.assignedPersonnelId && (emp.id === newAsset.assignedPersonnelId || emp.employeeId === newAsset.assignedPersonnelId)) ||
-                         (newAsset.assignedTo && emp.fullName.toLowerCase() === newAsset.assignedTo.toLowerCase());
-        if (isTarget) {
-          return {
-            ...emp,
-            workstation: newAsset.workstation || emp.workstation
-          };
-        }
-        return emp;
-      }));
-    }
 
     try {
       const kbStr = newAsset.workstation?.keyboard || newAsset.keyboard || '';
       const kbObsStr = newAsset.workstation?.keyboardObs || newAsset.keyboardObs || 'Good';
-      const kbCombined = kbObsStr !== 'Good' ? `${kbStr} [${kbObsStr}]` : kbStr;
-
       const mStr = newAsset.workstation?.mouse || newAsset.mouse || '';
       const mObsStr = newAsset.workstation?.mouseObs || newAsset.mouseObs || 'Good';
-      const mCombined = mObsStr !== 'Good' ? `${mStr} [${mObsStr}]` : mStr;
-
       const monStr = newAsset.workstation?.monitorModel || '';
       const monObsStr = newAsset.workstation?.monitorObs || 'Good';
-      const monCombined = monObsStr !== 'Good' ? `${monStr} [${monObsStr}]` : monStr;
 
       const obsCombined = [
         kbObsStr !== 'Good' ? `Clavier: ${kbObsStr}` : '',
@@ -1609,17 +1901,105 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         newAsset.notes
       ].filter(Boolean).join(' • ');
 
-      await supabase.from('it_equipment').insert({
+      const assignedEmp = employees.find(e => 
+        (newAsset.assignedPersonnelId && (e.id === newAsset.assignedPersonnelId || e.employeeId === newAsset.assignedPersonnelId)) ||
+        (newAsset.assignedTo && e.fullName.toLowerCase() === newAsset.assignedTo.toLowerCase())
+      );
+
+      // Verify that user_id exists in users table to prevent foreign key violation
+      const validUserId = assignedEmp?.employeeId && assignedEmp.employeeId.startsWith('EMP-') 
+        ? assignedEmp.employeeId 
+        : null;
+
+      const specsStr = [newAsset.os, newAsset.cpu, newAsset.ram, newAsset.storage].filter(Boolean).join(' ') || newAsset.workstation?.pcSpecs || '';
+
+      const { data, error } = await supabase.from('it_equipment').insert({
+        equipment_id: newAsset.assetTag,
         entreprise: newAsset.company || 'Lebrun S.A.',
         site: newAsset.location || 'Delmas 52',
-        nom: newAsset.name,
-        clavier: kbCombined,
-        souris: mCombined,
-        ecran: monCombined,
-        observations: obsCombined || 'Good'
+        type_poste: newAsset.subCategory === 'laptop' ? 'Poste Laptop' : 'Poste Desktop',
+        nom_pc: newAsset.name,
+        numero_serie_pc: newAsset.serialNumber || 'N/A',
+        details_pc: specsStr || 'Windows 11 Pro',
+        clavier: newAsset.workstation?.keyboard || newAsset.keyboard || 'N/A',
+        details_clavier: newAsset.workstation?.keyboardDetails || 'N/A',
+        observation_clavier: kbObsStr,
+        souris: newAsset.workstation?.mouse || newAsset.mouse || 'N/A',
+        details_souris: newAsset.workstation?.mouseDetails || 'N/A',
+        observation_souris: mObsStr,
+        ecran: monStr || 'N/A',
+        numero_serie_ecran: newAsset.workstation?.monitorSerial || 'N/A',
+        observation_ecran: monObsStr,
+        etat_general: newAsset.status === 'in_use' ? 'Good' : 'En réserve',
+        observations: obsCombined || 'Good',
+        user_id: validUserId,
+        nom: assignedEmp?.lastName || null,
+        prenom: assignedEmp?.firstName || null,
+        username: assignedEmp?.accounts?.appUsername || assignedEmp?.fullName || null,
+        email: assignedEmp?.email || null,
+        telephone: assignedEmp?.phone || null
+      }).select();
+
+      if (error) {
+        console.error('Supabase addITAsset insert error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: `Équipement IT non enregistré: ${error.message}`,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setItAssets(prev => {
+        const next = [newAsset, ...prev.filter(a => a.assetTag !== newAsset.assetTag && a.id !== newAsset.id)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_it', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addITAsset error:', err);
+
+      // Connect and synchronize in real-time with employee workstation
+      if (newAsset.assignedPersonnelId || newAsset.assignedTo) {
+        setEmployees(prev => prev.map(emp => {
+          const isTarget = (newAsset.assignedPersonnelId && (emp.id === newAsset.assignedPersonnelId || emp.employeeId === newAsset.assignedPersonnelId)) ||
+                           (newAsset.assignedTo && emp.fullName.toLowerCase() === newAsset.assignedTo.toLowerCase());
+          if (isTarget) {
+            return {
+              ...emp,
+              workstation: newAsset.workstation || emp.workstation
+            };
+          }
+          return emp;
+        }));
+      }
+
+      // Record movement
+      recordMovement({
+        assetId: newAsset.id,
+        assetName: newAsset.name,
+        assetCategory: 'it',
+        actionType: newAsset.status === 'in_use' ? 'check_out' : 'restock',
+        targetUser: newAsset.assignedTo,
+        employeeId: newAsset.assignedPersonnelId,
+        department: newAsset.assignedDepartment,
+        performedBy: 'Gestionnaire Matériel Lebronsa',
+        notes: `Ajout au catalogue : ${newAsset.assetTag}`
+      });
+
+      showToast({
+        title: 'Poste de Travail IT Ajouté',
+        message: `${newAsset.name} (${newAsset.assetTag}) a été enregistré avec succès.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addITAsset error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
@@ -1744,23 +2124,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString();
     const newNet: NetworkAsset = {
       ...asset,
-      id: `net-${Date.now()}`,
+      id: asset.assetTag || `net-${Date.now()}`,
       createdAt: now,
       updatedAt: now
     };
-    setNetworkAssets(prev => [newNet, ...prev]);
-
-    showToast({
-      title: 'Équipement Réseau Ajouté',
-      message: `${newNet.deviceType} (${newNet.assetTag}) a été enregistré.`,
-      type: 'success'
-    });
 
     try {
-      await supabase.from('network_equipment').insert({
+      const { data, error } = await supabase.from('network_equipment').insert({
+        network_equipment_id: asset.assetTag,
         entreprise: asset.company,
         site: asset.site,
-        type_equipement: asset.deviceType,
+        type_equipement_reseau: asset.deviceType,
         marque: asset.brand,
         modele: asset.model,
         hostname: asset.hostname,
@@ -1769,20 +2143,53 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         adresse_mac: asset.macAddress,
         etat: asset.status,
         observations: asset.observations
+      }).select();
+
+      if (error) {
+        console.error('Supabase addNetworkAsset insert error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: `Équipement réseau non enregistré: ${error.message}`,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setNetworkAssets(prev => {
+        const next = [newNet, ...prev.filter(n => n.assetTag !== newNet.assetTag && n.id !== newNet.id)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_network', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addNetworkAsset error:', err);
+
+      showToast({
+        title: 'Équipement Réseau Ajouté',
+        message: `${newNet.deviceType} (${newNet.assetTag}) a été enregistré dans la base de données.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addNetworkAsset error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   const updateNetworkAsset = async (id: string, updates: Partial<NetworkAsset>) => {
-    setNetworkAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+    const target = networkAssets.find(n => n.id === id || n.assetTag === id);
+    const targetTag = updates.assetTag || target?.assetTag || id;
+    const targetSerial = updates.serialNumber || target?.serialNumber;
 
     try {
       const payload: Record<string, any> = {};
       if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.site !== undefined) payload.site = updates.site;
-      if (updates.deviceType !== undefined) payload.type_equipement = updates.deviceType;
+      if (updates.deviceType !== undefined) payload.type_equipement_reseau = updates.deviceType;
       if (updates.brand !== undefined) payload.marque = updates.brand;
       if (updates.model !== undefined) payload.modele = updates.model;
       if (updates.hostname !== undefined) payload.hostname = updates.hostname;
@@ -1792,24 +2199,67 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.status !== undefined) payload.etat = updates.status;
       if (updates.observations !== undefined) payload.observations = updates.observations;
 
-      if (updates.serialNumber) {
-        await supabase.from('network_equipment').update(payload).eq('numero_serie', updates.serialNumber);
+      let updated = false;
+      if (targetTag) {
+        const { data, error } = await supabase.from('network_equipment').update(payload).eq('network_equipment_id', targetTag).select();
+        if (!error && data && data.length > 0) updated = true;
       }
-    } catch (err) {
-      console.warn('Sync Supabase updateNetworkAsset error:', err);
+      if (!updated && targetSerial && targetSerial !== 'À compléter') {
+        await supabase.from('network_equipment').update(payload).eq('numero_serie', targetSerial);
+      }
+
+      setNetworkAssets(prev => {
+        const next = prev.map(item => (item.id === id || item.assetTag === id) ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_network', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Équipement Réseau Modifié',
+        message: `${updates.deviceType || target?.deviceType || 'L\'équipement'} a été mis à jour.`,
+        type: 'info'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase updateNetworkAsset error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
   const deleteNetworkAsset = async (id: string) => {
-    const target = networkAssets.find(n => n.id === id);
-    setNetworkAssets(prev => prev.filter(item => item.id !== id));
+    const target = networkAssets.find(n => n.id === id || n.assetTag === id);
+    const targetTag = target?.assetTag || id;
+    const targetSerial = target?.serialNumber;
 
     try {
-      if (target?.serialNumber) {
-        await supabase.from('network_equipment').delete().eq('numero_serie', target.serialNumber);
+      if (targetTag) {
+        const { error } = await supabase.from('network_equipment').delete().eq('network_equipment_id', targetTag);
+        if (error && targetSerial && targetSerial !== 'À compléter') {
+          await supabase.from('network_equipment').delete().eq('numero_serie', targetSerial);
+        }
+      } else if (targetSerial && targetSerial !== 'À compléter') {
+        await supabase.from('network_equipment').delete().eq('numero_serie', targetSerial);
       }
-    } catch (err) {
-      console.warn('Sync Supabase deleteNetworkAsset error:', err);
+
+      setNetworkAssets(prev => {
+        const next = prev.filter(item => item.id !== id && item.assetTag !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_network', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Équipement Réseau Supprimé',
+        message: `${target?.deviceType || 'L\'équipement'} a été retiré de la base de données.`,
+        type: 'warning'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deleteNetworkAsset error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
@@ -1818,142 +2268,220 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString();
     const newUPS: UPSAsset = {
       ...asset,
-      id: `ups-${Date.now()}`,
+      id: asset.assetTag || `ups-${Date.now()}`,
       createdAt: now,
       updatedAt: now
     };
-    setUpsAssets(prev => [newUPS, ...prev]);
-
-    showToast({
-      title: 'Onduleur UPS Ajouté',
-      message: `${newUPS.name} (${newUPS.assetTag}) a été enregistré.`,
-      type: 'success'
-    });
 
     try {
-      await supabase.from('ups').insert({
+      const { data, error } = await supabase.from('ups').insert({
+        ups_id: asset.assetTag,
         entreprise: asset.company,
         site: asset.site,
-        nom: asset.name,
+        ups: asset.name,
         marque: asset.brand,
         modele: asset.model,
-        capacite: asset.capacity,
-        reference: asset.reference,
+        capacite_va: asset.capacity,
+        nom_reference: asset.reference,
         etat: asset.status,
         observations: asset.observations
+      }).select();
+
+      if (error) {
+        console.error('Supabase addUPSAsset insert error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: `Onduleur UPS non enregistré: ${error.message}`,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setUpsAssets(prev => {
+        const next = [newUPS, ...prev.filter(u => u.assetTag !== newUPS.assetTag && u.id !== newUPS.id)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_ups', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addUPSAsset error:', err);
+
+      showToast({
+        title: 'Onduleur UPS Ajouté',
+        message: `${newUPS.name} (${newUPS.assetTag}) a été enregistré dans la base de données.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addUPSAsset error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   const updateUPSAsset = async (id: string, updates: Partial<UPSAsset>) => {
-    setUpsAssets(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
+    const target = upsAssets.find(u => u.id === id || u.assetTag === id);
+    const targetTag = updates.assetTag || target?.assetTag || id;
+    const targetName = updates.name || target?.name;
 
     try {
       const payload: Record<string, any> = {};
       if (updates.company !== undefined) payload.entreprise = updates.company;
       if (updates.site !== undefined) payload.site = updates.site;
-      if (updates.name !== undefined) payload.nom = updates.name;
+      if (updates.name !== undefined) payload.ups = updates.name;
       if (updates.brand !== undefined) payload.marque = updates.brand;
       if (updates.model !== undefined) payload.modele = updates.model;
-      if (updates.capacity !== undefined) payload.capacite = updates.capacity;
-      if (updates.reference !== undefined) payload.reference = updates.reference;
+      if (updates.capacity !== undefined) payload.capacite_va = updates.capacity;
+      if (updates.reference !== undefined) payload.nom_reference = updates.reference;
       if (updates.status !== undefined) payload.etat = updates.status;
       if (updates.observations !== undefined) payload.observations = updates.observations;
 
-      if (updates.name) {
-        await supabase.from('ups').update(payload).eq('nom', updates.name);
+      let updated = false;
+      if (targetTag) {
+        const { data, error } = await supabase.from('ups').update(payload).eq('ups_id', targetTag).select();
+        if (!error && data && data.length > 0) updated = true;
       }
-    } catch (err) {
-      console.warn('Sync Supabase updateUPSAsset error:', err);
+      if (!updated && targetName) {
+        await supabase.from('ups').update(payload).eq('ups', targetName);
+      }
+
+      setUpsAssets(prev => {
+        const next = prev.map(item => (item.id === id || item.assetTag === id) ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_ups', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Onduleur UPS Modifié',
+        message: `${updates.name || target?.name || 'L\'onduleur'} a été mis à jour.`,
+        type: 'info'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase updateUPSAsset error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
   const deleteUPSAsset = async (id: string) => {
-    const target = upsAssets.find(u => u.id === id);
-    setUpsAssets(prev => prev.filter(item => item.id !== id));
+    const target = upsAssets.find(u => u.id === id || u.assetTag === id);
+    const targetTag = target?.assetTag || id;
+    const targetName = target?.name;
 
     try {
-      if (target?.name) {
-        await supabase.from('ups').delete().eq('nom', target.name);
+      if (targetTag) {
+        const { error } = await supabase.from('ups').delete().eq('ups_id', targetTag);
+        if (error && targetName) {
+          await supabase.from('ups').delete().eq('ups', targetName);
+        }
+      } else if (targetName) {
+        await supabase.from('ups').delete().eq('ups', targetName);
       }
-    } catch (err) {
-      console.warn('Sync Supabase deleteUPSAsset error:', err);
+
+      setUpsAssets(prev => {
+        const next = prev.filter(item => item.id !== id && item.assetTag !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_ups', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Onduleur UPS Supprimé',
+        message: `${target?.name || 'L\'onduleur'} a été retiré de la base de données.`,
+        type: 'warning'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deleteUPSAsset error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
   // Application Accounts Actions
   const addApplicationAccount = async (account: Omit<ApplicationAccount, 'id'>) => {
-    const newAcc: ApplicationAccount = {
-      ...account,
-      id: `app-${Date.now()}`
-    };
-    setApplicationAccounts(prev => [newAcc, ...prev]);
-
-    // Sync to employee accounts in real time
-    if (account.employeeId) {
-      setEmployees(prev => prev.map(emp => {
-        if (emp.id === account.employeeId || emp.employeeId === account.employeeId) {
-          return {
-            ...emp,
-            accounts: {
-              ...(emp.accounts || {}),
-              windowsUsername: account.windowsUsername !== undefined ? account.windowsUsername : (emp.accounts?.windowsUsername || ''),
-              windowsPassword: account.windowsPassword !== undefined ? account.windowsPassword : (emp.accounts?.windowsPassword || ''),
-              appUsername: account.username || emp.accounts?.appUsername || '',
-              appPassword: account.password !== undefined ? account.password : (emp.accounts?.appPassword || ''),
-              applications: account.applications || emp.accounts?.applications || 'Microsoft GP',
-              organization: account.organization || emp.accounts?.organization || emp.company
-            }
-          };
-        }
-        return emp;
-      }));
-    }
-
     const linkedEmp = employees.find(e => 
       (account.employeeId && (e.id === account.employeeId || e.employeeId === account.employeeId)) ||
       (account.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === account.username.toLowerCase())
     );
 
-    if (linkedEmp) {
-      setEmployees(prev => prev.map(emp => {
-        if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
-          return {
-            ...emp,
-            accounts: {
-              ...(emp.accounts || {}),
-              windowsUsername: account.windowsUsername || emp.accounts?.windowsUsername || '',
-              windowsPassword: account.windowsPassword || emp.accounts?.windowsPassword || '',
-              appUsername: account.username,
-              appPassword: account.password || '',
-              applications: account.applications || emp.accounts?.applications || 'Microsoft GP',
-              organization: account.organization || emp.accounts?.organization || emp.company
-            }
-          };
-        }
-        return emp;
-      }));
-    }
+    const empMatricule = linkedEmp?.employeeId && linkedEmp.employeeId.startsWith('EMP-') 
+      ? linkedEmp.employeeId 
+      : (account.employeeId?.startsWith('EMP-') ? account.employeeId : null);
 
-    showToast({
-      title: 'Accès & Session Enregistrés',
-      message: `Compte ${newAcc.username} rattaché au personnel avec succès.`,
-      type: 'success'
-    });
+    const nextAppId = String(Date.now().toString().slice(-6));
+    const newAcc: ApplicationAccount = {
+      ...account,
+      id: `app-${nextAppId}`
+    };
 
     try {
-      const empMatricule = linkedEmp?.employeeId || (account.employeeId?.startsWith('EMP-') ? account.employeeId : null);
-      await supabase.from('user_applications').insert({
+      const { data, error } = await supabase.from('user_applications').insert({
+        app_account_id: nextAppId,
         user_id: empMatricule,
         username: account.username,
         password_source: account.password || '1234',
         application: account.applications || 'Microsoft GP',
         organisation: account.organization || 'Lebrun S.A.'
+      }).select();
+
+      if (error) {
+        console.error('Supabase addApplicationAccount insert error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: `Compte applicatif non enregistré: ${error.message}`,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setApplicationAccounts(prev => {
+        const next = [newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_applications', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addApplicationAccount error:', err);
+
+      if (linkedEmp) {
+        setEmployees(prev => prev.map(emp => {
+          if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
+            return {
+              ...emp,
+              accounts: {
+                ...(emp.accounts || {}),
+                windowsUsername: account.windowsUsername || emp.accounts?.windowsUsername || '',
+                windowsPassword: account.windowsPassword || emp.accounts?.windowsPassword || '',
+                appUsername: account.username,
+                appPassword: account.password || '',
+                applications: account.applications || emp.accounts?.applications || 'Microsoft GP',
+                organization: account.organization || emp.accounts?.organization || emp.company
+              }
+            };
+          }
+          return emp;
+        }));
+      }
+
+      showToast({
+        title: 'Accès & Session Enregistrés',
+        message: `Compte ${newAcc.username} rattaché au personnel avec succès.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addApplicationAccount error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
@@ -2049,7 +2577,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (!updated) {
         await supabase.from('user_applications').insert({
           ...payload,
-          app_account_id: dbId && !isNaN(Number(dbId)) ? dbId : undefined
+          app_account_id: dbId && !isNaN(Number(dbId)) ? dbId : String(Date.now().toString().slice(-6))
         });
       }
 
@@ -2064,48 +2592,56 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const deleteApplicationAccount = async (id: string) => {
     const target = applicationAccounts.find(a => a.id === id);
-    setApplicationAccounts(prev => prev.filter(item => item.id !== id));
-
-    const linkedEmp = employees.find(e => 
-      (target?.employeeId && (e.id === target.employeeId || e.employeeId === target.employeeId)) ||
-      (target?.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === target.username.toLowerCase())
-    );
-
-    if (linkedEmp) {
-      setEmployees(prev => prev.map(emp => {
-        if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
-          return {
-            ...emp,
-            accounts: emp.accounts ? {
-              ...emp.accounts,
-              applications: 'Aucun'
-            } : undefined
-          };
-        }
-        return emp;
-      }));
-    }
-
-    showToast({
-      title: 'Compte Applicatif Supprimé',
-      message: `Le compte ${target?.username || ''} a été définitivement supprimé.`,
-      type: 'warning'
-    });
+    const dbId = id.replace('app-', '');
 
     try {
-      const dbId = id.replace('app-', '');
       if (dbId && !isNaN(Number(dbId))) {
         await supabase.from('user_applications').delete().eq('app_account_id', dbId);
       }
       if (target?.username) {
         await supabase.from('user_applications').delete().ilike('username', target.username);
       }
-      const empMatricule = linkedEmp?.employeeId || (target?.employeeId?.startsWith('EMP-') ? target.employeeId : undefined);
-      if (empMatricule) {
-        await supabase.from('user_applications').delete().eq('user_id', empMatricule);
+      if (target?.employeeId && target.employeeId.startsWith('EMP-')) {
+        await supabase.from('user_applications').delete().eq('user_id', target.employeeId);
       }
-    } catch (err) {
-      console.warn('Sync Supabase deleteApplicationAccount error:', err);
+
+      setApplicationAccounts(prev => {
+        const next = prev.filter(item => item.id !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_applications', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      const linkedEmp = employees.find(e => 
+        (target?.employeeId && (e.id === target.employeeId || e.employeeId === target.employeeId)) ||
+        (target?.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === target.username.toLowerCase())
+      );
+
+      if (linkedEmp) {
+        setEmployees(prev => prev.map(emp => {
+          if (emp.id === linkedEmp.id || emp.employeeId === linkedEmp.employeeId) {
+            return {
+              ...emp,
+              accounts: emp.accounts ? {
+                ...emp.accounts,
+                applications: 'Aucun'
+              } : undefined
+            };
+          }
+          return emp;
+        }));
+      }
+
+      showToast({
+        title: 'Compte Applicatif Supprimé',
+        message: `L'accès applicatif ${target?.username || ''} a été retiré de la base de données.`,
+        type: 'warning'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deleteApplicationAccount error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
@@ -2114,45 +2650,65 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString();
     const newPrinter: PrinterAsset = {
       ...printer,
-      id: `prn-${Date.now()}`,
+      id: printer.assetTag || `prn-${Date.now()}`,
       createdAt: now,
       updatedAt: now
     };
-    setPrinters(prev => [newPrinter, ...prev]);
-
-    showToast({
-      title: 'Imprimante Ajoutée',
-      message: `${newPrinter.name} (${newPrinter.assetTag}) a été enregistrée.`,
-      type: 'success'
-    });
 
     try {
-      await supabase.from('printers').insert({
+      const { data, error } = await supabase.from('printers').insert({
+        printer_id: printer.assetTag,
         entreprise: printer.company,
         site: printer.site,
         nom_imprimante: printer.name,
         marque: printer.brand,
         modele: printer.model,
-        numero_serie: printer.serialNumber,
-        adresse_ip: printer.ipAddress,
-        type: printer.type,
-        etat: printer.status,
-        observations: printer.observations
+        numero_serie: printer.serialNumber || 'N/A',
+        adresse_ip: printer.ipAddress || 'N/A',
+        type: printer.type || 'Multifonction',
+        etat: printer.status || 'Fonctionnel',
+        observations: printer.observations || 'Good'
+      }).select();
+
+      if (error) {
+        console.error('Supabase addPrinter insert error:', error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message: `Imprimante non enregistrée: ${error.message}`,
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setPrinters(prev => {
+        const next = [newPrinter, ...prev.filter(p => p.assetTag !== newPrinter.assetTag && p.id !== newPrinter.id)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_printers', JSON.stringify(next));
+        }
+        return next;
       });
-    } catch (err) {
-      console.warn('Sync Supabase addPrinter error:', err);
+
+      showToast({
+        title: 'Imprimante Ajoutée',
+        message: `${newPrinter.name} (${newPrinter.assetTag}) a été enregistrée dans la base de données.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addPrinter error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
     }
   };
 
   const updatePrinter = async (id: string, updates: Partial<PrinterAsset>) => {
     const target = printers.find(p => p.id === id);
-    setPrinters(prev => prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item));
-
-    showToast({
-      title: 'Imprimante Modifiée',
-      message: `${updates.name || target?.name || 'L\'imprimante'} a été mise à jour avec succès.`,
-      type: 'success'
-    });
+    const targetTag = updates.assetTag || target?.assetTag;
+    const targetSerial = updates.serialNumber || target?.serialNumber;
 
     try {
       const payload: Record<string, any> = {};
@@ -2167,9 +2723,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.status !== undefined) payload.etat = updates.status;
       if (updates.observations !== undefined) payload.observations = updates.observations;
 
-      const targetTag = updates.assetTag || target?.assetTag;
-      const targetSerial = updates.serialNumber || target?.serialNumber;
-
       if (targetTag) {
         const { error } = await supabase.from('printers').update(payload).eq('printer_id', targetTag);
         if (error && targetSerial) {
@@ -2178,25 +2731,33 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       } else if (targetSerial) {
         await supabase.from('printers').update(payload).eq('numero_serie', targetSerial);
       }
-    } catch (err) {
-      console.warn('Sync Supabase updatePrinter error:', err);
+
+      setPrinters(prev => {
+        const next = prev.map(item => item.id === id ? { ...item, ...updates, updatedAt: new Date().toISOString() } : item);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_printers', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Imprimante Modifiée',
+        message: `${updates.name || target?.name || 'L\'imprimante'} a été mise à jour avec succès.`,
+        type: 'success'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase updatePrinter error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
   const deletePrinter = async (id: string) => {
     const target = printers.find(p => p.id === id);
-    setPrinters(prev => prev.filter(item => item.id !== id));
-
-    showToast({
-      title: 'Imprimante Supprimée',
-      message: `${target?.name || 'L\'imprimante'} a été retirée de l'inventaire.`,
-      type: 'warning'
-    });
+    const targetTag = target?.assetTag;
+    const targetSerial = target?.serialNumber;
 
     try {
-      const targetTag = target?.assetTag;
-      const targetSerial = target?.serialNumber;
-
       if (targetTag) {
         const { error } = await supabase.from('printers').delete().eq('printer_id', targetTag);
         if (error && targetSerial) {
@@ -2205,8 +2766,24 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       } else if (targetSerial) {
         await supabase.from('printers').delete().eq('numero_serie', targetSerial);
       }
-    } catch (err) {
-      console.warn('Sync Supabase deletePrinter error:', err);
+
+      setPrinters(prev => {
+        const next = prev.filter(item => item.id !== id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_printers', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Imprimante Supprimée',
+        message: `${target?.name || 'L\'imprimante'} a été retirée de la base de données.`,
+        type: 'warning'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deletePrinter error:', err);
+      return { success: false, error: err?.message };
     }
   };
 
@@ -2304,17 +2881,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetToDefaultData = () => {
-    if (confirm('Voulez-vous réinitialiser toutes les données aux valeurs de démonstration de Lebronsa S.A. ?')) {
-      setEmployees(INITIAL_EMPLOYEES);
-      setItAssets(INITIAL_IT_ASSETS);
-      setPrinters(INITIAL_PRINTERS);
-      setPlans(INITIAL_PLANS);
-      setStarlinkKits(INITIAL_STARLINK_KITS);
-      setElectronics(INITIAL_ELECTRONICS);
-      setMovements(INITIAL_MOVEMENTS);
-      setAlerts(INITIAL_ALERTS);
-      localStorage.clear();
-    }
+    setEmployees(INITIAL_EMPLOYEES);
+    setItAssets(INITIAL_IT_ASSETS);
+    setPrinters(INITIAL_PRINTERS);
+    setPlans(INITIAL_PLANS);
+    setStarlinkKits(INITIAL_STARLINK_KITS);
+    setElectronics(INITIAL_ELECTRONICS);
+    setMovements(INITIAL_MOVEMENTS);
+    setAlerts(INITIAL_ALERTS);
+    localStorage.clear();
   };
 
   // Export Excel Haute Définition (.xlsx)

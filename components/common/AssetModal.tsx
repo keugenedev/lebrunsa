@@ -149,81 +149,93 @@ export default function AssetModal() {
     }
   }, [editingAsset, isAddModalOpen]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isAddModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const assignedEmp = employees.find(emp => emp.id === assignedPersonnelId);
-    const resolvedCompany = company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const hasDefectivePeripheral = keyboardObs === 'Défectueux' || mouseObs === 'Défectueux' || monitorObs === 'Défectueux';
+    try {
+      const assignedEmp = employees.find(emp => emp.id === assignedPersonnelId || emp.employeeId === assignedPersonnelId);
+      const resolvedCompany = company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
 
-    // Workstation details object
-    const workstationObj: WorkstationDetails = {
-      type: subCategory === 'laptop' ? 'Laptop' : 'Desktop',
-      pcName: name,
-      pcSerial: serialNumber,
-      pcSpecs: `${os} ${cpu} ${storage} ${ram}`.trim(),
-      monitorModel: monitorModel || 'Dell standard',
-      monitorSerial: monitorSerial || 'N/A',
-      monitorObs: monitorObs || 'Good',
-      keyboard: keyboardModel || 'Clavier Dell cable',
-      keyboardDetails: keyboardDetails || 'Clavier Alpha numerique',
-      keyboardObs: keyboardObs || 'Good',
-      mouse: mouseBrand || 'Dell',
-      mouseDetails: mouseDetails || 'Souris Bureau (Cable)',
-      mouseObs: mouseObs || 'Good',
-      generalState: hasDefectivePeripheral ? 'Maintenance' : (status === 'in_use' ? 'Good' : 'Maintenance'),
-      observations: generalObs || 'Good'
-    };
+      const hasDefectivePeripheral = keyboardObs === 'Défectueux' || mouseObs === 'Défectueux' || monitorObs === 'Défectueux';
 
-    const notesSummary = [
-      `${os} ${cpu} ${storage} ${ram}`.trim(),
-      monitorModel ? `Écran ${monitorModel}${monitorSerial ? ` (SN: ${monitorSerial})` : ''}` : '',
-      keyboardObs && keyboardObs !== 'Good' ? `Clavier: ${keyboardObs}` : '',
-      mouseObs && mouseObs !== 'Good' ? `Souris: ${mouseObs}` : '',
-      generalObs && generalObs !== 'Good' ? generalObs : ''
-    ].filter(Boolean).join(' • ');
+      // Workstation details object
+      const workstationObj: WorkstationDetails = {
+        type: subCategory === 'laptop' ? 'Laptop' : 'Desktop',
+        pcName: name,
+        pcSerial: serialNumber,
+        pcSpecs: `${os} ${cpu} ${storage} ${ram}`.trim(),
+        monitorModel: monitorModel || 'Dell standard',
+        monitorSerial: monitorSerial || 'N/A',
+        monitorObs: monitorObs || 'Good',
+        keyboard: keyboardModel || 'Clavier Dell cable',
+        keyboardDetails: keyboardDetails || 'Clavier Alpha numerique',
+        keyboardObs: keyboardObs || 'Good',
+        mouse: mouseBrand || 'Dell',
+        mouseDetails: mouseDetails || 'Souris Bureau (Cable)',
+        mouseObs: mouseObs || 'Good',
+        generalState: hasDefectivePeripheral ? 'Maintenance' : (status === 'in_use' ? 'Good' : 'Maintenance'),
+        observations: generalObs || 'Good'
+      };
 
-    const payload: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'> = {
-      name,
-      category: 'it' as const,
-      company: resolvedCompany,
-      assetTag,
-      status: (hasDefectivePeripheral && status === 'maintenance') ? 'maintenance' : (assignedEmp ? 'in_use' : status),
-      location,
-      notes: notesSummary,
-      os,
-      brand: brand || 'Dell',
-      model: model || 'OptiPlex Workstation',
-      serialNumber: serialNumber || `SN-${Date.now().toString().slice(-6)}`,
-      subCategory,
-      cpu,
-      ram,
-      storage,
-      workstation: workstationObj,
-      keyboard: keyboardModel,
-      clavier: keyboardModel,
-      keyboardObs: keyboardObs,
-      mouse: mouseBrand,
-      souris: mouseBrand,
-      mouseObs: mouseObs,
-      assignedPersonnelId: assignedEmp ? assignedEmp.id : undefined,
-      assignedTo: assignedEmp ? assignedEmp.fullName : undefined,
-      assignedDepartment: assignedEmp ? assignedEmp.department : undefined,
-      assignedEmail: assignedEmp ? assignedEmp.email : undefined,
-      purchaseDate: new Date().toISOString().slice(0, 10),
-      warrantyExpiry,
-      purchaseCost: parseFloat(purchaseCost) || 0
-    };
+      const notesSummary = [
+        `${os} ${cpu} ${storage} ${ram}`.trim(),
+        monitorModel ? `Écran ${monitorModel}${monitorSerial ? ` (SN: ${monitorSerial})` : ''}` : '',
+        keyboardObs && keyboardObs !== 'Good' ? `Clavier: ${keyboardObs}` : '',
+        mouseObs && mouseObs !== 'Good' ? `Souris: ${mouseObs}` : '',
+        generalObs && generalObs !== 'Good' ? generalObs : ''
+      ].filter(Boolean).join(' • ');
 
-    if (editingAsset) {
-      updateITAsset(editingAsset.id, payload);
-    } else {
-      addITAsset(payload);
+      const payload: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'> = {
+        name,
+        category: 'it' as const,
+        company: resolvedCompany,
+        assetTag,
+        status: (hasDefectivePeripheral && status === 'maintenance') ? 'maintenance' : (assignedEmp ? 'in_use' : status),
+        location,
+        notes: notesSummary,
+        os,
+        brand: brand || 'Dell',
+        model: model || 'OptiPlex Workstation',
+        serialNumber: serialNumber || `SN-${Date.now().toString().slice(-6)}`,
+        subCategory,
+        cpu,
+        ram,
+        storage,
+        workstation: workstationObj,
+        keyboard: keyboardModel,
+        clavier: keyboardModel,
+        keyboardObs: keyboardObs,
+        mouse: mouseBrand,
+        souris: mouseBrand,
+        mouseObs: mouseObs,
+        assignedPersonnelId: assignedEmp ? assignedEmp.employeeId || assignedEmp.id : undefined,
+        assignedTo: assignedEmp ? assignedEmp.fullName : undefined,
+        assignedDepartment: assignedEmp ? assignedEmp.department : undefined,
+        assignedEmail: assignedEmp ? assignedEmp.email : undefined,
+        purchaseDate: new Date().toISOString().slice(0, 10),
+        warrantyExpiry,
+        purchaseCost: parseFloat(purchaseCost) || 0
+      };
+
+      let res;
+      if (editingAsset) {
+        res = await updateITAsset(editingAsset.id, payload);
+      } else {
+        res = await addITAsset(payload);
+      }
+
+      if (res?.success !== false) {
+        closeAddModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeAddModal();
   };
 
   return (

@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import PrinterDetailsModal from './PrinterDetailsModal';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function PrintersView() {
   const { 
     printers, 
@@ -37,6 +39,7 @@ export default function PrintersView() {
   } = useInventory();
 
   const [selectedPrinterForDetails, setSelectedPrinterForDetails] = useState<PrinterAsset | null>(null);
+  const [deletingPrinter, setDeletingPrinter] = useState<PrinterAsset | null>(null);
 
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
@@ -256,11 +259,7 @@ export default function PrintersView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer l'imprimante ${p.name} (${p.serialNumber}) ?`)) {
-                deletePrinter(p.id);
-              }
-            }}
+            onClick={() => setDeletingPrinter(p)}
             title="Supprimer"
             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
@@ -412,9 +411,25 @@ export default function PrintersView() {
         <PrinterDetailsModal
           printer={selectedPrinterForDetails}
           onClose={() => setSelectedPrinterForDetails(null)}
-          onOpenEdit={(printer) => handleOpenEdit(printer)}
         />
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingPrinter)}
+        onClose={() => setDeletingPrinter(null)}
+        onConfirm={() => {
+          if (deletingPrinter) {
+            deletePrinter(deletingPrinter.id);
+            setDeletingPrinter(null);
+          }
+        }}
+        title="Supprimer l'imprimante"
+        message={`Êtes-vous certain de vouloir supprimer l'imprimante ${deletingPrinter?.name} (${deletingPrinter?.serialNumber}) ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

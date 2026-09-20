@@ -19,6 +19,8 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function StarlinkView() {
   const { 
     starlinkKits, 
@@ -29,6 +31,8 @@ export default function StarlinkView() {
     deleteStarlinkKit, 
     exportCSV 
   } = useInventory();
+
+  const [deletingKit, setDeletingKit] = useState<StarlinkKit | null>(null);
 
   const [testingKitId, setTestingKitId] = useState<string | null>(null);
 
@@ -219,11 +223,7 @@ export default function StarlinkView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer le kit Starlink ${kit.name} ?`)) {
-                deleteStarlinkKit(kit.id);
-              }
-            }}
+            onClick={() => setDeletingKit(kit)}
             title="Supprimer"
             className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
@@ -288,6 +288,23 @@ export default function StarlinkView() {
             </button>
           </>
         }
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingKit)}
+        onClose={() => setDeletingKit(null)}
+        onConfirm={() => {
+          if (deletingKit) {
+            deleteStarlinkKit(deletingKit.id);
+            setDeletingKit(null);
+          }
+        }}
+        title="Supprimer le kit Starlink"
+        message={`Êtes-vous certain de vouloir supprimer le kit Starlink ${deletingKit?.name} ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
       />
     </div>
   );

@@ -58,41 +58,52 @@ export default function EmployeeModal() {
     }
   }, [editingEmployee, isEmployeeModalOpen]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isEmployeeModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts.length > 1 ? nameParts[0] : fullName;
-    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    try {
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts.length > 1 ? nameParts[0] : fullName;
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-    const payload = {
-      employeeId,
-      company,
-      site,
-      lastName,
-      firstName,
-      fullName,
-      email: email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@lebrunsa.com`,
-      phone,
-      department,
-      jobTitle,
-      location: site,
-      status,
-      hireDate,
-      notes,
-      workstation: editingEmployee?.workstation,
-      accounts: editingEmployee?.accounts
-    };
+      const payload = {
+        employeeId,
+        company,
+        site,
+        lastName,
+        firstName,
+        fullName,
+        email: email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@lebrunsa.com`,
+        phone,
+        department,
+        jobTitle,
+        location: site,
+        status,
+        hireDate,
+        notes,
+        workstation: editingEmployee?.workstation,
+        accounts: editingEmployee?.accounts
+      };
 
-    if (editingEmployee) {
-      updateEmployee(editingEmployee.id, payload);
-    } else {
-      addEmployee(payload);
+      let res;
+      if (editingEmployee) {
+        res = await updateEmployee(editingEmployee.id, payload);
+      } else {
+        res = await addEmployee(payload);
+      }
+
+      if (res?.success !== false) {
+        closeEmployeeModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeEmployeeModal();
   };
 
   return (
@@ -311,13 +322,21 @@ export default function EmployeeModal() {
           </button>
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={(e) => {
               const form = (e.currentTarget.closest('.bg-white') as HTMLElement)?.querySelector('form');
               if (form) form.requestSubmit();
             }}
-            className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-xs font-semibold text-white shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {editingEmployee ? 'Enregistrer les modifications' : 'Créer le Collaborateur'}
+            {isSubmitting ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Enregistrement en cours...</span>
+              </>
+            ) : (
+              editingEmployee ? 'Enregistrer les modifications' : 'Créer le Collaborateur'
+            )}
           </button>
         </div>
       </div>

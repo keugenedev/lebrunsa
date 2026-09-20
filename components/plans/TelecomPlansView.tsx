@@ -16,6 +16,9 @@ import {
   Calendar 
 } from 'lucide-react';
 
+import { useState } from 'react';
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function TelecomPlansView() {
   const { 
     plans, 
@@ -25,6 +28,8 @@ export default function TelecomPlansView() {
     deletePlan, 
     exportCSV 
   } = useInventory();
+
+  const [deletingPlan, setDeletingPlan] = useState<TelecomPlan | null>(null);
 
   const columns: Column<TelecomPlan>[] = [
     {
@@ -159,11 +164,7 @@ export default function TelecomPlansView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer le forfait ${plan.name} ?`)) {
-                deletePlan(plan.id);
-              }
-            }}
+            onClick={() => setDeletingPlan(plan)}
             title="Supprimer"
             className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
@@ -228,6 +229,23 @@ export default function TelecomPlansView() {
             </button>
           </>
         }
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingPlan)}
+        onClose={() => setDeletingPlan(null)}
+        onConfirm={() => {
+          if (deletingPlan) {
+            deletePlan(deletingPlan.id);
+            setDeletingPlan(null);
+          }
+        }}
+        title="Supprimer le forfait telecom"
+        message={`Êtes-vous certain de vouloir supprimer le forfait ${deletingPlan?.name} ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
       />
     </div>
   );

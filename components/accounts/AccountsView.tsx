@@ -12,6 +12,8 @@ import {
   Filter
 } from 'lucide-react';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function AccountsView() {
   const {
     itAccounts,
@@ -25,6 +27,7 @@ export default function AccountsView() {
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [deletingAccount, setDeletingAccount] = useState<ITAccount | null>(null);
 
   // Combined search: header search + view search
   const activeSearch = search || globalSearch || '';
@@ -82,9 +85,7 @@ export default function AccountsView() {
   }, [itAccounts, selectedRole, selectedCompany, selectedStatus, activeSearch]);
 
   const handleDelete = (account: ITAccount) => {
-    if (confirm(`Êtes-vous certain de vouloir supprimer le compte de ${account.fullName} (@${account.username}) ?`)) {
-      deleteITAccount(account.id);
-    }
+    setDeletingAccount(account);
   };
 
   return (
@@ -309,6 +310,22 @@ export default function AccountsView() {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(deletingAccount)}
+        onClose={() => setDeletingAccount(null)}
+        onConfirm={() => {
+          if (deletingAccount) {
+            deleteITAccount(deletingAccount.id);
+            setDeletingAccount(null);
+          }
+        }}
+        title="Suppression de compte"
+        message={`Êtes-vous certain de vouloir supprimer le compte de ${deletingAccount?.fullName} (@${deletingAccount?.username}) ? cette action est définitive.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }

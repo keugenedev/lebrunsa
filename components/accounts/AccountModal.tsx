@@ -149,38 +149,49 @@ export default function AccountModal() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!validate()) return;
 
-    const trimmedFullName = fullName.trim();
-    const parts = trimmedFullName.split(/\s+/);
-    const firstName = parts[0] || '';
-    const lastName = parts.slice(1).join(' ') || parts[0] || '';
+    setIsSubmitting(true);
+    try {
+      const trimmedFullName = fullName.trim();
+      const parts = trimmedFullName.split(/\s+/);
+      const firstName = parts[0] || '';
+      const lastName = parts.slice(1).join(' ') || parts[0] || '';
 
-    const accountData = {
-      fullName: trimmedFullName,
-      firstName,
-      lastName,
-      username: username.trim().toLowerCase().replace(/^@/, ''),
-      email: email.trim().toLowerCase(),
-      role,
-      company,
-      site: site.trim() || 'Delmas 52',
-      phone: phone.trim() || undefined,
-      status,
-      specialty: specialty.trim() || undefined,
-      passwordHint: passwordHint.trim() || undefined,
-      notes: notes.trim() || undefined
-    };
+      const accountData = {
+        fullName: trimmedFullName,
+        firstName,
+        lastName,
+        username: username.trim().toLowerCase().replace(/^@/, ''),
+        email: email.trim().toLowerCase(),
+        role,
+        company,
+        site: site.trim() || 'Delmas 52',
+        phone: phone.trim() || undefined,
+        status,
+        specialty: specialty.trim() || undefined,
+        passwordHint: passwordHint.trim() || undefined,
+        notes: notes.trim() || undefined
+      };
 
-    if (editingAccount) {
-      updateITAccount(editingAccount.id, accountData);
-    } else {
-      addITAccount(accountData);
+      let res;
+      if (editingAccount) {
+        res = await updateITAccount(editingAccount.id, accountData);
+      } else {
+        res = await addITAccount(accountData);
+      }
+
+      if (res?.success !== false) {
+        closeAccountModal();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    closeAccountModal();
   };
 
   return (
@@ -482,9 +493,15 @@ export default function AccountModal() {
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-xs transition-all cursor-pointer"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-xl shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed"
             >
-              {editingAccount ? (
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Enregistrement en cours...</span>
+                </>
+              ) : editingAccount ? (
                 <>
                   <Save className="w-3.5 h-3.5" />
                   <span>Enregistrer les modifications</span>

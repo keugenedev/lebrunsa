@@ -21,6 +21,8 @@ import {
 import NetworkDetailsModal from './NetworkDetailsModal';
 import WifiPosterView from './WifiPosterView';
 
+import ConfirmModal from '@/components/common/ConfirmModal';
+
 export default function NetworkView() {
   const { networkAssets, openNetworkModal, deleteNetworkAsset, wifiNetworks, exportCSV } = useInventory();
 
@@ -28,6 +30,7 @@ export default function NetworkView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('all');
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<NetworkAsset | null>(null);
+  const [deletingAsset, setDeletingAsset] = useState<NetworkAsset | null>(null);
 
   const filteredNetwork = useMemo(() => {
     return networkAssets.filter(item => {
@@ -158,11 +161,7 @@ export default function NetworkView() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (confirm(`Supprimer l'équipement réseau ${item.model} (${item.assetTag}) ?`)) {
-                deleteNetworkAsset(item.id);
-              }
-            }}
+            onClick={() => setDeletingAsset(item)}
             title="Supprimer cet équipement"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
           >
@@ -305,9 +304,25 @@ export default function NetworkView() {
         <NetworkDetailsModal
           asset={selectedAssetForDetails}
           onClose={() => setSelectedAssetForDetails(null)}
-          onOpenEdit={(asset) => openNetworkModal(asset)}
         />
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deletingAsset)}
+        onClose={() => setDeletingAsset(null)}
+        onConfirm={() => {
+          if (deletingAsset) {
+            deleteNetworkAsset(deletingAsset.id);
+            setDeletingAsset(null);
+          }
+        }}
+        title="Supprimer l'équipement réseau"
+        message={`Êtes-vous certain de vouloir supprimer l'équipement réseau ${deletingAsset?.model} (${deletingAsset?.assetTag}) ?`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+      />
     </div>
   );
 }
