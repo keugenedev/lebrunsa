@@ -1171,66 +1171,52 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         }
 
         // 2. Load Users / Employees from Supabase (Newest first)
-        const { data: dbUsers, error: usrErr } = await supabase.from('users').select('*');
+        const { data: dbUsers, error: usrErr } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false, nullsFirst: false });
+
         if (!usrErr && dbUsers && dbUsers.length > 0) {
-          setEmployees(prev => {
-            const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
-              const firstName = r.prenom || '';
-              const lastName = r.nom || '';
-              const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
-              const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
+          const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
+            const firstName = r.prenom || '';
+            const lastName = r.nom || '';
+            const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
+            const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
 
-              const existingLocal = prev.find(e => e.employeeId === empId || e.id === empId);
-
-              return {
-                id: empId,
-                employeeId: empId,
-                fullName: fullName || existingLocal?.fullName || 'Collaborateur',
-                firstName: firstName || existingLocal?.firstName || '',
-                lastName: lastName || existingLocal?.lastName || '',
-                email: (r.email && r.email !== 'NOT' ? r.email : existingLocal?.email) || '',
-                phone: r.telephone || existingLocal?.phone || '',
-                company: (r.entreprise as Employee['company']) || existingLocal?.company || 'Lebrun S.A.',
-                site: r.site || existingLocal?.site || 'Delmas 52',
-                location: r.site || existingLocal?.location || 'Delmas 52',
-                department: r.departement || existingLocal?.department || '',
-                jobTitle: r.poste || existingLocal?.jobTitle || '',
-                hireDate: r.created_at ? r.created_at.slice(0, 10) : (existingLocal?.hireDate || '2024-01-15'),
-                status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : existingLocal?.status || 'active') as Employee['status'],
-                createdAt: r.created_at || existingLocal?.createdAt || new Date().toISOString(),
-                workstation: existingLocal?.workstation,
-                accounts: {
-                  windowsUsername: r.username || existingLocal?.accounts?.windowsUsername || fullName,
-                  windowsPassword: existingLocal?.accounts?.windowsPassword || '1234',
-                  appUsername: r.username || existingLocal?.accounts?.appUsername || '',
-                  appPassword: existingLocal?.accounts?.appPassword || '',
-                  applications: existingLocal?.accounts?.applications || 'Microsoft GP',
-                  organization: r.entreprise || existingLocal?.accounts?.organization || 'Lebrun S.A.'
-                }
-              };
-            });
-
-            const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || dbE.id === e.id));
-            const seenEmp = new Set<string>();
-            const deduplicated = [...localOnly, ...mappedFromDb]
-              .map(e => ({
-                ...e,
-                id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId)
-              }))
-              .filter(e => {
-                const k = e.employeeId || e.id;
-                if (!k || seenEmp.has(k) || seenEmp.has(e.id)) return false;
-                seenEmp.add(k);
-                seenEmp.add(e.id);
-                return true;
-              });
-            const merged = sortByNewest(deduplicated);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('lebron_inv_employees', JSON.stringify(merged));
-            }
-            return merged;
+            return {
+              id: empId,
+              employeeId: empId,
+              fullName: fullName || 'Collaborateur',
+              firstName,
+              lastName,
+              email: (r.email && r.email !== 'NOT' ? r.email : '') || '',
+              phone: r.telephone || '',
+              company: (r.entreprise as Employee['company']) || 'Lebrun S.A.',
+              site: r.site || 'Delmas 52',
+              location: r.site || 'Delmas 52',
+              department: r.departement || '',
+              jobTitle: r.poste || '',
+              hireDate: r.created_at ? r.created_at.slice(0, 10) : '2024-01-15',
+              status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : 'active') as Employee['status'],
+              createdAt: r.created_at || new Date().toISOString(),
+              accounts: {
+                windowsUsername: r.username || fullName,
+                windowsPassword: '1234',
+                appUsername: r.username || '',
+                appPassword: '',
+                applications: 'Microsoft GP',
+                organization: r.entreprise || 'Lebrun S.A.'
+              }
+            };
           });
+
+          // Supabase est la source de vérité — ordre created_at DESC garanti par la requête
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('lebron_inv_employees', JSON.stringify(mappedFromDb));
+          }
+          setEmployees(mappedFromDb);
         }
+
 
         // 3. Load Network Equipment from Supabase — Supabase fait foi, pas de merge avec le local
         const { data: dbNet, error: netErr } = await supabase.from('network_equipment').select('*');
