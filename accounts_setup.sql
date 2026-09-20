@@ -81,6 +81,15 @@ END;
 $$;
 
 -- 6. Supprimer un accès
+CREATE OR REPLACE FUNCTION get_accounts()
+RETURNS SETOF accounts_view
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+  SELECT * FROM accounts_view ORDER BY created_at DESC;
+$$;
+
 CREATE OR REPLACE FUNCTION delete_account(p_user_id TEXT)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -129,6 +138,7 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION upsert_account(TEXT, TEXT)        TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_accounts()                    TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION delete_account(TEXT)              TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION verify_login(TEXT, TEXT)          TO anon, authenticated;
 

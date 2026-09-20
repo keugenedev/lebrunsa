@@ -226,7 +226,7 @@ export default function UPSView() {
       <DataTable
         items={filteredUPS}
         columns={columns}
-        defaultRowsPerPage={10}
+        defaultRowsPerPage={50}
         onRowClick={(item) => setSelectedAssetForDetails(item)}
         customFilters={
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">

@@ -13,6 +13,8 @@ import {
 
 import ConfirmModal from '@/components/common/ConfirmModal';
 
+const DEFAULT_ROWS_PER_PAGE = 50;
+
 export default function AccountsView() {
   const {
     itAccounts,
@@ -24,6 +26,8 @@ export default function AccountsView() {
 
   const [search, setSearch] = useState('');
   const [deletingAccount, setDeletingAccount] = useState<ITAccount | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   // Combined search: header search + view search
   const activeSearch = search || globalSearch || '';
@@ -59,6 +63,12 @@ export default function AccountsView() {
       return bTime - aTime;
     });
   }, [itAccounts, activeSearch]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * rowsPerPage;
+  const endIndex = Math.min(startIndex + rowsPerPage, filteredAccounts.length);
+  const paginatedAccounts = filteredAccounts.slice(startIndex, endIndex);
 
   const handleDelete = (account: ITAccount) => {
     setDeletingAccount(account);
@@ -117,7 +127,10 @@ export default function AccountsView() {
             type="text"
             placeholder="Rechercher par code, nom, email ou poste..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
           />
         </div>
@@ -152,7 +165,7 @@ export default function AccountsView() {
                   </td>
                 </tr>
               ) : (
-                filteredAccounts.map((account, idx) => (
+                paginatedAccounts.map((account, idx) => (
                   <tr key={`${account.id || account.username || 'acc'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
                     {/* Code */}
                     <td className="py-3 px-3.5 whitespace-nowrap">
@@ -208,6 +221,76 @@ export default function AccountsView() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-3.5 px-4 pb-4">
+          <div className="text-xs text-slate-500">
+            Affichage de <span className="font-semibold text-slate-800">{filteredAccounts.length === 0 ? 0 : startIndex + 1}</span> Ã {' '}
+            <span className="font-semibold text-slate-800">{endIndex}</span> sur{' '}
+            <span className="font-semibold text-slate-800">{filteredAccounts.length}</span> Ã©lÃ©ment(s)
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span>Lignes :</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="h-8 rounded-lg border border-slate-300 bg-slate-50/70 px-2 text-xs font-medium text-slate-700 focus:outline-hidden focus:border-red-600 cursor-pointer"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={safeCurrentPage === 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+                title="PremiÃ¨re page"
+              >
+                <i className="ri-arrow-left-double-line text-xs"></i>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+                title="PrÃ©cÃ©dent"
+              >
+                <i className="ri-arrow-left-s-line text-xs"></i>
+              </button>
+
+              <span className="px-2.5 py-1 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg">
+                Page {safeCurrentPage} / {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages || filteredAccounts.length === 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+                title="Suivant"
+              >
+                <i className="ri-arrow-right-s-line text-xs"></i>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safeCurrentPage === totalPages || filteredAccounts.length === 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+                title="DerniÃ¨re page"
+              >
+                <i className="ri-arrow-right-double-line text-xs"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

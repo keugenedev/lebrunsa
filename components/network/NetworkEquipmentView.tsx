@@ -315,13 +315,13 @@ export default function NetworkEquipmentView() {
         <DataTable
           items={filteredNetwork}
           columns={networkColumns}
-          defaultRowsPerPage={10}
+          defaultRowsPerPage={50}
         />
       ) : (
         <DataTable
           items={filteredUPS}
           columns={upsColumns}
-          defaultRowsPerPage={10}
+          defaultRowsPerPage={50}
         />
       )}
     </div>

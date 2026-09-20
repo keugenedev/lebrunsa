@@ -119,6 +119,96 @@ const describePhoneDbError = (error: { message: string; code?: string }) =>
     : error.message;
 
 // Clé qui relie une fiche du registre documentaire à un téléphone
+type SupabaseErrorLike = {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+  name?: string;
+};
+
+type AccountViewRow = {
+  id?: string;
+  user_id?: string;
+  username?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  company?: string | null;
+  site?: string | null;
+  poste?: string | null;
+  department?: string | null;
+  status?: string | null;
+  has_password?: boolean | null;
+  password_hash?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type AccountsLoadResult = {
+  data: AccountViewRow[] | null;
+  error: SupabaseErrorLike | null;
+};
+
+const serializeSupabaseError = (error: unknown): SupabaseErrorLike => {
+  if (!error || typeof error !== 'object') {
+    return { message: String(error) };
+  }
+
+  const err = error as SupabaseErrorLike;
+  return {
+    message: err.message,
+    code: err.code,
+    details: err.details,
+    hint: err.hint,
+    name: err.name
+  };
+};
+
+const describeAccountsLoadError = (error: SupabaseErrorLike) => {
+  const message = error.message || '';
+  if (error.code === 'PGRST205' || /schema cache|does not exist/i.test(message)) {
+    return "La vue accounts_view n'existe pas encore dans Supabase ou le cache API n'est pas recharge. Executez accounts_setup.sql dans le SQL Editor.";
+  }
+  if (error.code === 'PGRST202' || /could not find the function/i.test(message)) {
+    return "La fonction get_accounts est absente. Executez la derniere version de accounts_setup.sql dans Supabase.";
+  }
+  return message || 'Erreur Supabase inconnue pendant le chargement des comptes.';
+};
+
+const accountRowToITAccount = (r: AccountViewRow): ITAccount => ({
+  id:        r.id || `account-${r.user_id || r.email || r.username || 'unknown'}`,
+  userId:    r.user_id,
+  username:  r.username   || '',
+  fullName:  [r.first_name, r.last_name].filter(Boolean).join(' ') || '',
+  firstName: r.first_name || '',
+  lastName:  r.last_name  || '',
+  email:     r.email      || '',
+  role:      'Technicien Support & Maintenance' as const,
+  company:   r.company    || 'Lebrun S.A.',
+  site:      r.site       || 'Delmas 52',
+  poste:     r.poste      || r.department || '',
+  status:    r.status === 'Actif' ? 'active' : 'inactive',
+  hasPassword: typeof r.has_password === 'boolean' ? r.has_password : Boolean(r.password_hash),
+  createdAt: r.created_at || new Date().toISOString(),
+  updatedAt: r.updated_at || r.created_at || new Date().toISOString(),
+});
+
+const readStoredITAccounts = (): ITAccount[] => {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const saved = localStorage.getItem('lebron_inv_it_accounts');
+    if (!saved) return [];
+
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('it_accounts cache read error:', error);
+    return [];
+  }
+};
+
 const phoneSheetUrl = (phone: PhoneAsset) => `phone://${encodeURIComponent(phone.id)}`;
 
 // Clé qui relie une fiche du registre documentaire à un collaborateur et à son poste
@@ -691,42 +781,62 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   });
 
   // IT Accounts state — Supabase est la seule source de vérité
-  const [itAccounts, setItAccounts] = useState<ITAccount[]>([]);
+  const [itAccounts, setItAccounts] = useState<ITAccount[]>(readStoredITAccounts);
 
   // Chargement depuis Supabase au montage — on efface le cache local périmé
   useEffect(() => {
     // Vider le cache localStorage pour éviter l'affichage des anciennes données codées en dur
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('lebron_inv_it_accounts');
-      localStorage.removeItem('lebron_deleted_it_accounts');
-    }
+    const loadAccounts = async () => {
+      let result = await supabase
+        .from('accounts_view')
+        .select('*')
+        .order('created_at', { ascending: false }) as AccountsLoadResult;
 
-    supabase
-      .from('accounts_view')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) { console.error('accounts_view load error:', error); return; }
+      if (result.error) {
+        const viewError = serializeSupabaseError(result.error);
+        const rpcResult = await supabase.rpc('get_accounts') as AccountsLoadResult;
+
+        if (rpcResult.error) {
+          const rpcError = serializeSupabaseError(rpcResult.error);
+          console.error('accounts_view load error:', {
+            view: viewError,
+            rpc: rpcError,
+            message: describeAccountsLoadError(rpcError.message ? rpcError : viewError)
+          });
+          return;
+        }
+
+        console.warn('accounts_view load fallback used:', {
+          view: viewError,
+          fallback: 'get_accounts'
+        });
+        result = rpcResult;
+      }
+
+      const { data, error } = result;
+      if (error) {
+        const accountError = serializeSupabaseError(error);
+        console.error('accounts_view load error:', {
+          ...accountError,
+          message: describeAccountsLoadError(accountError)
+        });
+        return;
+      }
         // Même si 0 résultats : on affiche 0 — jamais de données locales fantômes
-        const mapped: ITAccount[] = (data || []).map((r: any) => ({
-          id:        r.id,
-          userId:    r.user_id,
-          username:  r.username   || '',
-          fullName:  [r.first_name, r.last_name].filter(Boolean).join(' ') || '',
-          firstName: r.first_name || '',
-          lastName:  r.last_name  || '',
-          email:     r.email      || '',
-          role:      'Technicien Support & Maintenance' as const,
-          company:   r.company    || 'Lebrun S.A.',
-          site:      r.site       || 'Delmas 52',
-          poste:     r.poste      || r.department || '',
-          status:    r.status === 'Actif' ? 'active' : 'inactive',
-          hasPassword: typeof r.has_password === 'boolean' ? r.has_password : Boolean(r.password_hash),
-          createdAt: r.created_at,
-          updatedAt: r.updated_at,
-        }));
-        setItAccounts(mapped);
-      });
+        const mapped: ITAccount[] = (data || []).map(accountRowToITAccount);
+        setItAccounts(prev => {
+          const mappedKeys = new Set(mapped.map(a => a.userId || a.id).filter(Boolean));
+          const pendingLocal = prev.filter(a => !mappedKeys.has(a.userId || a.id));
+          const next = [...mapped, ...pendingLocal];
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
+            localStorage.removeItem('lebron_deleted_it_accounts');
+          }
+          return next;
+        });
+    };
+
+    loadAccounts();
   }, []);
 
 
@@ -1920,24 +2030,28 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
 
-      // La vue renvoie toutes les infos du collaborateur depuis users
+      // La vue renvoie normalement toutes les infos du collaborateur depuis users.
+      // Si le RPC renvoie une ligne minimale, on complète depuis le formulaire / personnel
+      // pour que le compte apparaisse immédiatement dans la table.
       const row = Array.isArray(data) ? data[0] : data;
+      const linkedEmp = employees.find(e => e.employeeId === userId || e.id === userId);
+      const nowIso = new Date().toISOString();
       const newAcc: ITAccount = {
-        id:        row.id,
-        userId:    row.user_id,
-        username:  row.username   || account.username,
-        fullName:  [row.first_name, row.last_name].filter(Boolean).join(' ') || account.fullName,
-        firstName: row.first_name || account.firstName,
-        lastName:  row.last_name  || account.lastName,
-        email:     row.email      || account.email,
+        id:        row?.id || `account-${userId}`,
+        userId:    row?.user_id || userId,
+        username:  row?.username || account.username || linkedEmp?.username || linkedEmp?.email?.split('@')[0] || userId.toLowerCase(),
+        fullName:  [row?.first_name, row?.last_name].filter(Boolean).join(' ') || account.fullName || linkedEmp?.fullName || '',
+        firstName: row?.first_name || account.firstName || linkedEmp?.firstName || '',
+        lastName:  row?.last_name || account.lastName || linkedEmp?.lastName || '',
+        email:     row?.email || account.email || linkedEmp?.email || '',
         role:      'Technicien Support & Maintenance' as const,
-        company:   row.company    || account.company,
-        site:      row.site       || account.site,
-        poste:     row.poste      || account.poste || '',
-        status:    row.status === 'Actif' ? 'active' : 'inactive',
-        hasPassword: typeof row.has_password === 'boolean' ? row.has_password : Boolean(row.password_hash),
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        company:   row?.company || account.company || linkedEmp?.company || 'Lebrun S.A.',
+        site:      row?.site || account.site || linkedEmp?.site || 'Delmas 52',
+        poste:     row?.poste || account.poste || linkedEmp?.jobTitle || linkedEmp?.position || '',
+        status:    row?.status === 'Actif' || account.status === 'active' ? 'active' : 'inactive',
+        hasPassword: typeof row?.has_password === 'boolean' ? row.has_password : true,
+        createdAt: row?.created_at || nowIso,
+        updatedAt: row?.updated_at || nowIso,
       };
 
       setItAccounts(prev => {

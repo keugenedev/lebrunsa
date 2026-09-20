@@ -428,7 +428,7 @@ export default function ApplicationsView() {
       <DataTable
         items={filteredAccounts}
         columns={columns}
-        defaultRowsPerPage={15}
+        defaultRowsPerPage={50}
         customFilters={
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">

@@ -44,6 +44,8 @@ const CATEGORIES: DocumentCategory[] = [
   'Procès-Verbaux & Décharges'
 ];
 
+const DEFAULT_ROWS_PER_PAGE = 50;
+
 export default function DocumentsView() {
   const {
     documents,
@@ -77,12 +79,16 @@ export default function DocumentsView() {
   // Search & Filters for Fiches
   const [sheetSearch, setSheetSearch] = useState('');
   const [sheetCompanyFilter, setSheetCompanyFilter] = useState('all');
+  const [sheetPage, setSheetPage] = useState(1);
+  const [sheetRowsPerPage, setSheetRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   // Search & Filters for Repository
   const [repoSearch, setRepoSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedCompany, setSelectedCompany] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [repoPage, setRepoPage] = useState(1);
+  const [repoRowsPerPage, setRepoRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   // Active search query
   const effectiveSheetSearch = sheetSearch || globalSearch || '';
@@ -96,6 +102,14 @@ export default function DocumentsView() {
       refs.set(emp.id, buildAssignmentDocRef(sheet.employee, sheet.options));
     });
     return refs;
+  }, [employees, getAssignmentSheet]);
+
+  const assignmentSheets = useMemo(() => {
+    const sheets = new Map<string, ReturnType<typeof getAssignmentSheet>>();
+    employees.forEach(emp => {
+      sheets.set(emp.id, getAssignmentSheet(emp));
+    });
+    return sheets;
   }, [employees, getAssignmentSheet]);
 
   // Filtered Employees with Assigned Equipment
@@ -113,9 +127,11 @@ export default function DocumentsView() {
         const matchesCompany = emp.company?.toLowerCase().includes(query) || false;
         const matchesSite = emp.site?.toLowerCase().includes(query) || false;
         const matchesJob = emp.jobTitle?.toLowerCase().includes(query) || false;
-        const matchesPC = emp.workstation?.pcName?.toLowerCase().includes(query) || false;
-        const matchesSerial = emp.workstation?.pcSerial?.toLowerCase().includes(query) || false;
-        const matchesMonitor = emp.workstation?.monitorSerial?.toLowerCase().includes(query) || false;
+        const sheet = assignmentSheets.get(emp.id);
+        const ws = sheet?.employee.workstation || emp.workstation;
+        const matchesPC = ws?.pcName?.toLowerCase().includes(query) || false;
+        const matchesSerial = ws?.pcSerial?.toLowerCase().includes(query) || false;
+        const matchesMonitor = ws?.monitorSerial?.toLowerCase().includes(query) || false;
         const matchesRef = sheetRefs.get(emp.id)?.toLowerCase().includes(query) || false;
 
         return matchesName || matchesId || matchesCompany || matchesSite || matchesJob || matchesPC || matchesSerial || matchesMonitor || matchesRef;
@@ -126,12 +142,15 @@ export default function DocumentsView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [employees, sheetCompanyFilter, effectiveSheetSearch, sheetRefs]);
+  }, [employees, sheetCompanyFilter, effectiveSheetSearch, sheetRefs, assignmentSheets]);
 
   // Overall calculations for assignment sheets (NO PRICE)
   const sheetStats = useMemo(() => {
     const total = filteredEmployees.length;
-    const laptops = filteredEmployees.filter(e => e.workstation?.type?.toLowerCase().includes('laptop') || e.workstation?.pcName?.toLowerCase().includes('lap')).length;
+    const laptops = filteredEmployees.filter(e => {
+      const ws = assignmentSheets.get(e.id)?.employee.workstation || e.workstation;
+      return ws?.type?.toLowerCase().includes('laptop') || ws?.pcName?.toLowerCase().includes('lap');
+    }).length;
     const desktops = total - laptops;
 
     return {
@@ -139,7 +158,7 @@ export default function DocumentsView() {
       laptops,
       desktops
     };
-  }, [filteredEmployees]);
+  }, [filteredEmployees, assignmentSheets]);
 
   // Filtered Documents in Repository
   const filteredDocuments = useMemo(() => {
@@ -171,6 +190,105 @@ export default function DocumentsView() {
       return bTime - aTime;
     });
   }, [documents, selectedCategory, selectedCompany, selectedStatus, effectiveRepoSearch]);
+
+  const sheetTotalPages = Math.max(1, Math.ceil(filteredEmployees.length / sheetRowsPerPage));
+  const safeSheetPage = Math.min(sheetPage, sheetTotalPages);
+  const paginatedEmployees = useMemo(() => {
+    const start = (safeSheetPage - 1) * sheetRowsPerPage;
+    return filteredEmployees.slice(start, start + sheetRowsPerPage);
+  }, [filteredEmployees, safeSheetPage, sheetRowsPerPage]);
+
+  const repoTotalPages = Math.max(1, Math.ceil(filteredDocuments.length / repoRowsPerPage));
+  const safeRepoPage = Math.min(repoPage, repoTotalPages);
+  const paginatedDocuments = useMemo(() => {
+    const start = (safeRepoPage - 1) * repoRowsPerPage;
+    return filteredDocuments.slice(start, start + repoRowsPerPage);
+  }, [filteredDocuments, safeRepoPage, repoRowsPerPage]);
+
+  const renderPagination = (
+    totalItems: number,
+    currentPage: number,
+    totalPages: number,
+    rowsPerPage: number,
+    onPageChange: (page: number) => void,
+    onRowsPerPageChange: (rows: number) => void
+  ) => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
+
+    return (
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-3.5 px-4 pb-4">
+        <div className="text-xs text-slate-500">
+          Affichage de <span className="font-semibold text-slate-800">{totalItems === 0 ? 0 : startIndex + 1}</span> Ã {' '}
+          <span className="font-semibold text-slate-800">{endIndex}</span> sur{' '}
+          <span className="font-semibold text-slate-800">{totalItems}</span> Ã©lÃ©ment(s)
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span>Lignes :</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                onRowsPerPageChange(Number(e.target.value));
+                onPageChange(1);
+              }}
+              className="h-8 rounded-lg border border-slate-300 bg-slate-50/70 px-2 text-xs font-medium text-slate-700 focus:outline-hidden focus:border-red-600 cursor-pointer"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onPageChange(1)}
+              disabled={currentPage === 1}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              title="PremiÃ¨re page"
+            >
+              <i className="ri-arrow-left-double-line text-xs"></i>
+            </button>
+            <button
+              type="button"
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              title="PrÃ©cÃ©dent"
+            >
+              <i className="ri-arrow-left-s-line text-xs"></i>
+            </button>
+
+            <span className="px-2.5 py-1 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-lg">
+              Page {currentPage} / {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages || totalItems === 0}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              title="Suivant"
+            >
+              <i className="ri-arrow-right-s-line text-xs"></i>
+            </button>
+            <button
+              type="button"
+              onClick={() => onPageChange(totalPages)}
+              disabled={currentPage === totalPages || totalItems === 0}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition shadow-2xs"
+              title="DerniÃ¨re page"
+            >
+              <i className="ri-arrow-right-double-line text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Navigation inside sheet preview modal
   const handleNextEmployee = () => {
@@ -521,7 +639,10 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                   type="text"
                   placeholder="Rechercher par nom, matricule, référence de fiche, PC, numéro de série, écran..."
                   value={sheetSearch}
-                  onChange={(e) => setSheetSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSheetSearch(e.target.value);
+                    setSheetPage(1);
+                  }}
                   className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
                 />
               </div>
@@ -530,7 +651,10 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
               <div>
                 <select
                   value={sheetCompanyFilter}
-                  onChange={(e) => setSheetCompanyFilter(e.target.value)}
+                  onChange={(e) => {
+                    setSheetCompanyFilter(e.target.value);
+                    setSheetPage(1);
+                  }}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all cursor-pointer"
                 >
                   <option value="all">Toutes les Entreprises</option>
@@ -576,8 +700,9 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                       </td>
                     </tr>
                   ) : (
-                    filteredEmployees.map((emp, idx) => {
-                      const ws = emp.workstation;
+                    paginatedEmployees.map((emp, idx) => {
+                      const sheet = assignmentSheets.get(emp.id) || getAssignmentSheet(emp);
+                      const ws = sheet.employee.workstation;
 
                       return (
                         <tr key={`${emp.employeeId || emp.id || 'emp'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
@@ -734,6 +859,14 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 </tbody>
               </table>
             </div>
+            {renderPagination(
+              filteredEmployees.length,
+              safeSheetPage,
+              sheetTotalPages,
+              sheetRowsPerPage,
+              setSheetPage,
+              setSheetRowsPerPage
+            )}
           </div>
         </div>
       )}
@@ -782,7 +915,10 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                   type="text"
                   placeholder="Rechercher titre, référence, auteur..."
                   value={repoSearch}
-                  onChange={(e) => setRepoSearch(e.target.value)}
+                  onChange={(e) => {
+                    setRepoSearch(e.target.value);
+                    setRepoPage(1);
+                  }}
                   className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
                 />
               </div>
@@ -792,7 +928,10 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 <Filter className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setRepoPage(1);
+                  }}
                   className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
                 >
                   <option value="all">Toutes les Catégories</option>
@@ -806,7 +945,10 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
               <div>
                 <select
                   value={selectedCompany}
-                  onChange={(e) => setSelectedCompany(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCompany(e.target.value);
+                    setRepoPage(1);
+                  }}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
                 >
                   <option value="all">Toutes les Entreprises</option>
@@ -821,7 +963,10 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
               <div>
                 <select
                   value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedStatus(e.target.value);
+                    setRepoPage(1);
+                  }}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
                 >
                   <option value="all">Tous les Statuts</option>
@@ -865,7 +1010,7 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                       </td>
                     </tr>
                   ) : (
-                    filteredDocuments.map((doc, idx) => (
+                    paginatedDocuments.map((doc, idx) => (
                       <tr key={`${doc.id || doc.reference || 'doc'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
                         {/* Title & Ref */}
                         <td className="py-3 px-3.5">
@@ -967,6 +1112,14 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 </tbody>
               </table>
             </div>
+            {renderPagination(
+              filteredDocuments.length,
+              safeRepoPage,
+              repoTotalPages,
+              repoRowsPerPage,
+              setRepoPage,
+              setRepoRowsPerPage
+            )}
           </div>
         </div>
       )}

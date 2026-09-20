@@ -54,7 +54,7 @@ export default function SuccessAnimation() {
           <DotLottieReact
             src={ANIMATION_SRC}
             autoplay
-            speed={0.6}
+            speed={0.85}
           />
         </div>
 

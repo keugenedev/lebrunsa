@@ -490,7 +490,7 @@ export default function ITEquipmentView() {
         items={filteredAssets}
         columns={columns}
         onRowClick={(asset) => setSelectedAssetForView(asset)}
-        defaultRowsPerPage={20}
+        defaultRowsPerPage={50}
         customFilters={
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">

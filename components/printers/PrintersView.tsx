@@ -348,7 +348,7 @@ export default function PrintersView() {
       <DataTable
         columns={columns}
         items={filteredPrinters}
-        defaultRowsPerPage={20}
+        defaultRowsPerPage={50}
         onRowClick={(p) => setSelectedPrinterForDetails(p)}
         customFilters={
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">

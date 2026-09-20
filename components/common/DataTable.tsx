@@ -44,7 +44,7 @@ export default function DataTable<T extends { id: string }>({
   filters,
   customFilters,
   actionButtons,
-  defaultRowsPerPage = 10,
+  defaultRowsPerPage = 50,
   emptyMessage = 'Aucun élément trouvé',
   onRowClick
 }: DataTableProps<T>) {

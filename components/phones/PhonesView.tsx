@@ -192,7 +192,7 @@ export default function PhonesView() {
       <DataTable
         items={filtered}
         columns={columns}
-        defaultRowsPerPage={10}
+        defaultRowsPerPage={50}
         emptyMessage="Aucun téléphone enregistré. Cliquez sur « Ajouter un téléphone »."
         onRowClick={(p) => openPhoneModal(p)}
         customFilters={
