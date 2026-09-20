@@ -690,30 +690,25 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return INITIAL_WIFI_NETWORKS;
   });
 
-  // IT Accounts state — chargé depuis Supabase (accounts_view), localStorage comme cache
-  const [itAccounts, setItAccounts] = useState<ITAccount[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lebron_inv_it_accounts');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) { console.error(e); }
-      }
-    }
-    return [];
-  });
+  // IT Accounts state — Supabase est la seule source de vérité
+  const [itAccounts, setItAccounts] = useState<ITAccount[]>([]);
 
-  // Chargement depuis Supabase au montage
+  // Chargement depuis Supabase au montage — on efface le cache local périmé
   useEffect(() => {
+    // Vider le cache localStorage pour éviter l'affichage des anciennes données codées en dur
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('lebron_inv_it_accounts');
+      localStorage.removeItem('lebron_deleted_it_accounts');
+    }
+
     supabase
       .from('accounts_view')
       .select('*')
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
         if (error) { console.error('accounts_view load error:', error); return; }
-        if (!data || data.length === 0) return;
-        const mapped: ITAccount[] = data.map((r: any) => ({
+        // Même si 0 résultats : on affiche 0 — jamais de données locales fantômes
+        const mapped: ITAccount[] = (data || []).map((r: any) => ({
           id:        r.id,
           userId:    r.user_id,
           username:  r.username   || '',
@@ -726,16 +721,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           site:      r.site       || 'Delmas 52',
           poste:     r.poste      || r.department || '',
           status:    r.status === 'Actif' ? 'active' : 'inactive',
-          password:  undefined,   // le hash n'est jamais renvoyé en clair
+          password:  undefined,
           createdAt: r.created_at,
           updatedAt: r.updated_at,
         }));
         setItAccounts(mapped);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(mapped));
-        }
       });
   }, []);
+
 
   // Documents state
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
