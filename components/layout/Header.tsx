@@ -30,6 +30,7 @@ export default function Header() {
       case 'personnel': return 'Personnel & Collaborateurs';
       case 'accounts': return 'Comptes';
       case 'documents': return 'Documents & Procédures';
+      case 'phones': return 'Téléphones & Portables';
       case 'settings': return 'Paramètres & Configuration';
       default: return 'Gestion de Parc';
     }
@@ -45,6 +46,7 @@ export default function Header() {
       case 'personnel': return 'Rechercher collaborateur, nom, matricule, département...';
       case 'accounts': return 'Rechercher compte, nom, rôle, email...';
       case 'documents': return 'Rechercher document, procédure, contrat, référence...';
+      case 'phones': return 'Rechercher téléphone, marque, modèle, IMEI, personne...';
       default: return 'Rechercher équipement, numéro de série, collaborateur...';
     }
   };
@@ -107,6 +109,7 @@ export default function Header() {
               applications: 'applications',
               network: 'network',
               ups: 'ups',
+              phones: 'phones',
               it: 'it'
             };
             exportCSV(validTabs[activeTab] || 'it');

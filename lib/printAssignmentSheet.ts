@@ -1,5 +1,26 @@
-import { Employee } from '@/types/inventory';
+import { Employee, WorkstationDetails } from '@/types/inventory';
 import type { jsPDF } from 'jspdf';
+
+/* -------------------------------------------------------------------------- */
+/*  Fiche d'affectation de matériel informatique                              */
+/*  Un seul modèle de données (buildSheetModel) alimente le PDF téléchargé,   */
+/*  l'impression navigateur et l'aperçu à l'écran, pour un rendu identique.   */
+/* -------------------------------------------------------------------------- */
+
+export interface AssignmentSheetOptions {
+  /** Code inventaire du poste remis (ex: AST-PC-LEB123). */
+  assetTag?: string;
+  /** Date d'émission (par défaut : aujourd'hui). */
+  date?: Date;
+  /** Référence déjà enregistrée dans la base : elle est réutilisée telle quelle. */
+  reference?: string;
+}
+
+/** Une fiche à produire : le collaborateur (avec son poste) et ses options d'émission. */
+export interface AssignmentSheet {
+  employee: Employee;
+  options?: AssignmentSheetOptions;
+}
 
 export function getCompanyLogo(company?: string): string {
   const c = (company || '').toLowerCase();
@@ -10,49 +31,187 @@ export function getCompanyLogo(company?: string): string {
   return '/Lebrunog.png';
 }
 
+export const MAIN_LOGO = '/Lebrunog.png';
+
+/** Référence unique de la fiche : FA-<SOC>-<AAAAMMJJ>-<code poste | matricule>. */
+export function buildAssignmentDocRef(emp: Employee, opts: AssignmentSheetOptions = {}): string {
+  if (opts.reference) return opts.reference;
+  const d = opts.date || new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const company = (emp.company || 'LEB').replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'LEB';
+  const tail = (opts.assetTag || emp.employeeId || emp.id || '001').trim();
+  return `FA-${company}-${ymd}-${tail}`;
+}
+
+/* ------------------------------- Modèle ------------------------------------ */
+
+interface SheetField {
+  label: string;
+  value: string;
+}
+
+interface SheetEquipment {
+  kind: string;
+  kindSub: string;
+  name: string;
+  detail: string;
+  serial: string;
+  serialSub: string;
+  state: string;
+}
+
+interface SheetModel {
+  docRef: string;
+  dateLabel: string;
+  site: string;
+  fullName: string;
+  showCompanyLogo: boolean;
+  companyName: string;
+  person: SheetField[];
+  equipment: SheetEquipment[];
+  observations: string;
+  legalText: string;
+}
+
+const DASH = '—';
+
+const orDash = (v?: string | null): string => {
+  const s = (v ?? '').toString().trim();
+  return s && s.toUpperCase() !== 'N/A' ? s : DASH;
+};
+
+/** Traduit l'observation saisie dans l'inventaire (souvent "Good") en libellé lisible. */
+function formatCondition(obs?: string): string {
+  const s = (obs || '').trim();
+  if (!s) return DASH;
+  const l = s.toLowerCase();
+  if (/(d[ée]f+ect|deffect|panne|hs\b)/.test(l)) return 'Défectueux';
+  if (/(trace|rayure|fissure|us[ée])/.test(l)) return 'À contrôler';
+  if (/(good|bon|conforme|ok|neuf)/.test(l)) return 'Bon état';
+  return s.length > 22 ? `${s.slice(0, 21)}…` : s;
+}
+
+function isGenericObservation(obs?: string): boolean {
+  const l = (obs || '').trim().toLowerCase();
+  return !l || l === 'good' || l === 'conforme' || l === 'bon' || l === 'n/a' || l === 'bon état';
+}
+
+function workstationTypeLabel(type?: string): string {
+  const l = (type || '').toLowerCase();
+  if (l.includes('lap') || l.includes('port')) return 'Ordinateur portable';
+  if (l.includes('desk') || l.includes('fixe') || l.includes('bureau')) return 'Ordinateur de bureau';
+  return type?.trim() || 'Poste de travail';
+}
+
+function buildSheetModel(emp: Employee, opts: AssignmentSheetOptions = {}): SheetModel {
+  const date = opts.date || new Date();
+  const ws: Partial<WorkstationDetails> = emp.workstation || {};
+  const site = orDash(emp.site || emp.location);
+  const companyName = emp.company || 'Lebrun S.A.';
+
+  const observations = [ws.observations, ws.notes, ws.obs].find(o => !isGenericObservation(o))?.trim() || '';
+
+  return {
+    docRef: buildAssignmentDocRef(emp, opts),
+    dateLabel: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+    site,
+    fullName: emp.fullName || '',
+    showCompanyLogo: getCompanyLogo(emp.company) !== MAIN_LOGO,
+    companyName,
+    person: [
+      { label: 'Nom complet', value: orDash(emp.fullName) },
+      { label: 'Matricule', value: orDash(emp.employeeId) },
+      { label: 'Société', value: orDash(companyName) },
+      { label: 'Site', value: site },
+      { label: 'Fonction', value: orDash(emp.jobTitle) },
+      { label: 'Service', value: orDash(emp.department) },
+      { label: 'Email', value: orDash(emp.email) },
+      { label: 'Téléphone', value: orDash(emp.phone) }
+    ],
+    equipment: [
+      {
+        kind: 'Unité centrale',
+        kindSub: workstationTypeLabel(ws.type),
+        name: orDash(ws.pcName),
+        detail: (ws.pcSpecs || '').trim(),
+        serial: orDash(ws.pcSerial),
+        serialSub: opts.assetTag ? `Inv. ${opts.assetTag}` : '',
+        state: formatCondition(ws.generalState)
+      },
+      {
+        kind: 'Écran',
+        kindSub: 'Affichage',
+        name: orDash(ws.monitorModel),
+        detail: '',
+        serial: orDash(ws.monitorSerial),
+        serialSub: '',
+        state: formatCondition(ws.monitorObs)
+      },
+      {
+        kind: 'Clavier',
+        kindSub: 'Saisie',
+        name: orDash(ws.keyboard),
+        detail: (ws.keyboardDetails || '').trim(),
+        serial: DASH,
+        serialSub: '',
+        state: formatCondition(ws.keyboardObs)
+      },
+      {
+        kind: 'Souris',
+        kindSub: 'Pointage',
+        name: orDash(ws.mouse),
+        detail: (ws.mouseDetails || '').trim(),
+        serial: DASH,
+        serialSub: '',
+        state: formatCondition(ws.mouseObs)
+      }
+    ],
+    observations,
+    legalText:
+      "Le collaborateur reconnaît avoir reçu ce jour le matériel décrit ci-dessus, en bon état de fonctionnement. " +
+      "Il s'engage à l'utiliser uniquement dans le cadre de ses missions, conformément à la charte informatique et à la " +
+      "politique de sécurité de l'entreprise, et à en prendre soin. Ce matériel reste la propriété de l'entreprise : il devra " +
+      "être restitué sur simple demande de la Direction des Systèmes d'Information ou de la Direction, ainsi qu'en cas de " +
+      "départ, de mutation ou de fin de contrat. Toute perte, panne ou détérioration doit être signalée sans délai à la DSI."
+  };
+}
+
+/* -------------------------------- Logos ------------------------------------ */
+
+export interface LogoData {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+const logoCache = new Map<string, Promise<LogoData | null>>();
+
 /**
- * Convertit une image en Data URL PNG en niveaux de gris (monochrome strict)
- * avec un timeout garanti pour ne JAMAIS bloquer la génération.
+ * Charge un logo en PNG (couleurs d'origine) pour l'intégrer au PDF,
+ * avec un délai maximal pour ne jamais bloquer la génération.
  */
-async function getGrayscaleBase64Logo(url: string): Promise<{ dataUrl: string; width: number; height: number } | null> {
-  if (typeof window === 'undefined' || !url) return null;
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      resolve(null);
-    }, 1200);
+export function getLogoData(url: string): Promise<LogoData | null> {
+  if (typeof window === 'undefined' || !url) return Promise.resolve(null);
+  const cached = logoCache.get(url);
+  if (cached) return cached;
+
+  const promise = new Promise<LogoData | null>((resolve) => {
+    const timer = setTimeout(() => resolve(null), 3000);
 
     const img = new Image();
     img.onload = () => {
       clearTimeout(timer);
       try {
-        const canvas = document.createElement('canvas');
         const w = img.naturalWidth || img.width || 100;
         const h = img.naturalHeight || img.height || 40;
+        const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
         if (!ctx) return resolve(null);
 
         ctx.drawImage(img, 0, 0);
-        try {
-          const imgData = ctx.getImageData(0, 0, w, h);
-          const data = imgData.data;
-          for (let i = 0; i < data.length; i += 4) {
-            if (data[i + 3] === 0) continue;
-            const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-            data[i] = gray;
-            data[i + 1] = gray;
-            data[i + 2] = gray;
-          }
-          ctx.putImageData(imgData, 0, 0);
-        } catch {
-          // Si tainted canvas, on continue avec l'image telle quelle
-        }
-        resolve({
-          dataUrl: canvas.toDataURL('image/png'),
-          width: w,
-          height: h
-        });
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h });
       } catch {
         resolve(null);
       }
@@ -63,1075 +222,556 @@ async function getGrayscaleBase64Logo(url: string): Promise<{ dataUrl: string; w
     };
     img.src = url;
   });
+
+  logoCache.set(url, promise);
+  return promise;
 }
 
+/* ------------------------------ Rendu PDF ---------------------------------- */
+
+const PAGE = { w: 210, h: 297, margin: 18 };
+const X0 = PAGE.margin;
+const X1 = PAGE.w - PAGE.margin;
+const CONTENT_W = X1 - X0;
+
+const INK = 17;
+const MUTED = 0;
+const RULE = 205;
+
 /**
- * Dessine une fiche d'affectation vectorielle parfaite au format A4 portrait (Page 1/1 stricte)
- * Monochrome strict, sans faux sceau, 100% lisible et nette.
+ * Dessine une fiche d'affectation A4 (1 page) : sobre, lisible, corps de texte ≥ 8 pt.
  */
-export async function renderVectorAssignmentSheet(doc: jsPDF, emp: Employee, origin: string): Promise<void> {
-  const docRef = `FA-${(emp.company || 'LEB').slice(0, 3).toUpperCase()}-2026-${emp.employeeId || '001'}`;
-  const today = new Date().toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
+export async function renderVectorAssignmentSheet(
+  doc: jsPDF,
+  emp: Employee,
+  origin: string,
+  opts: AssignmentSheetOptions = {}
+): Promise<void> {
+  const m = buildSheetModel(emp, opts);
 
-  const ws = emp.workstation || {
-    type: 'Poste Fixe (Desktop)',
-    pcName: 'Non renseigné',
-    pcSerial: 'N/A',
-    pcSpecs: 'Intel Core i5 - 16 GB RAM - SSD 500 GB - Windows 11 Pro',
-    monitorModel: 'Dell Professional 22"',
-    monitorSerial: 'N/A',
-    monitorObs: 'Conforme',
-    keyboard: 'Clavier Dell Câble',
-    keyboardDetails: 'Alpha-numérique standard',
-    keyboardObs: 'Conforme',
-    mouse: 'Souris Dell',
-    mouseDetails: 'Souris Bureau (Câble)',
-    mouseObs: 'Conforme',
-    generalState: 'Conforme',
-    observations: 'Conforme'
-  };
-
-  // Logos N&B (haute qualité vectorielle/PNG)
-  const leftLogoUrl = `${origin}/Lebrunog.png`;
-  const rightLogoUrl = `${origin}${getCompanyLogo(emp.company)}`;
-
-  const [leftLogo, rightLogo] = await Promise.all([
-    getGrayscaleBase64Logo(leftLogoUrl),
-    getGrayscaleBase64Logo(rightLogoUrl)
+  const [mainLogo, companyLogo] = await Promise.all([
+    getLogoData(`${origin}${MAIN_LOGO}`),
+    m.showCompanyLogo ? getLogoData(`${origin}${getCompanyLogo(emp.company)}`) : Promise.resolve(null)
   ]);
 
-  if (leftLogo) {
-    const ratio = leftLogo.width / leftLogo.height;
-    const targetH = 9.5;
-    const targetW = Math.min(30, targetH * ratio);
-    doc.addImage(leftLogo.dataUrl, 'PNG', 14, 7.5, targetW, targetH);
-  }
-
-  if (rightLogo) {
-    const ratio = rightLogo.width / rightLogo.height;
-    const targetH = 9.5;
-    const targetW = Math.min(30, targetH * ratio);
-    doc.addImage(rightLogo.dataUrl, 'PNG', 196 - targetW, 7.5, targetW, targetH);
-  }
-
-  // 1. En-tête Institutionnel : LEBRUN S.A. (pas de Groupe)
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(0, 0, 0);
-  doc.text('LEBRUN S.A.', 105, 11, { align: 'center' });
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(70, 70, 70);
-  doc.text("DIRECTION DES SYSTÈMES D'INFORMATION (DSI) • PARC INFORMATIQUE", 105, 15, { align: 'center' });
-
-  // Ligne de séparation haute
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.4);
-  doc.line(14, 18.5, 196, 18.5);
-
-  // 2. Titre Officiel du Document
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text("FICHE D'AFFECTATION DE MATÉRIEL INFORMATIQUE", 105, 23.5, { align: 'center' });
-
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(7);
-  doc.setTextColor(90, 90, 90);
-  doc.text('Procès-Verbal Officiel de Mise à Disposition & Décharge de Responsabilité', 105, 27.2, { align: 'center' });
-
-  // Barre Métadonnées (RÉFÉRENCE | DATE | SITE)
-  doc.setFillColor(243, 244, 246);
-  doc.setDrawColor(180, 180, 180);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(14, 29.5, 182, 5.5, 1, 1, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(0, 0, 0);
-  doc.text('RÉFÉRENCE : ' + docRef, 20, 33.3);
-  doc.setTextColor(170, 170, 170);
-  doc.text('|', 78, 33.3);
-  doc.setTextColor(0, 0, 0);
-  doc.text("DATE D'ÉMISSION : " + today, 86, 33.3);
-  doc.setTextColor(170, 170, 170);
-  doc.text('|', 148, 33.3);
-  doc.setTextColor(0, 0, 0);
-  doc.text('SITE : ' + (emp.site || emp.location || 'Delmas 52'), 156, 33.3);
-
-  // 3. Section 1 : Bénéficiaire
-  let y = 38;
-  doc.setFillColor(17, 24, 39);
-  doc.rect(14, y, 182, 4.4, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
-  doc.setTextColor(255, 255, 255);
-  doc.text('1. IDENTIFICATION DU COLLABORATEUR (BÉNÉFICIAIRE)', 17, y + 3.1);
-
-  y += 4.4;
-  const s1Rows = [
-    ['Nom & Prénom :', emp.fullName || 'N/A', 'Matricule Salarié :', emp.employeeId || 'N/A'],
-    ['Entreprise / Entité :', emp.company || 'Lebrun S.A.', 'Site / Affectation :', emp.site || emp.location || 'Delmas 52'],
-    ['Fonction / Poste :', emp.jobTitle || 'Collaborateur', 'Département / Service :', emp.department || 'Opérations'],
-    ['Email Professionnel :', emp.email || 'N/A', 'Téléphone de Contact :', emp.phone || 'N/A'],
-    ['Session Windows :', (emp.accounts && emp.accounts.windowsUsername) || 'Admin', 'Compte ERP / App (GP) :', (emp.accounts && emp.accounts.appUsername) || 'N/A']
-  ];
-
-  doc.setLineWidth(0.15);
-  doc.setDrawColor(180, 180, 180);
-  const rowH = 4.4;
-  for (let i = 0; i < s1Rows.length; i++) {
-    const r = s1Rows[i];
-    const curY = y + i * rowH;
-    // Col 1 label
-    doc.setFillColor(248, 250, 252);
-    doc.rect(14, curY, 36, rowH, 'FD');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
-    doc.setTextColor(70, 70, 70);
-    doc.text(r[0], 16, curY + 2.9);
-
-    // Col 2 value
-    doc.setFillColor(255, 255, 255);
-    doc.rect(50, curY, 55, rowH, 'FD');
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(r[1], 52, curY + 2.9);
-
-    // Col 3 label
-    doc.setFillColor(248, 250, 252);
-    doc.rect(105, curY, 36, rowH, 'FD');
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(70, 70, 70);
-    doc.text(r[2], 107, curY + 2.9);
-
-    // Col 4 value
-    doc.setFillColor(255, 255, 255);
-    doc.rect(141, curY, 55, rowH, 'FD');
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(r[3], 143, curY + 2.9);
-  }
-
-  y += s1Rows.length * rowH + 3;
-
-  // 4. Section 2 : Équipements Assignés
-  doc.setFillColor(17, 24, 39);
-  doc.rect(14, y, 182, 4.4, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
-  doc.setTextColor(255, 255, 255);
-  doc.text('2. INVENTAIRE DU MATÉRIEL & ÉQUIPEMENTS ASSIGNÉS', 17, y + 3.1);
-
-  y += 4.4;
-  // En-tête tableau équipements
-  doc.setFillColor(55, 65, 81);
-  doc.rect(14, y, 182, 4.2, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.2);
-  doc.setTextColor(255, 255, 255);
-  doc.text('COMPOSANT', 16, y + 2.8);
-  doc.text('DÉSIGNATION, MARQUE & MODÈLE', 52, y + 2.8);
-  doc.text('N° DE SÉRIE (S/N) / HOSTNAME', 130, y + 2.8);
-  doc.text('ÉTAT CONSTATÉ', 175, y + 2.8, { align: 'center' });
-
-  y += 4.2;
-  const eqRows = [
-    {
-      comp: 'Ordinateur / UC',
-      sub: ws.type || 'Poste Fixe',
-      desc: ws.pcName || 'Dell Workstation',
-      specs: ws.pcSpecs || 'Intel Core i5 - 16 GB RAM - SSD 500 GB - Windows 11 Pro',
-      sn: 'S/N : ' + (ws.pcSerial || 'N/A'),
-      etat: (ws.generalState || 'Conforme').toUpperCase()
-    },
-    {
-      comp: 'Écran / Moniteur',
-      sub: 'Affichage principal',
-      desc: ws.monitorModel || 'Écran Dell Professional 22"',
-      specs: 'Écran professionnel haute résolution avec pied réglable',
-      sn: 'S/N : ' + (ws.monitorSerial || 'N/A'),
-      etat: (ws.monitorObs || 'Conforme').toUpperCase()
-    },
-    {
-      comp: 'Clavier',
-      sub: 'Périphérique de saisie',
-      desc: ws.keyboard || 'Clavier Dell Standard',
-      specs: 'Format : ' + (ws.keyboardDetails || 'Alpha-numérique USB'),
-      sn: 'Rattaché au poste ' + (ws.pcName || ''),
-      etat: (ws.keyboardObs || 'Conforme').toUpperCase()
-    },
-    {
-      comp: 'Souris',
-      sub: 'Dispositif de pointage',
-      desc: ws.mouse || 'Souris Optique Dell',
-      specs: 'Format : ' + (ws.mouseDetails || 'Souris optique filaire'),
-      sn: 'Rattachée au poste ' + (ws.pcName || ''),
-      etat: (ws.mouseObs || 'Conforme').toUpperCase()
-    },
-    {
-      comp: 'Connectique & Câbles',
-      sub: 'Alimentation & Vidéo',
-      desc: "Lot Câble d'Alimentation & Câble Vidéo",
-      specs: 'Cordon secteur tripolaire 110V/220V + Câble HDMI / DP',
-      sn: 'Lot certifié standard',
-      etat: 'CONFORME'
-    }
-  ];
-
-  const eqRowH = 9.2;
-  for (let i = 0; i < eqRows.length; i++) {
-    const eq = eqRows[i];
-    const curY = y + i * eqRowH;
-    doc.setFillColor(i % 2 === 0 ? 255 : 249, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 252);
-    doc.rect(14, curY, 182, eqRowH, 'FD');
-
-    // Col 1
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(0, 0, 0);
-    doc.text(eq.comp, 16, curY + 3.6);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.8);
-    doc.setTextColor(90, 90, 90);
-    doc.text(eq.sub, 16, curY + 7.2);
-
-    // Col 2
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(0, 0, 0);
-    doc.text(eq.desc, 52, curY + 3.6);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.8);
-    doc.setTextColor(60, 60, 60);
-    const specsLines = doc.splitTextToSize(eq.specs, 74);
-    doc.text(specsLines[0] || '', 52, curY + 7.2);
-
-    // Col 3
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
-    doc.setTextColor(0, 0, 0);
-    doc.text(eq.sn, 130, curY + 5.2);
-
-    // Col 4 : État sobre et propre (PAS de bouton moche)
-    doc.setDrawColor(120, 120, 120);
-    doc.setLineWidth(0.15);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(167, curY + 2.6, 16, 4.2, 'FD');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(5.8);
-    doc.setTextColor(0, 0, 0);
-    doc.text(eq.etat, 175, curY + 5.6, { align: 'center' });
-
-    // Lignes verticales internes
-    doc.line(50, curY, 50, curY + eqRowH);
-    doc.line(128, curY, 128, curY + eqRowH);
-    doc.line(165, curY, 165, curY + eqRowH);
-  }
-
-  y += eqRows.length * eqRowH + 3;
-
-  // 5. Section 3 : Engagement & Décharge (Lebrun S.A., pas de Groupe)
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(100, 116, 139);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(14, y, 182, 17.5, 1, 1, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text('3. ENGAGEMENT FORMEL & DÉCHARGE DE RESPONSABILITÉ', 17, y + 3.4);
-  doc.line(14, y + 4.8, 196, y + 4.8);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(5.8);
-  doc.setTextColor(30, 41, 59);
-  const legalText = "Le collaborateur soussigné certifie expressément avoir reçu en main propre ce jour la totalité des équipements, périphériques et accessoires mentionnés ci-dessus, configurés et reconnus en bon état de fonctionnement. Il s'engage à en assurer la garde vigilante, à les utiliser exclusivement dans le cadre de ses missions professionnelles conformément à la charte informatique et à la Politique de Sécurité des Systèmes d'Information (PSSI) de Lebrun S.A. En cas de départ de l'entreprise, mutation, fin de contrat ou sur simple demande de la DSI ou de la Direction Générale, le matériel devra être immédiatement restitué dans son état d'origine.";
-  const splitLegal = doc.splitTextToSize(legalText, 176);
-  doc.text(splitLegal, 17, y + 7.8);
-
-  y += 17.5 + 3;
-
-  // 6. Section 4 : Visas, Signatures & Sceau Officiel (Entièrement visible, jamais coupée)
-  doc.setFillColor(17, 24, 39);
-  doc.rect(14, y, 182, 4.4, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
-  doc.setTextColor(255, 255, 255);
-  doc.text('4. VISAS, SIGNATURES & VALIDATION OFFICIELLE', 17, y + 3.1);
-
-  y += 4.4 + 1.8;
-  const sigBoxH = 44;
-
-  // Cadre Salarié
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(100, 116, 139);
-  doc.setLineWidth(0.2);
-  doc.rect(14, y, 88, sigBoxH, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.8);
-  doc.setTextColor(0, 0, 0);
-  doc.text('LE COLLABORATEUR / BÉNÉFICIAIRE', 17, y + 4.2);
-  doc.line(14, y + 5.8, 102, y + 5.8);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
-  doc.text('M./Mme ' + (emp.fullName || ''), 17, y + 10.5);
-
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(5.8);
-  doc.setTextColor(80, 80, 80);
-  doc.text('Mention obligatoire : « Lu et approuvé, matériel reçu conforme »', 17, y + 14.2);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text('Date : ______ / ______ / 2026', 17, y + 19);
-
-  doc.setLineDashPattern([1.5, 1.5], 0);
-  doc.line(17, y + 30, 99, y + 30);
-  doc.setLineDashPattern([], 0);
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(5.8);
-  doc.setTextColor(120, 120, 120);
-  doc.text('Signature manuscrite du collaborateur :', 17, y + 34);
-
-  // Cadre DSI
-  doc.setFillColor(255, 255, 255);
-  doc.rect(108, y, 88, sigBoxH, 'FD');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.8);
-  doc.setTextColor(0, 0, 0);
-  doc.text("POUR LA DIRECTION DES SYSTÈMES D'INFORMATION", 111, y + 4.2);
-  doc.line(108, y + 5.8, 196, y + 5.8);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.2);
-  doc.text('Direction Informatique / Lebrun S.A.', 111, y + 10.5);
-
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(5.8);
-  doc.setTextColor(80, 80, 80);
-  doc.text('Mention : « Matériel audité, configuré et remis conforme »', 111, y + 14.2);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text("Date d'émission : " + today, 111, y + 19);
-
-  // Ligne signature DSI
-  doc.setLineDashPattern([1.5, 1.5], 0);
-  doc.line(111, y + 30, 148, y + 30);
-  doc.setLineDashPattern([], 0);
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(5.8);
-  doc.setTextColor(120, 120, 120);
-  doc.text('Signature & Visa DSI :', 111, y + 34);
-
-  // Cadre réservé au Sceau Officiel réel (Laissé vide pour apposition de votre tampon physique)
-  doc.setFillColor(250, 250, 250);
-  doc.setDrawColor(80, 80, 80);
-  doc.setLineDashPattern([1.5, 1.5], 0);
-  doc.rect(152, y + 21, 41, 20, 'FD');
-  doc.setLineDashPattern([], 0);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(5.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text('CADRE RÉSERVÉ AU', 172.5, y + 29, { align: 'center' });
-  doc.text('SCEAU OFFICIEL', 172.5, y + 32.5, { align: 'center' });
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(4.6);
-  doc.setTextColor(100, 100, 100);
-  doc.text('(Tampon physique & visa)', 172.5, y + 36.5, { align: 'center' });
-
-  // 7. Bas de page officiel
-  const footerY = 284;
-  doc.setDrawColor(180, 180, 180);
-  doc.setLineWidth(0.2);
-  doc.line(14, footerY, 196, footerY);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(100, 100, 100);
-  doc.text('Lebrun S.A. • Port-au-Prince, Haïti • Delmas 52 / Pétion-Ville', 14, footerY + 3.8);
-  doc.text("Fiche officielle d'affectation individuelle IT • Exemplaire Original • Page 1 / 1", 196, footerY + 3.8, { align: 'right' });
-}
-
-/**
- * Génère et télécharge directement un fichier PDF vectoriel pur, haute fidélité,
- * sans coupure et instantané.
- */
-export async function downloadSingleAssignmentSheetPDF(emp: Employee): Promise<void> {
-  if (typeof window === 'undefined') return;
-
-  const { default: jsPDF } = await import('jspdf');
-  const origin = window.location.origin;
-
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-    compress: true
-  });
-
-  await renderVectorAssignmentSheet(doc, emp, origin);
-
-  const safeName = (emp.fullName || 'Collaborateur').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-  const safeId = (emp.employeeId || '001').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-  doc.save(`Fiche_Affectation_${safeName}_${safeId}.pdf`);
-}
-
-/**
- * Génère et télécharge un PDF multipages pour l'ensemble des collaborateurs filtrés.
- */
-export async function downloadAllAssignmentSheetsPDF(
-  employees: Employee[],
-  onProgress?: (current: number, total: number) => void
-): Promise<void> {
-  if (typeof window === 'undefined' || !employees || employees.length === 0) return;
-
-  const { default: jsPDF } = await import('jspdf');
-  const origin = window.location.origin;
-
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-    compress: true
-  });
-
-  for (let i = 0; i < employees.length; i++) {
-    if (i > 0) {
-      doc.addPage('a4', 'portrait');
-    }
-    if (onProgress) {
-      onProgress(i + 1, employees.length);
-    }
-    await renderVectorAssignmentSheet(doc, employees[i], origin);
-  }
-
-  doc.save(`Fiches_Affectation_Lebrun_SA_Total_${employees.length}.pdf`);
-}
-
-/**
- * Template HTML/CSS pour l'aperçu à l'écran et pour l'impression navigateur (window.print)
- */
-export function generateAssignmentSheetHTML(emp: Employee, origin: string): string {
-  const leftLogo = `${origin}/Lebrunog.png`;
-  const rightLogo = `${origin}${getCompanyLogo(emp.company)}`;
-  const today = new Date().toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
-  const docRef = `FA-${(emp.company || 'LEB').slice(0, 3).toUpperCase()}-2026-${emp.employeeId || '001'}`;
-
-  const ws = emp.workstation || {
-    type: 'Poste Fixe (Desktop)',
-    pcName: 'Non renseigné',
-    pcSerial: 'N/A',
-    pcSpecs: 'Intel Core i5 - 16 GB RAM - SSD 500 GB - Windows 11 Pro',
-    monitorModel: 'Dell Professional 22"',
-    monitorSerial: 'N/A',
-    monitorObs: 'Conforme',
-    keyboard: 'Clavier Dell Câble',
-    keyboardDetails: 'Alpha-numérique',
-    keyboardObs: 'Conforme',
-    mouse: 'Dell',
-    mouseDetails: 'Souris Bureau (Câble)',
-    mouseObs: 'Conforme',
-    generalState: 'Conforme',
-    observations: 'Conforme'
+  const text = (
+    str: string,
+    x: number,
+    y: number,
+    o: { size: number; bold?: boolean; italic?: boolean; color?: number; align?: 'left' | 'right' | 'center' }
+  ) => {
+    doc.setFont('helvetica', o.bold ? 'bold' : o.italic ? 'italic' : 'normal');
+    doc.setFontSize(o.size);
+    const c = o.color ?? INK;
+    doc.setTextColor(c, c, c);
+    doc.text(str, x, y, { align: o.align || 'left' });
   };
 
+  const hRule = (y: number, x0 = X0, x1 = X1, gray = RULE, width = 0.2) => {
+    doc.setDrawColor(gray, gray, gray);
+    doc.setLineWidth(width);
+    doc.line(x0, y, x1, y);
+  };
+
+  const sectionTitle = (title: string, y: number) => {
+    doc.setCharSpace(0.35);
+    text(title.toUpperCase(), X0, y, { size: 8.5, bold: true });
+    doc.setCharSpace(0);
+    hRule(y + 2.2, X0, X1, INK, 0.35);
+  };
+
+  const drawLogo = (logo: LogoData, side: 'left' | 'right') => {
+    const targetH = 13;
+    const targetW = Math.min(46, targetH * (logo.width / logo.height));
+    const h = targetW / (logo.width / logo.height);
+    const x = side === 'left' ? X0 : X1 - targetW;
+    doc.addImage(logo.dataUrl, 'PNG', x, 12 + (targetH - h) / 2, targetW, h);
+  };
+
+  /** Coupe un texte sans espaces (n° de série) pour qu'il tienne dans la largeur donnée. */
+  const wrapToken = (str: string, maxW: number, size: number): string[] => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(size);
+    const lines: string[] = [];
+    let cur = '';
+    for (const ch of str) {
+      if (cur && doc.getTextWidth(cur + ch) > maxW) {
+        lines.push(cur);
+        cur = ch;
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  // --- En-tête ---
+  if (mainLogo) drawLogo(mainLogo, 'left');
+  else text('LEBRUN S.A.', X0, 21, { size: 13, bold: true });
+  if (companyLogo) drawLogo(companyLogo, 'right');
+  hRule(27, X0, X1, RULE, 0.3);
+
+  // --- Titre ---
+  text("Fiche d'affectation de matériel informatique", X0, 40, { size: 17, bold: true });
+  text('Remise de matériel et décharge de responsabilité', X0, 46.5, { size: 9.5, color: MUTED });
+
+  // --- Références ---
+  const metaY = 55;
+  const metaCols: [string, string, number][] = [
+    ['Référence', m.docRef, X0],
+    ["Date d'émission", m.dateLabel, X0 + 76],
+    ['Site', m.site, X0 + 128]
+  ];
+  hRule(metaY - 3.5, X0, X1);
+  for (const [label, value, x] of metaCols) {
+    text(label.toUpperCase(), x, metaY, { size: 7, color: MUTED });
+    text(value, x, metaY + 4.8, { size: 10, bold: true });
+  }
+  hRule(metaY + 8, X0, X1);
+
+  // --- 1. Collaborateur ---
+  let y = 73;
+  sectionTitle('1. Collaborateur', y);
+  y += 8.5;
+  const colX = [X0, X0 + 88];
+  const colW = 82;
+  for (let i = 0; i < m.person.length; i += 2) {
+    for (let c = 0; c < 2; c++) {
+      const f = m.person[i + c];
+      if (!f) continue;
+      text(f.label.toUpperCase(), colX[c], y, { size: 7, color: MUTED });
+      const lines = doc.splitTextToSize(f.value, colW) as string[];
+      text(lines[0], colX[c], y + 4.6, { size: 10, bold: f.label === 'Nom complet' });
+    }
+    y += 9.8;
+  }
+
+  // --- 2. Matériel remis ---
+  y += 5;
+  sectionTitle('2. Matériel remis', y);
+  y += 7.5;
+
+  const colEquip = X0;
+  const colDesign = X0 + 36.5;
+  const colSerial = X0 + 113;
+  const colState = X1;
+  const designW = 74;
+  const serialW = 38;
+
+  doc.setCharSpace(0.25);
+  text('ÉQUIPEMENT', colEquip, y, { size: 7, bold: true, color: MUTED });
+  text('DÉSIGNATION', colDesign, y, { size: 7, bold: true, color: MUTED });
+  text('N° DE SÉRIE', colSerial, y, { size: 7, bold: true, color: MUTED });
+  doc.setCharSpace(0);
+  text('ÉTAT', colState, y, { size: 7, bold: true, color: MUTED, align: 'right' });
+  hRule(y + 2, X0, X1, RULE, 0.25);
+  y += 2;
+
+  for (const eq of m.equipment) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    const nameLines = (doc.splitTextToSize(eq.name, designW) as string[]).slice(0, 2);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const detailLines = eq.detail ? (doc.splitTextToSize(eq.detail, designW) as string[]).slice(0, 2) : [];
+    const serialLines = wrapToken(eq.serial, serialW, 9).slice(0, 2);
+    const designRows = nameLines.length + detailLines.length;
+    const serialRows = serialLines.length + (eq.serialSub ? 1 : 0);
+    const rowH = Math.max(11, 4.6 + Math.max(designRows, serialRows, 2) * 4.1 + 0.8);
+
+    const top = y + 4.8;
+    text(eq.kind, colEquip, top, { size: 9.5, bold: true });
+    text(eq.kindSub, colEquip, top + 4.2, { size: 8, color: MUTED });
+
+    nameLines.forEach((line, i) => text(line, colDesign, top + i * 4.2, { size: 9.5, bold: true }));
+    detailLines.forEach((line, i) =>
+      text(line, colDesign, top + (nameLines.length + i) * 4.2, { size: 8, color: MUTED })
+    );
+
+    serialLines.forEach((line, i) => text(line, colSerial, top + i * 4.2, { size: 9 }));
+    if (eq.serialSub) text(eq.serialSub, colSerial, top + serialLines.length * 4.2, { size: 8, color: MUTED });
+
+    text(eq.state, colState, top, { size: 9, bold: eq.state === 'Défectueux', align: 'right' });
+
+    y += rowH;
+    hRule(y, X0, X1, RULE, 0.15);
+  }
+
+  if (m.observations) {
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const obsLines = (doc.splitTextToSize(m.observations, CONTENT_W - 26) as string[]).slice(0, 2);
+    text('OBSERVATIONS', X0, y, { size: 7, bold: true, color: MUTED });
+    obsLines.forEach((line, i) => text(line, X0 + 26, y + i * 4.2, { size: 9 }));
+    y += (obsLines.length - 1) * 4.2;
+  }
+
+  // --- 3. Engagement ---
+  y += 8.5;
+  sectionTitle('3. Engagement du collaborateur', y);
+  y += 7.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+  const legalLines = doc.splitTextToSize(m.legalText, CONTENT_W) as string[];
+  doc.text(m.legalText, X0, y, { align: 'justify', maxWidth: CONTENT_W, lineHeightFactor: 1.42 });
+  y += (legalLines.length - 1) * 9 * 0.3528 * 1.42;
+
+  // --- Signatures ---
+  const sigTop = y + 8;
+  const sigW = 82;
+  const sigX = [X0, X1 - sigW];
+  const blocks = [
+    {
+      title: 'Le collaborateur',
+      name: m.fullName,
+      note: 'Mention manuscrite : « Lu et approuvé »',
+      date: 'Date : ____ / ____ / ________',
+      caption: 'Signature'
+    },
+    {
+      title: "Pour la Direction des Systèmes d'Information",
+      name: 'Direction Informatique',
+      note: '',
+      date: `Date : ${m.dateLabel}`,
+      caption: 'Signature et cachet'
+    }
+  ];
+
+  blocks.forEach((b, i) => {
+    const x = sigX[i];
+    doc.setCharSpace(0.25);
+    text(b.title.toUpperCase(), x, sigTop, { size: 7, bold: true, color: MUTED });
+    doc.setCharSpace(0);
+    text(b.name, x, sigTop + 6, { size: 10, bold: true });
+    if (b.note) text(b.note, x, sigTop + 11, { size: 8, italic: true, color: MUTED });
+    text(b.date, x, sigTop + (b.note ? 17 : 12), { size: 9 });
+
+    const lineY = sigTop + 28;
+    hRule(lineY, x, x + sigW, INK, 0.3);
+    text(b.caption, x, lineY + 4, { size: 7.5, color: MUTED });
+  });
+
+  // --- Pied de page ---
+  const footY = PAGE.h - 10;
+  hRule(footY - 4, X0, X1);
+  text('Lebrun S.A. · Port-au-Prince, Haïti', X0, footY, { size: 7.5, color: MUTED });
+  text(m.docRef, X1, footY, { size: 7.5, color: MUTED, align: 'right' });
+}
+
+function newDoc(JsPDF: typeof jsPDF): jsPDF {
+  return new JsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+}
+
+const safeFilePart = (s: string, fallback: string) =>
+  (s || fallback).trim().replace(/[^a-zA-Z0-9_-]/g, '_') || fallback;
+
+/**
+ * Génère et télécharge la fiche d'affectation d'un collaborateur (PDF A4, 1 page).
+ */
+export async function downloadSingleAssignmentSheetPDF(
+  emp: Employee,
+  opts: AssignmentSheetOptions = {}
+): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  const { default: JsPDF } = await import('jspdf');
+  const doc = newDoc(JsPDF);
+  await renderVectorAssignmentSheet(doc, emp, window.location.origin, opts);
+
+  doc.save(`Fiche_Affectation_${safeFilePart(emp.fullName, 'Collaborateur')}_${safeFilePart(emp.employeeId, '001')}.pdf`);
+}
+
+/**
+ * Génère et télécharge un PDF multipages (une fiche par collaborateur).
+ */
+export async function downloadAllAssignmentSheetsPDF(
+  sheets: AssignmentSheet[],
+  onProgress?: (current: number, total: number) => void
+): Promise<void> {
+  if (typeof window === 'undefined' || !sheets || sheets.length === 0) return;
+
+  const { default: JsPDF } = await import('jspdf');
+  const doc = newDoc(JsPDF);
+
+  for (let i = 0; i < sheets.length; i++) {
+    if (i > 0) doc.addPage('a4', 'portrait');
+    onProgress?.(i + 1, sheets.length);
+    await renderVectorAssignmentSheet(doc, sheets[i].employee, window.location.origin, sheets[i].options);
+  }
+
+  doc.save(`Fiches_Affectation_Total_${sheets.length}.pdf`);
+}
+
+/* --------------------- Aperçu écran & impression navigateur ---------------- */
+
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Feuille HTML (aperçu et window.print) — mêmes contenus et mêmes proportions que le PDF.
+ */
+export function generateAssignmentSheetHTML(
+  emp: Employee,
+  origin: string,
+  opts: AssignmentSheetOptions = {}
+): string {
+  const m = buildSheetModel(emp, opts);
+  const e = escapeHtml;
+
+  const mainLogo = `${origin}${MAIN_LOGO}`;
+  const companyLogo = `${origin}${getCompanyLogo(emp.company)}`;
+
+  const personHTML = m.person
+    .map(f => `<div class="field"><div class="k">${e(f.label)}</div><div class="v${f.label === 'Nom complet' ? ' strong' : ''}">${e(f.value)}</div></div>`)
+    .join('');
+
+  const equipmentHTML = m.equipment
+    .map(eq => `
+      <tr>
+        <td><div class="strong">${e(eq.kind)}</div><div class="muted small">${e(eq.kindSub)}</div></td>
+        <td><div class="strong">${e(eq.name)}</div>${eq.detail ? `<div class="muted small">${e(eq.detail)}</div>` : ''}</td>
+        <td><div>${e(eq.serial)}</div>${eq.serialSub ? `<div class="muted small">${e(eq.serialSub)}</div>` : ''}</td>
+        <td class="right${eq.state === 'Défectueux' ? ' strong' : ''}">${e(eq.state)}</td>
+      </tr>`)
+    .join('');
+
   return `
-  <div class="sheet-container">
-    <!-- En-tête : Logos N&B à gauche et à droite -->
-    <div class="header-logos-row">
-      <div class="logo-box-left">
-        <img src="${leftLogo}" class="logo-left" alt="Lebrun S.A." />
-      </div>
-      <div class="header-center-info">
-        <div class="header-org-title">LEBRUN S.A.</div>
-        <div class="header-org-sub">Direction des Systèmes d'Information (DSI) • Service Parc & Matériel</div>
-      </div>
-      <div class="logo-box-right">
-        <img src="${rightLogo}" class="logo-right" alt="${emp.company || 'Filiale'}" />
-      </div>
+  <section class="sheet">
+    <header class="hdr">
+      <img class="logo" src="${mainLogo}" alt="Lebrun S.A." />
+      ${m.showCompanyLogo ? `<img class="logo" src="${companyLogo}" alt="${e(m.companyName)}" />` : ''}
+    </header>
+
+    <h1>Fiche d'affectation de matériel informatique</h1>
+    <p class="subtitle">Remise de matériel et décharge de responsabilité</p>
+
+    <div class="meta">
+      <div><div class="k">Référence</div><div class="v strong">${e(m.docRef)}</div></div>
+      <div><div class="k">Date d'émission</div><div class="v strong">${e(m.dateLabel)}</div></div>
+      <div><div class="k">Site</div><div class="v strong">${e(m.site)}</div></div>
     </div>
 
-    <!-- Bloc Titre Officiel du Document -->
-    <div class="doc-title-block">
-      <h1 class="doc-main-title">FICHE D'AFFECTATION DE MATÉRIEL INFORMATIQUE</h1>
-      <div class="doc-sub-title">Procès-Verbal Officiel de Remise de Matériel & Décharge de Responsabilité</div>
-      <div class="doc-meta-bar">
-        <span class="meta-item"><strong>RÉFÉRENCE :</strong> ${docRef}</span>
-        <span class="meta-sep">|</span>
-        <span class="meta-item"><strong>DATE D'ÉMISSION :</strong> ${today}</span>
-        <span class="meta-sep">|</span>
-        <span class="meta-item"><strong>SITE :</strong> ${emp.site || emp.location || 'Delmas 52'}</span>
-      </div>
-    </div>
+    <h2>1. Collaborateur</h2>
+    <div class="fields">${personHTML}</div>
 
-    <!-- Section 1 : Bénéficiaire -->
-    <div class="section-title">1. IDENTIFICATION DU COLLABORATEUR (BÉNÉFICIAIRE)</div>
-    <table class="data-table">
-      <tr>
-        <td class="label-cell" style="width: 24%;">Nom & Prénom :</td>
-        <td class="value-cell" style="width: 26%;"><strong>${emp.fullName}</strong></td>
-        <td class="label-cell" style="width: 24%;">Matricule Salarié :</td>
-        <td class="value-cell font-mono" style="width: 26%;"><strong>${emp.employeeId}</strong></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Entreprise / Entité :</td>
-        <td class="value-cell"><strong>${emp.company || 'Lebrun S.A.'}</strong></td>
-        <td class="label-cell">Site / Affectation :</td>
-        <td class="value-cell">${emp.site || emp.location || 'Delmas 52'}</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Fonction / Poste :</td>
-        <td class="value-cell">${emp.jobTitle || 'Collaborateur'}</td>
-        <td class="label-cell">Département / Service :</td>
-        <td class="value-cell">${emp.department || 'Opérations'}</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Email Professionnel :</td>
-        <td class="value-cell">${emp.email || 'N/A'}</td>
-        <td class="label-cell">Téléphone de Contact :</td>
-        <td class="value-cell">${emp.phone || 'N/A'}</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Session Windows :</td>
-        <td class="value-cell font-mono">${emp.accounts?.windowsUsername || 'Admin'}</td>
-        <td class="label-cell">Compte ERP / App (GP) :</td>
-        <td class="value-cell font-mono">${emp.accounts?.appUsername || 'N/A'}</td>
-      </tr>
-    </table>
-
-    <!-- Section 2 : Équipements Assignés -->
-    <div class="section-title" style="margin-top: 8px;">2. INVENTAIRE DU MATÉRIEL & ÉQUIPEMENTS ASSIGNÉS</div>
-    <table class="equipment-table">
+    <h2>2. Matériel remis</h2>
+    <table class="equipment">
       <thead>
-        <tr>
-          <th style="width: 22%;">Composant</th>
-          <th style="width: 42%;">Désignation, Marque & Modèle</th>
-          <th style="width: 24%;">N° de Série (S/N) / Hostname</th>
-          <th style="width: 12%; text-align: center;">État</th>
-        </tr>
+        <tr><th style="width:21%">Équipement</th><th style="width:44%">Désignation</th><th style="width:23%">N° de série</th><th class="right" style="width:12%">État</th></tr>
       </thead>
-      <tbody>
-        <tr>
-          <td class="comp-cell">
-            <strong>Ordinateur / UC</strong>
-            <div class="comp-sub">${ws.type || 'Poste Fixe'}</div>
-          </td>
-          <td>
-            <div class="comp-bold">${ws.pcName || 'Dell OptiPlex'}</div>
-            <div class="specs-text">${ws.pcSpecs || 'Intel Core i5 - 16 GB RAM - SSD 500 GB'}</div>
-          </td>
-          <td class="font-mono">
-            <strong>S/N :</strong> ${ws.pcSerial || 'N/A'}
-          </td>
-          <td class="state-cell">
-            <span class="badge">CONFORME</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="comp-cell">
-            <strong>Écran / Moniteur</strong>
-            <div class="comp-sub">Affichage principal</div>
-          </td>
-          <td>
-            <div class="comp-bold">${ws.monitorModel || 'Écran Dell Professional 22"'}</div>
-            <div class="specs-text">Écran haute résolution avec pied réglable</div>
-          </td>
-          <td class="font-mono">
-            <strong>S/N :</strong> ${ws.monitorSerial || 'N/A'}
-          </td>
-          <td class="state-cell">
-            <span class="badge">CONFORME</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="comp-cell">
-            <strong>Clavier</strong>
-            <div class="comp-sub">Périphérique de saisie</div>
-          </td>
-          <td>
-            <div class="comp-bold">${ws.keyboard || 'Clavier Dell Standard'}</div>
-            <div class="specs-text">Format : ${ws.keyboardDetails || 'Alpha-numérique USB'}</div>
-          </td>
-          <td class="font-mono text-muted">
-            Rattaché au poste ${ws.pcName || ''}
-          </td>
-          <td class="state-cell">
-            <span class="badge">CONFORME</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="comp-cell">
-            <strong>Souris</strong>
-            <div class="comp-sub">Dispositif de pointage</div>
-          </td>
-          <td>
-            <div class="comp-bold">${ws.mouse || 'Souris Optique Dell'}</div>
-            <div class="specs-text">Format : ${ws.mouseDetails || 'Souris optique filaire'}</div>
-          </td>
-          <td class="font-mono text-muted">
-            Rattachée au poste ${ws.pcName || ''}
-          </td>
-          <td class="state-cell">
-            <span class="badge">CONFORME</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="comp-cell">
-            <strong>Connectique & Câbles</strong>
-            <div class="comp-sub">Alimentation & Vidéo</div>
-          </td>
-          <td>
-            <div class="comp-bold">Lot Câblage & Alimentation</div>
-            <div class="specs-text">Cordon secteur tripolaire + Câble HDMI/DP</div>
-          </td>
-          <td class="font-mono text-muted">
-            Lot certifié standard
-          </td>
-          <td class="state-cell">
-            <span class="badge">CONFORME</span>
-          </td>
-        </tr>
-      </tbody>
+      <tbody>${equipmentHTML}</tbody>
     </table>
+    ${m.observations ? `<p class="obs"><span class="k">Observations</span>${e(m.observations)}</p>` : ''}
 
-    <!-- Section 3 : Engagement Légal -->
-    <div class="legal-box">
-      <div class="legal-box-title">3. ENGAGEMENT FORMEL & DÉCHARGE DE RESPONSABILITÉ</div>
-      <div class="legal-box-text">
-        Le collaborateur soussigné certifie expressément avoir reçu en main propre ce jour la totalité des équipements, périphériques et accessoires mentionnés ci-dessus, configurés et reconnus en bon état de fonctionnement. Il s'engage à en assurer la garde vigilante, à les utiliser exclusivement dans le cadre de ses missions professionnelles conformément à la charte informatique et à la Politique de Sécurité des Systèmes d'Information (PSSI) de Lebrun S.A. En cas de départ de l'entreprise, mutation, fin de contrat ou sur simple demande de la DSI ou de la Direction Générale, le matériel devra être immédiatement restitué dans son état d'origine.
+    <h2>3. Engagement du collaborateur</h2>
+    <p class="legal">${e(m.legalText)}</p>
+
+    <div class="signatures">
+      <div class="sig">
+        <div class="k">Le collaborateur</div>
+        <div class="v strong">${e(m.fullName)}</div>
+        <div class="muted small italic">Mention manuscrite : « Lu et approuvé »</div>
+        <div class="date">Date : ____ / ____ / ________</div>
+        <div class="sig-line"><span class="muted small">Signature</span></div>
+      </div>
+      <div class="sig">
+        <div class="k">Pour la Direction des Systèmes d'Information</div>
+        <div class="v strong">Direction Informatique</div>
+        <div class="date">Date : ${e(m.dateLabel)}</div>
+        <div class="sig-line"><span class="muted small">Signature et cachet</span></div>
       </div>
     </div>
 
-    <!-- Section 4 : Signatures & Sceau Physique (Sans faux sceau) -->
-    <div class="section-title" style="margin-top: 8px;">4. VISAS, SIGNATURES & VALIDATION OFFICIELLE</div>
-    <div class="signatures-grid">
-      <!-- Cadre Salarié -->
-      <div class="sig-box">
-        <div class="sig-header">LE COLLABORATEUR / BÉNÉFICIAIRE</div>
-        <div class="sig-name">M./Mme ${emp.fullName}</div>
-        <div class="sig-mention">Mention manuscrite obligatoire : <em>« Lu et approuvé, matériel reçu conforme »</em></div>
-        <div class="sig-date">Date : ______ / ______ / 2026</div>
-        <div class="sig-space">
-          <span class="sig-placeholder">Signature manuscrite du collaborateur :</span>
-        </div>
-      </div>
-
-      <!-- Cadre DSI avec espace réservé pour le vrai sceau physique -->
-      <div class="sig-box">
-        <div class="sig-header">POUR LA DIRECTION DES SYSTÈMES D'INFORMATION (DSI)</div>
-        <div class="sig-name">Direction Informatique / Lebrun S.A.</div>
-        <div class="sig-mention">Mention : <em>« Matériel audité, configuré et remis conforme »</em></div>
-        <div class="sig-date">Date : ${today}</div>
-        <div class="dsi-sig-row">
-          <div class="sig-space-dsi">
-            <span class="sig-placeholder">Signature & Visa DSI :</span>
-          </div>
-          <!-- Emplacement propre pour apposition du vrai sceau physique de l'entreprise -->
-          <div class="physical-stamp-zone">
-            <div class="stamp-zone-header">CADRE RÉSERVÉ AU SCEAU OFFICIEL</div>
-            <div class="stamp-zone-desc">(Apposition du tampon physique)</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bas de page officiel -->
-    <div class="doc-footer">
-      <span>Lebrun S.A. • Port-au-Prince, Haïti • Delmas 52 / Pétion-Ville</span>
-      <span>Fiche officielle d'affectation individuelle IT • Exemplaire Original • Page 1 / 1</span>
-      <span>Système Centralisé de Gestion IT</span>
-    </div>
-  </div>
+    <footer class="foot">
+      <span>Lebrun S.A. · Port-au-Prince, Haïti</span>
+      <span>${e(m.docRef)}</span>
+    </footer>
+  </section>
   `;
 }
 
 export function getPrintCSS(): string {
   return `
-    @page {
-      size: A4 portrait;
-      margin: 6mm 10mm;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #ffffff; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      color: #000000;
-      background: #ffffff;
-      font-size: 9.5px;
-      line-height: 1.3;
+      font-family: Helvetica, Arial, sans-serif;
+      color: #111111;
+      font-size: 10pt;
+      line-height: 1.35;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .sheet-container {
-      width: 100%;
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 6px 10px;
+
+    .sheet {
+      position: relative;
+      width: 210mm;
+      height: 296mm;
+      padding: 12mm 18mm 0;
       background: #ffffff;
+      overflow: hidden;
+      break-after: page;
       page-break-after: always;
-      box-sizing: border-box;
     }
-    .sheet-container:last-child {
-      page-break-after: auto;
-    }
+    .sheet:last-child { break-after: auto; page-break-after: auto; }
 
-    /* En-tête */
-    .header-logos-row {
+    .k {
+      font-size: 7pt;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #000000;
+    }
+    .v { font-size: 10pt; }
+    .strong { font-weight: 700; }
+    .muted { color: #000000; }
+    .small { font-size: 8pt; }
+    .italic { font-style: italic; }
+    .right { text-align: right; }
+
+    .hdr {
       display: flex;
+      align-items: flex-start;
       justify-content: space-between;
-      align-items: center;
-      padding-bottom: 6px;
-      border-bottom: 1.5px solid #000000;
-      margin-bottom: 6px;
+      height: 15mm;
+      border-bottom: 0.3mm solid #cdcdcd;
     }
-    .logo-box-left, .logo-box-right {
-      display: flex;
-      align-items: center;
-    }
-    .header-center-info {
-      text-align: center;
-      flex: 1;
-      padding: 0 10px;
-    }
-    .header-org-title {
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: #000000;
-      text-transform: uppercase;
-    }
-    .header-org-sub {
-      font-size: 7.5px;
-      color: #4b5563;
-      margin-top: 1px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    img.logo-left, img.logo-right {
-      height: 44px;
-      max-width: 150px;
+    .logo {
+      max-height: 13mm;
+      max-width: 46mm;
       object-fit: contain;
-      filter: grayscale(100%);
-      -webkit-filter: grayscale(100%);
     }
 
-    /* Titre */
-    .doc-title-block {
-      text-align: center;
-      margin-bottom: 6px;
+    h1 { font-size: 17pt; font-weight: 700; line-height: 1.15; margin-top: 5mm; }
+    .subtitle { font-size: 9.5pt; color: #000000; margin-top: 1.6mm; }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 76mm 52mm 1fr;
+      margin-top: 2.5mm;
+      padding: 2.2mm 0 2.4mm;
+      border-top: 0.2mm solid #cdcdcd;
+      border-bottom: 0.2mm solid #cdcdcd;
     }
-    .doc-main-title {
-      font-size: 13px;
-      font-weight: 900;
-      color: #000000;
-      letter-spacing: 0.5px;
-      margin: 0 0 1px 0;
+    .meta .v { margin-top: 1mm; }
+
+    h2 {
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-    }
-    .doc-sub-title {
-      font-size: 8.5px;
-      color: #374151;
-      font-style: italic;
-    }
-    .doc-meta-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 4px;
-      padding: 2.5px 10px;
-      background: #f3f4f6;
-      border: 1px solid #9ca3af;
-      border-radius: 3px;
-      font-size: 8.5px;
-      color: #111827;
-    }
-    .meta-item {
-      display: inline-block;
-    }
-    .meta-sep {
-      color: #9ca3af;
+      padding-bottom: 1.6mm;
+      border-bottom: 0.35mm solid #111111;
+      margin: 6mm 0 3mm;
     }
 
-    /* Titres sections */
-    .section-title {
-      font-size: 9px;
-      font-weight: 800;
-      color: #ffffff;
-      background: #111827;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      padding: 2.5px 6px;
-      margin-bottom: 3px;
+    .fields {
+      display: grid;
+      grid-template-columns: 88mm 1fr;
+      row-gap: 2mm;
     }
+    .field .v { margin-top: 0.8mm; overflow-wrap: anywhere; }
 
-    /* Tableaux */
-    .data-table, .equipment-table {
+    table.equipment {
       width: 100%;
       border-collapse: collapse;
-      font-size: 9px;
-      margin-bottom: 3px;
+      table-layout: fixed;
     }
-    .data-table td {
-      border: 1px solid #cbd5e1;
-      padding: 3px 6px;
-    }
-    .label-cell {
-      background: #f8fafc;
-      color: #374151;
-      font-weight: 600;
-    }
-    .value-cell {
-      color: #000000;
-    }
-
-    /* Tableau équipements */
-    .equipment-table th {
-      background: #374151;
-      color: #ffffff;
-      font-size: 8px;
-      font-weight: 700;
+    .equipment th {
+      font-size: 7pt;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
-      padding: 3.5px 6px;
+      color: #000000;
+      font-weight: 700;
       text-align: left;
-      border: 1px solid #374151;
+      padding: 0 0 1.6mm;
+      border-bottom: 0.25mm solid #cdcdcd;
     }
-    .equipment-table td {
-      border: 1px solid #cbd5e1;
-      padding: 3px 6px;
-      vertical-align: middle;
+    .equipment th.right { text-align: right; }
+    .equipment td {
+      vertical-align: top;
+      padding: 1.4mm 2mm 1.4mm 0;
+      border-bottom: 0.15mm solid #cdcdcd;
+      font-size: 9.5pt;
+      overflow-wrap: anywhere;
     }
-    .equipment-table tbody tr:nth-child(even) {
-      background: #f8fafc;
-    }
-    .comp-cell {
-      font-size: 9px;
-    }
-    .comp-sub {
-      font-size: 7.5px;
-      color: #64748b;
-    }
-    .comp-bold {
-      font-weight: 700;
-      color: #000000;
-    }
-    .specs-text {
-      font-size: 7.5px;
-      color: #475569;
-    }
-    .font-mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 8.5px;
-    }
-    .text-muted {
-      color: #64748b;
-    }
-    .state-cell {
-      text-align: center;
-    }
+    .equipment td.right { padding-right: 0; }
+    .equipment td .small { margin-top: 0.4mm; }
 
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 1px 5px;
-      border-radius: 2px;
-      font-size: 7.5px;
-      font-weight: 700;
-      background: #ffffff;
-      color: #000000;
-      border: 1px solid #475569;
-      letter-spacing: 0.2px;
-    }
+    .obs { margin-top: 3.5mm; font-size: 9pt; }
+    .obs .k { display: inline-block; width: 26mm; font-weight: 700; }
 
-    /* Cadre légal */
-    .legal-box {
-      border: 1px solid #64748b;
-      background: #f8fafc;
-      border-radius: 3px;
-      padding: 4px 7px;
-      margin-top: 5px;
-    }
-    .legal-box-title {
-      font-size: 8px;
-      font-weight: 800;
+    .legal {
+      font-size: 9pt;
+      line-height: 1.42;
       color: #000000;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 2px;
-      border-bottom: 1px solid #cbd5e1;
-      padding-bottom: 1.5px;
-    }
-    .legal-box-text {
-      font-size: 7.5px;
-      color: #1e293b;
-      line-height: 1.3;
       text-align: justify;
     }
 
-    /* Signatures */
-    .signatures-grid {
+    .signatures {
+      margin-top: 6mm;
       display: flex;
-      gap: 8px;
-      margin-top: 4px;
+      justify-content: space-between;
     }
-    .sig-box {
-      flex: 1;
-      border: 1px solid #64748b;
-      border-radius: 3px;
-      padding: 5px 7px;
-      background: #ffffff;
+    .sig { width: 82mm; min-height: 33mm; display: flex; flex-direction: column; }
+    .sig .v { margin-top: 1.4mm; }
+    .sig .date { font-size: 9pt; margin-top: 2mm; }
+    .sig-line {
+      margin-top: auto;
+      border-top: 0.3mm solid #111111;
+      padding-top: 1.2mm;
     }
-    .sig-header {
-      font-size: 8px;
-      font-weight: 800;
+
+    .foot {
+      position: absolute;
+      left: 18mm;
+      right: 18mm;
+      bottom: 6mm;
+      display: flex;
+      justify-content: space-between;
+      padding-top: 3mm;
+      border-top: 0.2mm solid #cdcdcd;
+      font-size: 7.5pt;
       color: #000000;
-      text-transform: uppercase;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 1.5px;
-      margin-bottom: 2.5px;
-      letter-spacing: 0.3px;
-    }
-    .sig-name {
-      font-size: 8.5px;
-      font-weight: 700;
-      color: #111827;
-    }
-    .sig-mention {
-      font-size: 7px;
-      color: #64748b;
-      margin-top: 1px;
-    }
-    .sig-date {
-      font-size: 7.5px;
-      font-weight: 600;
-      color: #334155;
-      margin-top: 2px;
-    }
-    .sig-space {
-      height: 42px;
-      margin-top: 3px;
-      border-top: 1px dashed #94a3b8;
-      padding-top: 2px;
-    }
-    .sig-placeholder {
-      font-size: 7px;
-      color: #94a3b8;
-      font-style: italic;
     }
 
-    /* Zone signature DSI et Sceau physique */
-    .dsi-sig-row {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 6px;
-      margin-top: 3px;
-    }
-    .sig-space-dsi {
-      flex: 1;
-      height: 42px;
-      border-top: 1px dashed #94a3b8;
-      padding-top: 2px;
-    }
-
-    /* Emplacement réservé au vrai Sceau physique */
-    .physical-stamp-zone {
-      width: 140px;
-      height: 42px;
-      border: 1px dashed #475569;
-      border-radius: 3px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      background: #fafafa;
-      padding: 2px 3px;
-    }
-    .stamp-zone-header {
-      font-size: 6.5px;
-      font-weight: 800;
-      color: #111827;
-      text-transform: uppercase;
-      letter-spacing: 0.2px;
-    }
-    .stamp-zone-desc {
-      font-size: 5.5px;
-      color: #64748b;
-      margin-top: 1px;
-    }
-
-    /* Bas de page */
-    .doc-footer {
-      display: flex;
-      justify-content: space-between;
-      border-top: 1px solid #cbd5e1;
-      padding-top: 4px;
-      margin-top: 6px;
-      font-size: 6.5px;
-      color: #64748b;
-    }
-
-    @media print {
-      body {
-        margin: 0;
-      }
-      .sheet-container {
-        padding: 0;
-        margin: 0 auto;
-      }
+    @media screen {
+      html, body { background: #e5e7eb; }
+      body { padding: 24px 0; }
+      .sheet { margin: 0 auto 24px; box-shadow: 0 1px 10px rgba(0, 0, 0, 0.2); }
     }
   `;
 }
 
-export function getFullPrintHTML(sheetsHTML: string): string {
+export function getFullPrintHTML(sheetsHTML: string, autoPrint = true): string {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Fiches d'Affectation Matériel IT - Lebrun S.A.</title>
+  <title>Fiches d'affectation - matériel informatique</title>
   <style>
     ${getPrintCSS()}
   </style>
 </head>
 <body>
   ${sheetsHTML}
-  <script>
+  ${autoPrint
+    ? `<script>
     window.onload = function() {
-      setTimeout(function() {
-        window.print();
-      }, 300);
+      setTimeout(function() { window.print(); }, 300);
     };
-  </script>
+  </script>`
+    : ''}
 </body>
 </html>`;
 }
 
-export function printSingleAssignmentSheet(emp: Employee): void {
+export function printSingleAssignmentSheet(emp: Employee, opts: AssignmentSheetOptions = {}): void {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const sheetContent = generateAssignmentSheetHTML(emp, origin);
-  const fullHTML = getFullPrintHTML(sheetContent);
+  const fullHTML = getFullPrintHTML(generateAssignmentSheetHTML(emp, origin, opts));
 
   const printWindow = window.open('', '_blank', 'width=920,height=1100');
   if (printWindow) {
@@ -1141,10 +781,10 @@ export function printSingleAssignmentSheet(emp: Employee): void {
   }
 }
 
-export function printAllAssignmentSheets(employees: Employee[]): void {
+export function printAllAssignmentSheets(sheets: AssignmentSheet[]): void {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const sheets = employees.map(emp => generateAssignmentSheetHTML(emp, origin)).join('\n');
-  const fullHTML = getFullPrintHTML(sheets);
+  const sheetsHTML = sheets.map(s => generateAssignmentSheetHTML(s.employee, origin, s.options)).join('\n');
+  const fullHTML = getFullPrintHTML(sheetsHTML);
 
   const printWindow = window.open('', '_blank', 'width=920,height=1100');
   if (printWindow) {

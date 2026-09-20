@@ -27,7 +27,6 @@ import {
   Layers,
   KeyRound
 } from 'lucide-react';
-import { downloadSingleAssignmentSheetPDF } from '@/lib/printAssignmentSheet';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
 
@@ -38,7 +37,8 @@ export default function PersonnelView() {
     deleteEmployee, 
     getEmployeeAssignedAssets, 
     exportCSV,
-    applicationAccounts
+    applicationAccounts,
+    downloadAssignmentSheet
   } = useInventory();
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -184,7 +184,7 @@ export default function PersonnelView() {
           </button>
           <button
             type="button"
-            onClick={() => downloadSingleAssignmentSheetPDF(emp)}
+            onClick={() => downloadAssignmentSheet(emp)}
             title="Télécharger la Fiche d'Affectation (PDF)"
             className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
           >
@@ -596,7 +596,7 @@ export default function PersonnelView() {
               <button
                 onClick={() => {
                   if (selectedEmployee) {
-                    downloadSingleAssignmentSheetPDF(selectedEmployee);
+                    downloadAssignmentSheet(selectedEmployee);
                   }
                 }}
                 className="px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"

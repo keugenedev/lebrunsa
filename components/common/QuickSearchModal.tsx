@@ -8,8 +8,10 @@ import {
   Laptop, 
   Users, 
   Barcode, 
-  ArrowRight, 
-  Printer
+  ArrowRight,
+  Printer,
+  FileText,
+  Smartphone
 } from 'lucide-react';
 
 export default function QuickSearchModal() {
@@ -18,8 +20,11 @@ export default function QuickSearchModal() {
     setIsSpotlightOpen, 
     printers,
     itAssets, 
-    employees, 
-    setActiveTab 
+    employees,
+    documents,
+    phones,
+    setActiveTab,
+    setSearchQuery
   } = useInventory();
 
   const [query, setQuery] = useState('');
@@ -73,6 +78,30 @@ export default function QuickSearchModal() {
       icon: Users,
       tab: 'personnel' as const,
       data: e
+    })),
+    // Téléphones (recherche par marque, modèle, IMEI ou personne)
+    ...phones.map(p => ({
+      id: p.id,
+      name: `${p.brand} ${p.model}`,
+      subtitle: `${p.assignedTo || 'Non attribué'} • ${p.company}${p.imei1 ? ` • IMEI ${p.imei1}` : ''}${p.imei2 ? ` / ${p.imei2}` : ''}`,
+      tag: p.assetTag,
+      category: 'phones',
+      typeLabel: 'Téléphone',
+      icon: Smartphone,
+      tab: 'phones' as const,
+      data: p
+    })),
+    // Documents & fiches d'affectation (recherche par référence)
+    ...documents.map(d => ({
+      id: d.id,
+      name: d.title,
+      subtitle: `${d.category} • ${d.company} • ${d.author}`,
+      tag: d.reference || 'REF-N/A',
+      category: 'documents',
+      typeLabel: 'Document',
+      icon: FileText,
+      tab: 'documents' as const,
+      data: d
     }))
   ];
 
@@ -99,7 +128,7 @@ export default function QuickSearchModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher imprimante, IP, poste Dell, numéro de série, collaborateur..."
+            placeholder="Rechercher imprimante, IP, poste Dell, n° de série, collaborateur, référence de document..."
             className="flex-1 bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden font-medium"
           />
 
@@ -118,7 +147,9 @@ export default function QuickSearchModal() {
             { id: 'all', label: 'Tous les actifs' },
             { id: 'printers', label: 'Imprimantes' },
             { id: 'it', label: 'Postes Dell' },
-            { id: 'personnel', label: 'Personnel' }
+            { id: 'personnel', label: 'Personnel' },
+            { id: 'phones', label: 'Téléphones' },
+            { id: 'documents', label: 'Documents' }
           ].map(f => (
             <button
               key={f.id}
@@ -147,6 +178,8 @@ export default function QuickSearchModal() {
                 <div
                   key={`${item.id || item.tag || 'item'}-${idx}`}
                   onClick={() => {
+                    // Un document s'ouvre déjà filtré sur sa référence
+                    if (item.category === 'documents') setSearchQuery(item.tag);
                     setActiveTab(item.tab);
                     setIsSpotlightOpen(false);
                   }}

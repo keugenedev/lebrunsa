@@ -19,15 +19,19 @@ import {
   Monitor,
   Keyboard,
   Mouse,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import AssignmentSheetModal from './AssignmentSheetModal';
+import IncidentReportForm from './IncidentReportForm';
 import { 
   printSingleAssignmentSheet, 
   printAllAssignmentSheets,
   downloadSingleAssignmentSheetPDF,
-  downloadAllAssignmentSheetsPDF
+  downloadAllAssignmentSheetsPDF,
+  buildAssignmentDocRef
 } from '@/lib/printAssignmentSheet';
+import { downloadPhoneSheetPDF } from '@/lib/printPhoneSheet';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
 const CATEGORIES: DocumentCategory[] = [
@@ -44,6 +48,11 @@ export default function DocumentsView() {
   const {
     documents,
     employees,
+    itAssets,
+    phones,
+    getAssignmentSheet,
+    registerAssignmentSheets,
+    downloadAssignmentSheet,
     openDocumentModal,
     deleteDocument,
     exportCSV,
@@ -55,7 +64,7 @@ export default function DocumentsView() {
   const [deletingDoc, setDeletingDoc] = useState<DocumentItem | null>(null);
 
   // Sub-tab selection: 'assignment_sheets' by default
-  const [activeSubTab, setActiveSubTab] = useState<'assignment_sheets' | 'repository'>('assignment_sheets');
+  const [activeSubTab, setActiveSubTab] = useState<'assignment_sheets' | 'repository' | 'incident'>('assignment_sheets');
 
   // Sheet Modal State
   const [selectedEmpForSheet, setSelectedEmpForSheet] = useState<Employee | null>(null);
@@ -79,6 +88,16 @@ export default function DocumentsView() {
   const effectiveSheetSearch = sheetSearch || globalSearch || '';
   const effectiveRepoSearch = repoSearch || globalSearch || '';
 
+  // Référence de la fiche de chaque collaborateur (celle enregistrée dans la base, sinon celle qui sera émise)
+  const sheetRefs = useMemo(() => {
+    const refs = new Map<string, string>();
+    employees.forEach(emp => {
+      const sheet = getAssignmentSheet(emp);
+      refs.set(emp.id, buildAssignmentDocRef(sheet.employee, sheet.options));
+    });
+    return refs;
+  }, [employees, getAssignmentSheet]);
+
   // Filtered Employees with Assigned Equipment
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
@@ -97,8 +116,9 @@ export default function DocumentsView() {
         const matchesPC = emp.workstation?.pcName?.toLowerCase().includes(query) || false;
         const matchesSerial = emp.workstation?.pcSerial?.toLowerCase().includes(query) || false;
         const matchesMonitor = emp.workstation?.monitorSerial?.toLowerCase().includes(query) || false;
+        const matchesRef = sheetRefs.get(emp.id)?.toLowerCase().includes(query) || false;
 
-        return matchesName || matchesId || matchesCompany || matchesSite || matchesJob || matchesPC || matchesSerial || matchesMonitor;
+        return matchesName || matchesId || matchesCompany || matchesSite || matchesJob || matchesPC || matchesSerial || matchesMonitor || matchesRef;
       }
       return true;
     }).sort((a, b) => {
@@ -106,7 +126,7 @@ export default function DocumentsView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [employees, sheetCompanyFilter, effectiveSheetSearch]);
+  }, [employees, sheetCompanyFilter, effectiveSheetSearch, sheetRefs]);
 
   // Overall calculations for assignment sheets (NO PRICE)
   const sheetStats = useMemo(() => {
@@ -176,7 +196,7 @@ export default function DocumentsView() {
   const handleDownloadSingle = async (emp: Employee) => {
     try {
       setDownloadingId(emp.id);
-      await downloadSingleAssignmentSheetPDF(emp);
+      await downloadAssignmentSheet(emp);
       showToast?.({
         title: 'Téléchargement terminé',
         message: `Fiche d'affectation téléchargée pour ${emp.fullName}`,
@@ -199,7 +219,12 @@ export default function DocumentsView() {
     try {
       setIsDownloadingAll(true);
       setBatchProgress({ current: 0, total: filteredEmployees.length });
-      await downloadAllAssignmentSheetsPDF(filteredEmployees, (current, total) => {
+      await registerAssignmentSheets(filteredEmployees.map(emp => ({ emp })));
+      const sheets = filteredEmployees.map(emp => {
+        const s = getAssignmentSheet(emp);
+        return { employee: s.employee, options: s.options };
+      });
+      await downloadAllAssignmentSheetsPDF(sheets, (current, total) => {
         setBatchProgress({ current, total });
       });
       showToast?.({
@@ -225,6 +250,43 @@ export default function DocumentsView() {
   };
 
   const handleDownloadDoc = (doc: DocumentItem) => {
+    // Fiche d'affectation créée automatiquement : on régénère le vrai PDF
+    const assignment = doc.url?.match(/^assignment:\/\/([^/]+)\/(.+)$/);
+    if (assignment) {
+      const emp = employees.find(e => e.id === decodeURIComponent(assignment[1]));
+      const asset = itAssets.find(a => a.id === decodeURIComponent(assignment[2]));
+      if (emp) {
+        const date = doc.createdAt ? new Date(doc.createdAt) : undefined;
+        downloadSingleAssignmentSheetPDF(
+          { ...emp, workstation: asset?.workstation || emp.workstation },
+          { assetTag: asset?.assetTag, date, reference: doc.reference }
+        ).catch(err => {
+          console.error('Erreur téléchargement PDF:', err);
+          showToast({ title: 'Erreur', message: 'Erreur lors du téléchargement du PDF', type: 'error' });
+        });
+        return;
+      }
+    }
+
+    // Fiche d'affectation de téléphone créée automatiquement : on régénère le vrai PDF
+    const phoneRef = doc.url?.match(/^phone:\/\/(.+)$/);
+    if (phoneRef) {
+      const phone = phones.find(p => p.id === decodeURIComponent(phoneRef[1]));
+      if (phone) {
+        const owner = employees.find(e =>
+          e.employeeId === phone.assignedPersonnelId ||
+          e.id === phone.assignedPersonnelId ||
+          (phone.assignedTo && e.fullName.toLowerCase() === phone.assignedTo.toLowerCase())
+        );
+        const date = doc.createdAt ? new Date(doc.createdAt) : undefined;
+        downloadPhoneSheetPDF(phone, owner, { date, reference: doc.reference }).catch(err => {
+          console.error('Erreur téléchargement PDF:', err);
+          showToast({ title: 'Erreur', message: 'Erreur lors du téléchargement du PDF', type: 'error' });
+        });
+        return;
+      }
+    }
+
     const content = `========================================================
 LEBRUN S.A. - DOCUMENT OFFICIEL IT
 ========================================================
@@ -324,7 +386,15 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 </span>
               </button>
               <button
-                onClick={() => printAllAssignmentSheets(filteredEmployees)}
+                onClick={() => {
+                  void registerAssignmentSheets(filteredEmployees.map(emp => ({ emp })));
+                  printAllAssignmentSheets(
+                    filteredEmployees.map(emp => {
+                      const s = getAssignmentSheet(emp);
+                      return { employee: s.employee, options: s.options };
+                    })
+                  );
+                }}
                 className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
                 title="Imprimer directement toutes les fiches d'affectation"
               >
@@ -340,7 +410,7 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 <span>Export Excel</span>
               </button>
             </>
-          ) : (
+          ) : activeSubTab === 'repository' ? (
             <>
               <button
                 onClick={() => openDocumentModal()}
@@ -358,7 +428,7 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 <span>Export Excel</span>
               </button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -397,7 +467,21 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
             {documents.length}
           </span>
         </button>
+
+        <button
+          onClick={() => setActiveSubTab('incident')}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+            activeSubTab === 'incident'
+              ? 'bg-slate-900 text-white font-semibold shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium'
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Rapport d&apos;incident</span>
+        </button>
       </div>
+
+      {activeSubTab === 'incident' && <IncidentReportForm />}
 
       {/* ========================================================================= */}
       {/* SUB-TAB 1: FICHES D'AFFECTATION MATÉRIEL (PDF)                           */}
@@ -435,7 +519,7 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 <Search className="w-3.5 h-3.5 absolute left-3 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Rechercher collaborateur par nom, matricule, PC, numéro de série, écran, clavier..."
+                  placeholder="Rechercher par nom, matricule, référence de fiche, PC, numéro de série, écran..."
                   value={sheetSearch}
                   onChange={(e) => setSheetSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
@@ -466,15 +550,15 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                 <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
                     {/* Première colonne: Nom de la personne & Coordonnées */}
-                    <th className="py-3 px-3.5" style={{ width: '30%' }}>
+                    <th className="py-3 px-3.5" style={{ width: '26%' }}>
                       Nom de la personne & Coordonnées
                     </th>
                     {/* Équipements assignés avec détails complets (clavier, souris, écran, PC) */}
-                    <th className="py-3 px-3.5" style={{ width: '50%' }}>
+                    <th className="py-3 px-3.5" style={{ width: '44%' }}>
                       Équipements Assignés (Détails Complets)
                     </th>
                     {/* Statut Fiche & Visas */}
-                    <th className="py-3 px-3.5 text-center" style={{ width: '10%' }}>
+                    <th className="py-3 px-3.5 text-center" style={{ width: '18%' }}>
                       Statut Fiche
                     </th>
                     {/* Actions / Téléchargement & Impression PDF */}
@@ -595,7 +679,9 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border border-slate-700 bg-white text-slate-900 uppercase tracking-wide">
                               Conforme
                             </span>
-                            <div className="text-[9px] text-slate-500 mt-0.5">Visas prêts</div>
+                            <div className="text-[9px] font-mono text-slate-500 mt-1 break-all leading-tight" title="Référence de la fiche (enregistrée dans la base)">
+                              {sheetRefs.get(emp.id)}
+                            </div>
                           </td>
 
                           {/* 4. Actions / Télécharger PDF, Imprimer, Aperçu */}
@@ -618,7 +704,11 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
 
                               {/* Direct Print */}
                               <button
-                                onClick={() => printSingleAssignmentSheet(emp)}
+                                onClick={() => {
+                                  const s = getAssignmentSheet(emp);
+                                  void registerAssignmentSheets([{ emp }]);
+                                  printSingleAssignmentSheet(s.employee, s.options);
+                                }}
                                 className="h-7 flex items-center gap-1 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold shadow-2xs transition-all cursor-pointer active:scale-95"
                                 title="Imprimer la fiche individuelle"
                               >

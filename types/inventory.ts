@@ -6,6 +6,7 @@ export type NavigationTab =
   | 'printers'
   | 'network'
   | 'ups'
+  | 'phones'
   | 'applications'
   | 'personnel'
   | 'accounts'
@@ -98,6 +99,23 @@ export interface NetworkAsset {
   macAddress: string;
   status: string;
   observations: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Téléphone / portable, avec la personne à qui il est associé. IMEI 1 et IMEI 2 sont facultatifs. */
+export interface PhoneAsset {
+  id: string;
+  assetTag: string; // ex: TEL-LEB-001
+  company: string;
+  site: string;
+  brand: string; // Marque
+  model: string; // Modèle
+  imei1?: string;
+  imei2?: string;
+  assignedPersonnelId?: string; // matricule du collaborateur (Employee.employeeId)
+  assignedTo?: string; // nom complet du collaborateur
+  observations?: string;
   createdAt?: string;
   updatedAt?: string;
 }

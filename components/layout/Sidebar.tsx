@@ -14,7 +14,8 @@ import {
   Zap, 
   KeyRound,
   UserCheck,
-  FileText
+  FileText,
+  Smartphone
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -30,6 +31,7 @@ export default function Sidebar() {
     applicationAccounts,
     itAccounts,
     documents,
+    phones,
     logout,
     currentUser
   } = useInventory();
@@ -49,6 +51,7 @@ export default function Sidebar() {
     { id: 'personnel', label: 'Personnel', count: employees.length, icon: Users },
     { id: 'accounts', label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck },
     { id: 'documents', label: 'Documents', count: documents?.length || 0, icon: FileText },
+    { id: 'phones', label: 'Téléphones', count: phones.length, icon: Smartphone },
     { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
     { id: 'settings', label: 'Configuration', icon: Settings }
   ];

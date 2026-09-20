@@ -10,6 +10,7 @@ import PrintersView from '@/components/printers/PrintersView';
 import PersonnelView from '@/components/personnel/PersonnelView';
 import NetworkView from '@/components/network/NetworkView';
 import UPSView from '@/components/ups/UPSView';
+import PhonesView from '@/components/phones/PhonesView';
 import ApplicationsView from '@/components/applications/ApplicationsView';
 import AccountsView from '@/components/accounts/AccountsView';
 import DocumentsView from '@/components/documents/DocumentsView';
@@ -22,6 +23,7 @@ import EmployeeModal from '@/components/personnel/EmployeeModal';
 import PrinterModal from '@/components/printers/PrinterModal';
 import NetworkModal from '@/components/network/NetworkModal';
 import UPSModal from '@/components/ups/UPSModal';
+import PhoneModal from '@/components/phones/PhoneModal';
 import ApplicationModal from '@/components/applications/ApplicationModal';
 import AccountModal from '@/components/accounts/AccountModal';
 import DocumentModal from '@/components/documents/DocumentModal';
@@ -74,6 +76,8 @@ function MainContent() {
         return <AccountsView />;
       case 'documents':
         return <DocumentsView />;
+      case 'phones':
+        return <PhonesView />;
       case 'settings':
         return <SettingsView />;
       default:
@@ -109,6 +113,7 @@ function MainContent() {
       <PrinterModal />
       <NetworkModal />
       <UPSModal />
+      <PhoneModal />
       <ApplicationModal />
       <AccountModal />
       <DocumentModal />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ITAsset,
   TelecomPlan,
@@ -12,6 +12,7 @@ import {
   PrinterAsset,
   NetworkAsset,
   UPSAsset,
+  PhoneAsset,
   ApplicationAccount,
   AssetCategory,
   AnyAsset,
@@ -41,6 +42,88 @@ import {
 } from '@/data/initialData';
 import { supabase } from '@/lib/supabase';
 import { downloadExcel, downloadExcelCSV } from '@/lib/exportExcel';
+import {
+  AssignmentSheetOptions,
+  buildAssignmentDocRef,
+  downloadSingleAssignmentSheetPDF
+} from '@/lib/printAssignmentSheet';
+import { buildPhoneDocRef, downloadPhoneSheetPDF, PhoneSheetOptions } from '@/lib/printPhoneSheet';
+import { generatePhoneCode } from '@/lib/phones';
+
+// Documents : colonnes ajoutées après coup (site, type, taille, date). Tant que le SQL correspondant
+// n'a pas été exécuté dans Supabase, on retente sans elles pour ne jamais bloquer l'enregistrement.
+const DOC_EXTRA_COLUMNS = ['site', 'file_type', 'file_size', 'last_updated'];
+const isMissingColumnError = (error: { message: string; code?: string } | null) =>
+  Boolean(error) && (error!.code === 'PGRST204' || /column/i.test(error!.message));
+const withoutDocExtras = (row: Record<string, any>) => {
+  const copy = { ...row };
+  DOC_EXTRA_COLUMNS.forEach(k => delete copy[k]);
+  return copy;
+};
+const documentToRow = (d: DocumentItem) => ({
+  document_id: d.id,
+  title: d.title,
+  category: d.category,
+  reference: d.reference || 'N/A',
+  author: d.author || 'Direction IT',
+  company: d.company || 'Lebrun S.A.',
+  status: d.status || 'valide',
+  file_url: d.url || null,
+  description: d.description || null,
+  site: d.site || null,
+  file_type: d.fileType || 'pdf',
+  file_size: d.fileSize || null,
+  last_updated: d.lastUpdated || null
+});
+const insertDocumentRows = async (rows: Record<string, any>[]) => {
+  let res = await supabase.from('documents').insert(rows);
+  if (isMissingColumnError(res.error)) {
+    res = await supabase.from('documents').insert(rows.map(withoutDocExtras));
+  }
+  return res;
+};
+
+// Téléphones : conversion ligne Supabase <-> objet applicatif
+const mapPhoneRow = (row: any, idx: number): PhoneAsset => ({
+  id: row.phone_id ? String(row.phone_id) : `phone-${row.id ?? idx + 1}`,
+  assetTag: row.phone_id || `TEL-${String(row.id ?? idx + 1).padStart(3, '0')}`,
+  company: row.entreprise || 'Lebrun S.A.',
+  site: row.site || '',
+  brand: row.marque || '',
+  model: row.modele || '',
+  imei1: row.imei1 || undefined,
+  imei2: row.imei2 || undefined,
+  assignedPersonnelId: row.user_id || undefined,
+  assignedTo: row.personne || undefined,
+  observations: row.observations || '',
+  createdAt: row.created_at || new Date().toISOString(),
+  updatedAt: row.created_at || new Date().toISOString()
+});
+
+const phoneToRow = (p: PhoneAsset) => ({
+  phone_id: p.assetTag,
+  entreprise: p.company || null,
+  site: p.site || null,
+  marque: p.brand,
+  modele: p.model,
+  imei1: p.imei1 || null,
+  imei2: p.imei2 || null,
+  user_id: p.assignedPersonnelId || null,
+  personne: p.assignedTo || null,
+  observations: p.observations || null
+});
+
+const describePhoneDbError = (error: { message: string; code?: string }) =>
+  error.code === 'PGRST205' || /schema cache|does not exist/i.test(error.message)
+    ? "La table « phones » n'existe pas encore dans Supabase. Exécutez la section TÉLÉPHONES de supabase_setup.sql dans le SQL Editor."
+    : error.message;
+
+// Clé qui relie une fiche du registre documentaire à un téléphone
+const phoneSheetUrl = (phone: PhoneAsset) => `phone://${encodeURIComponent(phone.id)}`;
+
+// Clé qui relie une fiche du registre documentaire à un collaborateur et à son poste
+const assignmentSheetUrl = (emp: Employee, asset?: ITAsset) =>
+  `assignment://${encodeURIComponent(emp.id)}/${asset ? encodeURIComponent(asset.id) : '-'}`;
 
 interface InventoryContextType {
   // State
@@ -117,6 +200,17 @@ interface InventoryContextType {
   networkAssets: NetworkAsset[];
   upsAssets: UPSAsset[];
   applicationAccounts: ApplicationAccount[];
+
+  // Téléphones / portables (enregistrés dans la table Supabase "phones")
+  phones: PhoneAsset[];
+  isPhoneModalOpen: boolean;
+  editingPhone: PhoneAsset | null;
+  openPhoneModal: (phone?: PhoneAsset) => void;
+  closePhoneModal: () => void;
+  addPhone: (phone: Omit<PhoneAsset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
+  updatePhone: (id: string, updates: Partial<PhoneAsset>) => Promise<any>;
+  deletePhone: (id: string) => Promise<any>;
+  downloadPhoneSheet: (phone: PhoneAsset) => Promise<void>;
 
   // Modals & Actions Network
   isNetworkModalOpen: boolean;
@@ -202,12 +296,21 @@ interface InventoryContextType {
   addDocument: (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
   updateDocument: (id: string, updates: Partial<DocumentItem>) => Promise<any>;
   deleteDocument: (id: string) => Promise<any>;
+  getAssignmentSheet: (emp: Employee, asset?: ITAsset) => {
+    employee: Employee;
+    options: AssignmentSheetOptions;
+    asset?: ITAsset;
+    url: string;
+    existing?: DocumentItem;
+  };
+  registerAssignmentSheets: (targets: { emp: Employee; asset?: ITAsset; force?: boolean }[]) => Promise<DocumentItem[]>;
+  downloadAssignmentSheet: (emp: Employee) => Promise<void>;
 
   // Operations
   recordMovement: (mov: Omit<StockMovement, 'id' | 'date'>) => void;
   markAlertRead: (id: string) => void;
   dismissAlert: (id: string) => void;
-  exportCSV: (category?: AssetCategory | 'personnel' | 'accounts' | 'documents' | 'applications' | 'network' | 'ups') => void;
+  exportCSV: (category?: AssetCategory | 'personnel' | 'accounts' | 'documents' | 'applications' | 'network' | 'ups' | 'phones') => void;
   resetToDefaultData: () => void;
 
   // Aggregated Stats
@@ -257,6 +360,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const closeNetworkModal = () => {
     setIsNetworkModalOpen(false);
     setEditingNetworkAsset(null);
+  };
+
+  // Phone Modal
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [editingPhone, setEditingPhone] = useState<PhoneAsset | null>(null);
+  const openPhoneModal = (phone?: PhoneAsset) => {
+    setEditingPhone(phone || null);
+    setIsPhoneModalOpen(true);
+  };
+  const closePhoneModal = () => {
+    setIsPhoneModalOpen(false);
+    setEditingPhone(null);
   };
 
   // UPS Modal
@@ -492,6 +607,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
     }
     return INITIAL_UPS_ASSETS;
+  });
+
+  const [phones, setPhones] = useState<PhoneAsset[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_inv_phones');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return [];
   });
 
   const [applicationAccounts, setApplicationAccounts] = useState<ApplicationAccount[]>(() => {
@@ -870,6 +995,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applicationAccounts]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lebron_inv_phones', JSON.stringify(phones));
+    }
+  }, [phones]);
+
   // Authentification — connexion uniquement via email + mot de passe (itAccounts)
   const login = (email: string, password?: string): boolean => {
     const emailQuery = (email || '').trim().toLowerCase();
@@ -1129,6 +1260,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           });
         }
 
+        // 4b. Load Phones from Supabase (la base fait foi ; si la table est absente, on garde le cache local)
+        const { data: dbPhones, error: phonesErr } = await supabase.from('phones').select('*');
+        if (!phonesErr && dbPhones) {
+          const mappedPhones: PhoneAsset[] = dbPhones.map((row: any, idx: number) => mapPhoneRow(row, idx));
+          setPhones(sortByNewest(mappedPhones));
+        } else if (phonesErr) {
+          console.warn('Table phones indisponible:', phonesErr.message);
+        }
+
         // 5. Load User Applications from Supabase (Newest first)
         const { data: dbApps, error: appsErr } = await supabase.from('user_applications').select('*').order('app_account_id', { ascending: false });
         if (!appsErr && dbApps && dbApps.length > 0) {
@@ -1318,6 +1458,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             status: row.status || 'valide',
             lastUpdated: row.last_updated || row.created_at || new Date().toISOString().slice(0, 10),
             fileUrl: row.file_url || '',
+            url: row.file_url || undefined,
+            site: row.site || undefined,
+            fileSize: row.file_size || undefined,
             description: row.description || '',
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.created_at || new Date().toISOString()
@@ -1630,6 +1773,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         return kit;
       }));
 
+      // Synchronise le nom, la société et le site sur les téléphones associés
+      setPhones(prev => prev.map(ph => {
+        const isOwner = (ph.assignedPersonnelId && (ph.assignedPersonnelId === id || ph.assignedPersonnelId === oldEmployeeId)) ||
+                        (oldFullName && ph.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        if (!isOwner) return ph;
+        return {
+          ...ph,
+          assignedTo: updates.fullName !== undefined ? updates.fullName : ph.assignedTo,
+          assignedPersonnelId: updates.employeeId !== undefined ? updates.employeeId : ph.assignedPersonnelId,
+          company: updates.company !== undefined ? updates.company : ph.company,
+          site: updates.site || updates.location || ph.site,
+          updatedAt: new Date().toISOString()
+        };
+      }));
+      if (oldEmployeeId) {
+        const phonePayload: Record<string, any> = {};
+        if (updates.fullName !== undefined) phonePayload.personne = updates.fullName;
+        if (updates.employeeId !== undefined) phonePayload.user_id = updates.employeeId;
+        if (updates.company !== undefined) phonePayload.entreprise = updates.company;
+        if (updates.site !== undefined) phonePayload.site = updates.site;
+        if (Object.keys(phonePayload).length > 0) {
+          await supabase.from('phones').update(phonePayload).eq('user_id', oldEmployeeId);
+        }
+      }
+
       // Synchronize in real-time with application accounts
       setApplicationAccounts(prev => prev.map(acc => {
         const isLinked = (acc.employeeId && (acc.employeeId === id || acc.employeeId === oldEmployeeId)) ||
@@ -1723,6 +1891,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           telephone: null
         }).eq('user_id', empMatricule);
 
+        // 1b. Les téléphones associés restent dans l'inventaire, sans personne
+        await supabase.from('phones').update({ user_id: null, personne: null }).eq('user_id', empMatricule);
+
         // 2. Unlink / delete linked application account
         await supabase.from('user_applications').delete().eq('user_id', empMatricule);
 
@@ -1785,6 +1956,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           return { ...kit, assignedTo: undefined, assignedPersonnelId: undefined };
         }
         return kit;
+      }));
+
+      setPhones(prev => prev.map(ph => {
+        const isOwner = (ph.assignedPersonnelId && (ph.assignedPersonnelId === id || ph.assignedPersonnelId === empMatricule)) ||
+                        (oldFullName && ph.assignedTo?.toLowerCase() === oldFullName.toLowerCase());
+        return isOwner ? { ...ph, assignedTo: undefined, assignedPersonnelId: undefined } : ph;
       }));
 
       showToast({
@@ -2091,17 +2268,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     };
 
     try {
-      const { data, error } = await supabase.from('documents').insert({
-        document_id: docId,
-        title: doc.title,
-        category: doc.category,
-        reference: doc.reference || 'N/A',
-        author: doc.author || 'Direction IT',
-        company: doc.company || 'Lebrun S.A.',
-        status: doc.status || 'valide',
-        file_url: doc.url || null,
-        description: doc.description || null
-      }).select();
+      const { error } = await insertDocumentRows([documentToRow(newDoc)]);
 
       if (error) {
         console.error('Supabase addDocument error:', error);
@@ -2149,9 +2316,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.status !== undefined) payload.status = updates.status;
       if (updates.url !== undefined) payload.file_url = updates.url;
       if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.fileType !== undefined) payload.file_type = updates.fileType;
+      if (updates.fileSize !== undefined) payload.file_size = updates.fileSize;
+      if (updates.lastUpdated !== undefined) payload.last_updated = updates.lastUpdated;
 
       if (Object.keys(payload).length > 0) {
-        await supabase.from('documents').update(payload).eq('document_id', id);
+        const { error: updErr } = await supabase.from('documents').update(payload).eq('document_id', id);
+        if (isMissingColumnError(updErr)) {
+          const slim = withoutDocExtras(payload);
+          if (Object.keys(slim).length > 0) await supabase.from('documents').update(slim).eq('document_id', id);
+        }
       }
 
       setDocuments(prev => {
@@ -2207,6 +2382,146 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         type: 'error'
       });
       return { success: false, error: err?.message };
+    }
+  };
+
+  // Retrouve un collaborateur à partir de son id, de son matricule ou de son nom complet
+  const findEmployee = (personnelId?: string, fullName?: string) =>
+    employees.find(e =>
+      (personnelId && (e.id === personnelId || e.employeeId === personnelId)) ||
+      (fullName && e.fullName.toLowerCase() === fullName.toLowerCase())
+    );
+
+  // ---- Fiches d'affectation : chaque référence est enregistrée dans la table `documents` ----
+  const pendingSheetRefs = useRef<Set<string>>(new Set());
+
+  // Fiche (collaborateur + poste + options d'émission) ; réutilise la référence déjà enregistrée
+  const getAssignmentSheet = useCallback((emp: Employee, assetOverride?: ITAsset) => {
+    const asset = assetOverride || itAssets.find(a =>
+      (a.assignedPersonnelId && (a.assignedPersonnelId === emp.id || a.assignedPersonnelId === emp.employeeId)) ||
+      (a.assignedTo && a.assignedTo.toLowerCase() === emp.fullName.toLowerCase())
+    );
+    const url = assignmentSheetUrl(emp, asset);
+    const existing = documents.find(d => d.url === url);
+    const createdAt = existing?.createdAt ? new Date(existing.createdAt) : undefined;
+    const options: AssignmentSheetOptions = {
+      assetTag: asset?.assetTag,
+      date: createdAt && !isNaN(createdAt.getTime()) ? createdAt : undefined,
+      reference: existing?.reference || undefined
+    };
+    return {
+      employee: { ...emp, workstation: asset?.workstation || emp.workstation } as Employee,
+      options,
+      asset,
+      url,
+      existing
+    };
+  }, [itAssets, documents]);
+
+  // Enregistre en une seule requête les références manquantes (ou force une nouvelle émission)
+  const registerAssignmentSheets = async (
+    targets: { emp: Employee; asset?: ITAsset; force?: boolean }[]
+  ): Promise<DocumentItem[]> => {
+    const now = new Date();
+    const fresh: DocumentItem[] = [];
+
+    for (const t of targets) {
+      const sheet = getAssignmentSheet(t.emp, t.asset);
+      if (sheet.existing && !t.force) continue;
+
+      const reference = buildAssignmentDocRef(sheet.employee, { assetTag: sheet.options.assetTag, date: now });
+      if (
+        fresh.some(f => f.reference === reference) ||
+        documents.some(d => d.reference === reference) ||
+        pendingSheetRefs.current.has(reference)
+      ) continue;
+
+      const what = sheet.asset ? `poste ${sheet.asset.name} (${sheet.asset.assetTag})` : 'matériel informatique';
+      fresh.push({
+        id: `DOC-${reference.replace(/[^a-zA-Z0-9]/g, '')}`,
+        title: `Fiche d'affectation - ${t.emp.fullName}${sheet.asset ? ` - ${sheet.asset.name}` : ''}`,
+        reference,
+        category: "Fiches d'Affectation",
+        company: t.emp.company || 'Lebrun S.A.',
+        site: t.emp.site || t.emp.location,
+        fileType: 'pdf',
+        author: 'Direction IT',
+        lastUpdated: now.toISOString().slice(0, 10),
+        description: `Fiche d'affectation du ${what} - ${t.emp.fullName} (${t.emp.employeeId}).`,
+        url: sheet.url,
+        status: 'valide',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString()
+      });
+    }
+
+    if (fresh.length === 0) return [];
+    fresh.forEach(d => pendingSheetRefs.current.add(d.reference));
+
+    try {
+      const { error } = await insertDocumentRows(fresh.map(documentToRow));
+
+      if (error) {
+        console.error('Supabase registerAssignmentSheets error:', error);
+        showToast({
+          title: 'Références non enregistrées',
+          message: error.message,
+          type: 'error'
+        });
+        return [];
+      }
+
+      setDocuments(prev => {
+        const next = [...fresh, ...prev.filter(d => !fresh.some(f => f.id === d.id || f.reference === d.reference))];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_documents', JSON.stringify(next));
+        }
+        return next;
+      });
+      return fresh;
+    } catch (err: any) {
+      console.error('Sync Supabase registerAssignmentSheets error:', err);
+      showToast({
+        title: 'Références non enregistrées',
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return [];
+    } finally {
+      fresh.forEach(d => pendingSheetRefs.current.delete(d.reference));
+    }
+  };
+
+  // Télécharge la fiche PDF d'un collaborateur (sa référence est enregistrée au préalable)
+  const downloadAssignmentSheet = async (emp: Employee) => {
+    await registerAssignmentSheets([{ emp }]);
+    const sheet = getAssignmentSheet(emp);
+    await downloadSingleAssignmentSheetPDF(sheet.employee, sheet.options);
+  };
+
+  // Affectation d'un poste IT à un collaborateur : nouvelle fiche enregistrée dans la base
+  // (référence recherchable). Le PDF se télécharge à la demande.
+  const createAssignmentDocument = async (emp: Employee, asset: ITAsset) => {
+    try {
+      const now = new Date();
+      await registerAssignmentSheets([{ emp, asset, force: true }]);
+
+      // Le PDF n'est pas généré automatiquement : il se télécharge depuis Documents
+      const sheetEmployee: Employee = { ...emp, workstation: asset.workstation || emp.workstation };
+      const options: AssignmentSheetOptions = { assetTag: asset.assetTag, date: now };
+
+      showToast({
+        title: "Fiche d'affectation enregistrée",
+        message: `Référence ${buildAssignmentDocRef(sheetEmployee, options)} ajoutée dans Documents.`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.warn("Création de la fiche d'affectation impossible:", err);
+      showToast({
+        title: "Fiche d'affectation non générée",
+        message: "Le poste est bien affecté, mais la fiche n'a pas pu être créée. Vous pouvez la générer depuis Documents.",
+        type: 'warning'
+      });
     }
   };
 
@@ -2325,6 +2640,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         message: `${newAsset.name} (${newAsset.assetTag}) a été enregistré avec succès.`,
         type: 'success'
       });
+
+      // Poste remis à un collaborateur : la fiche d'affectation est créée automatiquement
+      if (assignedEmp) {
+        void createAssignmentDocument(assignedEmp, newAsset);
+      }
       return { success: true };
     } catch (err: any) {
       console.error('Sync Supabase addITAsset error:', err);
@@ -2349,6 +2669,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       message: 'Les informations du poste ont été enregistrées.',
       type: 'info'
     });
+
+    // Nouvelle affectation à un collaborateur (différent du précédent) : fiche d'affectation automatique
+    if (targetAsset && (updates.assignedPersonnelId || updates.assignedTo)) {
+      const newAssignee = findEmployee(updates.assignedPersonnelId, updates.assignedTo);
+      const previousAssignee = findEmployee(targetAsset.assignedPersonnelId, targetAsset.assignedTo);
+      if (newAssignee && newAssignee.id !== previousAssignee?.id) {
+        void createAssignmentDocument(newAssignee, { ...targetAsset, ...updates });
+      }
+    }
 
     if (updates.workstation || updates.assignedPersonnelId || updates.assignedTo) {
       setEmployees(prev => prev.map(emp => {
@@ -2733,6 +3062,253 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (err: any) {
       console.error('Sync Supabase deleteUPSAsset error:', err);
+      return { success: false, error: err?.message };
+    }
+  };
+
+  // ---- Fiches d'affectation de téléphone : enregistrées dans la table documents ----
+  const getPhoneSheet = useCallback((phone: PhoneAsset) => {
+    const employee = employees.find(e =>
+      (phone.assignedPersonnelId && (e.employeeId === phone.assignedPersonnelId || e.id === phone.assignedPersonnelId)) ||
+      (phone.assignedTo && e.fullName.toLowerCase() === phone.assignedTo.toLowerCase())
+    );
+    const url = phoneSheetUrl(phone);
+    const existing = documents.find(d => d.url === url);
+    const createdAt = existing?.createdAt ? new Date(existing.createdAt) : undefined;
+    const options: PhoneSheetOptions = {
+      date: createdAt && !isNaN(createdAt.getTime()) ? createdAt : undefined,
+      reference: existing?.reference || undefined
+    };
+    return { employee, options, url, existing };
+  }, [employees, documents]);
+
+  // Enregistre la fiche dans documents (nouvelle émission si force, sinon seulement si elle n'existe pas)
+  const registerPhoneSheet = async (phone: PhoneAsset, force = false) => {
+    const sheet = getPhoneSheet(phone);
+    if (sheet.existing && !force) return;
+
+    const now = new Date();
+    const reference = buildPhoneDocRef(phone, { date: now });
+    if (documents.some(d => d.reference === reference) || pendingSheetRefs.current.has(reference)) return;
+
+    const owner = sheet.employee;
+    const name = owner?.fullName || phone.assignedTo || 'Non attribué';
+    const doc: DocumentItem = {
+      id: `DOC-${reference.replace(/[^a-zA-Z0-9]/g, '')}`,
+      title: `Fiche d'affectation téléphone - ${name} - ${phone.brand} ${phone.model}`,
+      reference,
+      category: "Fiches d'Affectation",
+      company: owner?.company || phone.company || 'Lebrun S.A.',
+      site: owner?.site || owner?.location || phone.site,
+      fileType: 'pdf',
+      author: 'Direction IT',
+      lastUpdated: now.toISOString().slice(0, 10),
+      description: `Fiche d'affectation du téléphone ${phone.brand} ${phone.model} (${phone.assetTag}) - ${name}${owner ? ` (${owner.employeeId})` : ''}.`,
+      url: sheet.url,
+      status: 'valide',
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString()
+    };
+
+    pendingSheetRefs.current.add(reference);
+    try {
+      const { error } = await insertDocumentRows([documentToRow(doc)]);
+      if (error) {
+        console.error('Supabase registerPhoneSheet error:', error);
+        showToast({ title: 'Référence non enregistrée', message: error.message, type: 'error' });
+        return;
+      }
+      setDocuments(prev => {
+        const next = [doc, ...prev.filter(d => d.id !== doc.id && d.reference !== doc.reference)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_documents', JSON.stringify(next));
+        }
+        return next;
+      });
+    } finally {
+      pendingSheetRefs.current.delete(reference);
+    }
+  };
+
+  // Télécharge la fiche PDF d'un téléphone attribué (sa référence est enregistrée au préalable)
+  const downloadPhoneSheet = async (phone: PhoneAsset) => {
+    if (!phone.assignedTo && !phone.assignedPersonnelId) {
+      showToast({
+        title: 'Aucune personne associée',
+        message: "Associez d'abord ce téléphone à un collaborateur pour générer sa fiche d'affectation.",
+        type: 'info'
+      });
+      return;
+    }
+    await registerPhoneSheet(phone);
+    const sheet = getPhoneSheet(phone);
+    await downloadPhoneSheetPDF(phone, sheet.employee, sheet.options);
+  };
+
+  // Téléphone remis à une personne : nouvelle fiche enregistrée dans documents (PDF à la demande)
+  const createPhoneDocument = async (phone: PhoneAsset) => {
+    try {
+      const now = new Date();
+      await registerPhoneSheet(phone, true);
+
+      // Le PDF n'est pas généré automatiquement : il se télécharge depuis Documents ou depuis la liste des téléphones
+      const options: PhoneSheetOptions = { date: now };
+      showToast({
+        title: "Fiche d'affectation enregistrée",
+        message: `Référence ${buildPhoneDocRef(phone, options)} ajoutée dans Documents.`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.warn("Création de la fiche téléphone impossible:", err);
+      showToast({
+        title: "Fiche d'affectation non générée",
+        message: "Le téléphone est bien enregistré, mais sa fiche n'a pas pu être créée.",
+        type: 'warning'
+      });
+    }
+  };
+
+  // Phone Actions (table Supabase "phones")
+  const addPhone = async (phone: Omit<PhoneAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    let newPhone: PhoneAsset = {
+      ...phone,
+      id: phone.assetTag || `phone-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    try {
+      let { error } = await supabase.from('phones').insert(phoneToRow(newPhone));
+
+      // Code déjà pris (très improbable) : on en tire un autre automatiquement
+      for (let i = 0; i < 3 && error && (error.code === '23505' || /duplicate key/i.test(error.message)); i++) {
+        const code = generatePhoneCode(newPhone.company, phones.map(p => p.assetTag));
+        newPhone = { ...newPhone, assetTag: code, id: code };
+        ({ error } = await supabase.from('phones').insert(phoneToRow(newPhone)));
+      }
+
+      if (error) {
+        console.error('Supabase addPhone insert error:', error);
+        const message = describePhoneDbError(error);
+        showToast({
+          title: "Erreur d'enregistrement",
+          message,
+          type: 'error'
+        });
+        return { success: false, error: message };
+      }
+
+      setPhones(prev => {
+        const next = [newPhone, ...prev.filter(p => p.id !== newPhone.id && p.assetTag !== newPhone.assetTag)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_phones', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Téléphone Ajouté',
+        message: `${newPhone.brand} ${newPhone.model} (${newPhone.assetTag}) a été enregistré dans la base de données.`,
+        type: 'success'
+      });
+
+      // Téléphone remis à une personne : sa fiche d'affectation est créée automatiquement
+      if (newPhone.assignedPersonnelId || newPhone.assignedTo) {
+        void createPhoneDocument(newPhone);
+      }
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase addPhone error:', err);
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: err?.message || 'Erreur réseau',
+        type: 'error'
+      });
+      return { success: false, error: err?.message };
+    }
+  };
+
+  const updatePhone = async (id: string, updates: Partial<PhoneAsset>) => {
+    const target = phones.find(p => p.id === id || p.assetTag === id);
+    if (!target) return { success: false, error: 'Téléphone introuvable' };
+    // Le code est attribué une fois pour toutes : il ne peut pas être modifié
+    const merged: PhoneAsset = { ...target, ...updates, assetTag: target.assetTag, id: target.id, updatedAt: new Date().toISOString() };
+
+    try {
+      // upsert sur phone_id : met à jour la ligne, ou la crée si elle n'existait que dans le cache local
+      const { error } = await supabase.from('phones').upsert(phoneToRow(merged), { onConflict: 'phone_id' });
+
+      if (error) {
+        console.error('Supabase updatePhone error:', error);
+        const message = describePhoneDbError(error);
+        showToast({
+          title: 'Erreur de modification',
+          message,
+          type: 'error'
+        });
+        return { success: false, error: message };
+      }
+
+      setPhones(prev => {
+        const next = prev.map(p => (p.id === target.id ? merged : p));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_phones', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Téléphone Modifié',
+        message: `${merged.brand} ${merged.model} a été mis à jour.`,
+        type: 'info'
+      });
+
+      // Nouvelle personne associée : nouvelle fiche d'affectation automatique
+      if (merged.assignedPersonnelId && merged.assignedPersonnelId !== target.assignedPersonnelId) {
+        void createPhoneDocument(merged);
+      }
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase updatePhone error:', err);
+      showToast({ title: 'Erreur de modification', message: err?.message || 'Erreur réseau', type: 'error' });
+      return { success: false, error: err?.message };
+    }
+  };
+
+  const deletePhone = async (id: string) => {
+    const target = phones.find(p => p.id === id || p.assetTag === id);
+    if (!target) return { success: false, error: 'Téléphone introuvable' };
+
+    try {
+      const { error } = await supabase.from('phones').delete().eq('phone_id', target.assetTag);
+      if (error) {
+        console.error('Supabase deletePhone error:', error);
+        showToast({
+          title: 'Erreur de suppression',
+          message: describePhoneDbError(error),
+          type: 'error'
+        });
+        return { success: false, error: error.message };
+      }
+
+      setPhones(prev => {
+        const next = prev.filter(p => p.id !== target.id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_phones', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      showToast({
+        title: 'Téléphone Supprimé',
+        message: `${target.brand} ${target.model} a été retiré de la base de données.`,
+        type: 'warning'
+      });
+      return { success: true };
+    } catch (err: any) {
+      console.error('Sync Supabase deletePhone error:', err);
+      showToast({ title: 'Erreur de suppression', message: err?.message || 'Erreur réseau', type: 'error' });
       return { success: false, error: err?.message };
     }
   };
@@ -3229,7 +3805,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Export Excel Haute Définition (.xlsx)
-  const exportCSV = (cat?: AssetCategory | 'personnel' | 'accounts' | 'documents' | 'applications' | 'network' | 'ups') => {
+  const exportCSV = (cat?: AssetCategory | 'personnel' | 'accounts' | 'documents' | 'applications' | 'network' | 'ups' | 'phones') => {
     const today = new Date().toISOString().slice(0, 10);
     let headers: string[] = [];
     let rows: (string | number | undefined | null)[][] = [];
@@ -3443,6 +4019,22 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         u.reference,
         u.status,
         u.observations || 'Good'
+      ]);
+    } else if (cat === 'phones') {
+      filename = `LebrunSA_Telephones_Portables_${today}.xlsx`;
+      sheetTitle = 'Téléphones';
+      headers = ['Code', 'Marque', 'Modèle', 'IMEI 1', 'IMEI 2', 'Personne associée', 'Matricule', 'Entreprise', 'Site', 'Observations'];
+      rows = phones.map(p => [
+        p.assetTag,
+        p.brand,
+        p.model,
+        p.imei1 || '',
+        p.imei2 || '',
+        p.assignedTo || 'Non attribué',
+        p.assignedPersonnelId || '',
+        p.company,
+        p.site,
+        p.observations || ''
       ]);
     } else if (!cat || cat === 'it') {
       filename = `LebrunSA_Postes_IT_Materiel_${today}.xlsx`;
@@ -3687,6 +4279,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         addUPSAsset,
         updateUPSAsset,
         deleteUPSAsset,
+        phones,
+        isPhoneModalOpen,
+        editingPhone,
+        openPhoneModal,
+        closePhoneModal,
+        addPhone,
+        updatePhone,
+        deletePhone,
+        downloadPhoneSheet,
         isApplicationModalOpen,
         editingApplicationAccount,
         openApplicationModal,
@@ -3749,6 +4350,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         openDocumentModal,
         closeDocumentModal,
         addDocument,
+        getAssignmentSheet,
+        registerAssignmentSheets,
+        downloadAssignmentSheet,
         updateDocument,
         deleteDocument,
         stats
