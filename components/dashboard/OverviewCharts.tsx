@@ -206,6 +206,12 @@ export default function OverviewCharts() {
   const aeroUPS = (upsAssets || []).filter(u => u.site?.includes('Aéroport') || u.site?.includes('Depot')).length;
   const aeroEmp = employees.filter(e => e.location?.includes('Aéroport') || e.location?.includes('Depot')).length;
 
+  const petionIT = itAssets.filter(a => a.location?.toLowerCase().includes('pétion') || a.location?.toLowerCase().includes('petion')).length;
+  const petionPrn = printers.filter(p => p.site?.toLowerCase().includes('pétion') || p.site?.toLowerCase().includes('petion')).length;
+  const petionNet = (networkAssets || []).filter(n => n.site?.toLowerCase().includes('pétion') || n.site?.toLowerCase().includes('petion')).length;
+  const petionUPS = (upsAssets || []).filter(u => u.site?.toLowerCase().includes('pétion') || u.site?.toLowerCase().includes('petion')).length;
+  const petionEmp = employees.filter(e => e.location?.toLowerCase().includes('pétion') || e.location?.toLowerCase().includes('petion')).length;
+
   // 3. Data: Company breakdown (memoized to keep reference stable and prevent chart redraws)
   const companies = useMemo(() => [
     { name: 'Lebrun S.A.', tag: 'LEB' },

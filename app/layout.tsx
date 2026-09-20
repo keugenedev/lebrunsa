@@ -13,9 +13,6 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Lebronsa S.A. | Système d'Inventaire, Équipements & Flotte",
   description: "Plateforme professionnelle d'inventaire d'entreprise pour Lebronsa S.A. : équipements IT, forfaits télécoms, terminaux Starlink, électronique et affectations collaborateurs.",
-  icons: {
-    icon: "/Lebrunog.png",
-  }
 };
 
 export default function RootLayout({
