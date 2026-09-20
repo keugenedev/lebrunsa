@@ -141,11 +141,11 @@ export default function QuickSearchModal() {
               Aucun résultat certifié pour « {query} »
             </div>
           ) : (
-            filteredResults.map(item => {
+            filteredResults.map((item, idx) => {
               const Icon = item.icon;
               return (
                 <div
-                  key={item.id}
+                  key={`${item.id || item.tag || 'item'}-${idx}`}
                   onClick={() => {
                     setActiveTab(item.tab);
                     setIsSpotlightOpen(false);

@@ -520,8 +520,8 @@ export default function PersonnelView() {
                   ) : (
                     <div className="space-y-3">
                       {/* Additional IT Assets */}
-                      {additionalIt.map(item => (
-                        <div key={item.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                      {additionalIt.map((item, idx) => (
+                        <div key={`${item.id || item.assetTag || 'it'}-${idx}`} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                               {item.subCategory === 'laptop' ? <Laptop className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
@@ -543,8 +543,8 @@ export default function PersonnelView() {
                       ))}
 
                       {/* Telecom Plans */}
-                      {assets.plans.map(plan => (
-                        <div key={plan.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                      {assets.plans.map((plan, idx) => (
+                        <div key={`${plan.id || plan.phoneNumber || 'plan'}-${idx}`} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                               <Smartphone className="w-4 h-4" />
@@ -565,8 +565,8 @@ export default function PersonnelView() {
                       ))}
 
                       {/* Starlink Kits */}
-                      {assets.starlink.map(kit => (
-                        <div key={kit.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                      {assets.starlink.map((kit, idx) => (
+                        <div key={`${kit.id || kit.kitNumber || 'kit'}-${idx}`} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                               <Satellite className="w-4 h-4" />

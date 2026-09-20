@@ -236,9 +236,9 @@ export default function DataTable<T extends { id: string }>({
                 </td>
               </tr>
             ) : (
-              paginatedItems.map((item) => (
+              paginatedItems.map((item, index) => (
                 <tr
-                  key={item.id}
+                  key={`${item.id || (item as any).employeeId || (item as any).assetTag || 'row'}-${index}`}
                   onClick={() => onRowClick && onRowClick(item)}
                   className={`hover:bg-slate-50/80 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 >

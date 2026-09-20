@@ -378,7 +378,19 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try { 
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+            const seen = new Set<string>();
+            return parsed
+              .map((e: any) => ({
+                ...e,
+                id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId)
+              }))
+              .filter((e: any) => {
+                const k = e.employeeId || e.id;
+                if (!k || seen.has(k) || seen.has(e.id)) return false;
+                seen.add(k);
+                seen.add(e.id);
+                return true;
+              });
           }
         } catch (e) { console.error(e); }
       }
@@ -860,10 +872,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           setPrinters(prev => {
             const mappedFromDb: PrinterAsset[] = dbPrinters.map((r: any, idx: number) => {
               const tag = r.printer_id ? String(r.printer_id) : `PRN-HP-${(r.id || idx + 1).toString().padStart(3, '0')}`;
-              const existingLocal = prev.find(p => (r.numero_serie && r.numero_serie !== 'N/A' && p.serialNumber === r.numero_serie) || p.assetTag === tag);
+              const existingLocal = prev.find(p => p.assetTag === tag || p.id === tag);
 
               return {
-                id: existingLocal?.id || (r.printer_id ? String(r.printer_id) : `prn-db-${r.id || idx + 1}`),
+                id: tag,
                 assetTag: tag,
                 company: r.entreprise || existingLocal?.company || 'Lebrun S.A.',
                 site: r.site || existingLocal?.site || 'Delmas 52',
@@ -880,8 +892,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            const localOnly = prev.filter(p => !mappedFromDb.some(dbP => dbP.serialNumber === p.serialNumber || dbP.assetTag === p.assetTag));
-            const merged = sortByNewest([...localOnly, ...mappedFromDb]);
+            const localOnly = prev.filter(p => !mappedFromDb.some(dbP => dbP.assetTag === p.assetTag || dbP.id === p.id));
+            const seenPrn = new Set<string>();
+            const deduplicated = [...localOnly, ...mappedFromDb].filter(p => {
+              const k = p.assetTag || p.id;
+              if (!k || seenPrn.has(k)) return false;
+              seenPrn.add(k);
+              return true;
+            });
+            const merged = sortByNewest(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_printers', JSON.stringify(merged));
             }
@@ -899,15 +918,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
               const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
 
-              const existingLocal = prev.find(e => 
-                e.employeeId === empId || 
-                e.id === empId ||
-                (r.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === r.username.toLowerCase()) ||
-                (r.email && r.email !== 'NOT' && e.email && r.email.toLowerCase() === e.email.toLowerCase())
-              );
+              const existingLocal = prev.find(e => e.employeeId === empId || e.id === empId);
 
               return {
-                id: existingLocal?.id || empId,
+                id: empId,
                 employeeId: empId,
                 fullName: fullName || existingLocal?.fullName || 'Collaborateur',
                 firstName: firstName || existingLocal?.firstName || '',
@@ -934,8 +948,21 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || (dbE.email && dbE.email === e.email)));
-            const merged = sortByNewest([...localOnly, ...mappedFromDb]);
+            const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || dbE.id === e.id));
+            const seenEmp = new Set<string>();
+            const deduplicated = [...localOnly, ...mappedFromDb]
+              .map(e => ({
+                ...e,
+                id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId)
+              }))
+              .filter(e => {
+                const k = e.employeeId || e.id;
+                if (!k || seenEmp.has(k) || seenEmp.has(e.id)) return false;
+                seenEmp.add(k);
+                seenEmp.add(e.id);
+                return true;
+              });
+            const merged = sortByNewest(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_employees', JSON.stringify(merged));
             }
@@ -965,7 +992,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           }));
           setNetworkAssets(prev => {
             const localOnly = prev.filter(n => !mappedNet.some(dbN => dbN.assetTag === n.assetTag || dbN.id === n.id || (n.serialNumber !== 'N/A' && n.serialNumber !== 'À compléter' && dbN.serialNumber === n.serialNumber)));
-            const merged = sortByNewest([...localOnly, ...mappedNet]);
+            const seenNet = new Set<string>();
+            const deduplicated = [...localOnly, ...mappedNet].filter(n => {
+              const k = n.assetTag || n.id;
+              if (!k || seenNet.has(k)) return false;
+              seenNet.add(k);
+              return true;
+            });
+            const merged = sortByNewest(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_network', JSON.stringify(merged));
             }
@@ -993,7 +1027,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           }));
           setUpsAssets(prev => {
             const localOnly = prev.filter(u => !mappedUps.some(dbU => dbU.assetTag === u.assetTag || dbU.id === u.id));
-            const merged = sortByNewest([...localOnly, ...mappedUps]);
+            const seenUps = new Set<string>();
+            const deduplicated = [...localOnly, ...mappedUps].filter(u => {
+              const k = u.assetTag || u.id;
+              if (!k || seenUps.has(k)) return false;
+              seenUps.add(k);
+              return true;
+            });
+            const merged = sortByNewest(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_ups', JSON.stringify(merged));
             }
@@ -1039,7 +1080,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               !dbApps.some((r: any) => r.username?.toLowerCase() === localAcc.username.toLowerCase())
             );
 
-            const merged = sortByNewest([...localOnly, ...syncedFromDb]);
+            const seenApps = new Set<string>();
+            const deduplicated = [...localOnly, ...syncedFromDb].filter(a => {
+              const k = a.id || a.username;
+              if (!k || seenApps.has(k)) return false;
+              seenApps.add(k);
+              return true;
+            });
+            const merged = sortByNewest(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_applications', JSON.stringify(merged));
             }
@@ -1074,17 +1122,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           setItAssets(prev => {
             const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
               const tag = r.equipment_id ? String(r.equipment_id) : `AST-PC-${(r.id || idx + 1).toString().padStart(3, '0')}`;
-              const existingLocal = prev.find(a => 
-                (r.numero_serie_pc && r.numero_serie_pc !== 'N/A' && a.serialNumber === r.numero_serie_pc) ||
-                (a.assetTag === tag)
-              );
+              const existingLocal = prev.find(a => a.assetTag === tag || a.id === tag);
 
               const rowPerson = (r.prenom && r.nom) ? `${r.prenom} ${r.nom}` : (r.nom || r.prenom || r.assigne_a);
               const pcSerial = r.numero_serie_pc || r.numero_serie || existingLocal?.serialNumber || 'N/A';
               const pcName = r.nom_pc || r.nom || existingLocal?.name || `Poste ${tag}`;
 
               return {
-                id: existingLocal?.id || (r.equipment_id ? String(r.equipment_id) : `it-db-${r.id || idx + 1}`),
+                id: tag,
                 assetTag: tag,
                 name: pcName,
                 brand: r.marque || existingLocal?.brand || 'Dell',
@@ -1127,8 +1172,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            const localOnly = prev.filter(a => !mappedFromDb.some(dbA => dbA.serialNumber === a.serialNumber || dbA.assetTag === a.assetTag));
-            const merged = sortByNewest([...localOnly, ...mappedFromDb]);
+            const localOnly = prev.filter(a => !mappedFromDb.some(dbA => dbA.assetTag === a.assetTag || dbA.id === a.id));
+            const seenIT = new Set<string>();
+            const deduplicated = [...localOnly, ...mappedFromDb].filter(a => {
+              const k = a.assetTag || a.id;
+              if (!k || seenIT.has(k)) return false;
+              seenIT.add(k);
+              return true;
+            });
+            const merged = sortByNewest(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_it', JSON.stringify(merged));
             }

@@ -237,8 +237,8 @@ export default function AccountsView() {
                   </td>
                 </tr>
               ) : (
-                filteredAccounts.map((account) => (
-                  <tr key={account.id} className="hover:bg-slate-50/70 transition-colors">
+                filteredAccounts.map((account, idx) => (
+                  <tr key={`${account.id || account.username || 'acc'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
                     {/* Person Name - Plain, clean text */}
                     <td className="py-3 px-3.5 font-semibold text-slate-900 whitespace-nowrap">
                       {account.fullName}

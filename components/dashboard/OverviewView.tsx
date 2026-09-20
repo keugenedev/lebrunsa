@@ -230,8 +230,8 @@ export default function OverviewView() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
-          {companyStats.map((c) => (
-            <div key={c.name} className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between">
+          {companyStats.map((c, idx) => (
+            <div key={`${c.name}-${idx}`} className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="h-8 flex items-center">
@@ -301,8 +301,8 @@ export default function OverviewView() {
             </div>
 
             <div className="mt-3 divide-y divide-slate-100">
-              {printers.slice(0, 5).map((p) => (
-                <div key={p.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+              {printers.slice(0, 5).map((p, idx) => (
+                <div key={`${p.assetTag || p.id || 'prn'}-${idx}`} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <CompanyLogo company={p.company} className="h-4 max-w-[65px] w-auto object-contain shrink-0" />
                     <div className="min-w-0">
@@ -324,7 +324,7 @@ export default function OverviewView() {
               onClick={() => setActiveTab('printers')}
               className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
-              Consulter les {totalPrinters} imprimantes &rarr;
+              Voir toutes les imprimantes &rarr;
             </button>
           </div>
         </div>
@@ -350,8 +350,8 @@ export default function OverviewView() {
             </div>
 
             <div className="mt-3 divide-y divide-slate-100">
-              {employees.slice(0, 5).map((emp) => (
-                <div key={emp.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+              {employees.slice(0, 5).map((emp, idx) => (
+                <div key={`${emp.employeeId || emp.id || 'emp'}-${idx}`} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="h-7 w-7 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px] shrink-0 shadow-2xs">
                       {emp.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}

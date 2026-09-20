@@ -492,11 +492,11 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                       </td>
                     </tr>
                   ) : (
-                    filteredEmployees.map((emp) => {
+                    filteredEmployees.map((emp, idx) => {
                       const ws = emp.workstation;
 
                       return (
-                        <tr key={emp.id} className="hover:bg-slate-50/70 transition-colors">
+                        <tr key={`${emp.employeeId || emp.id || 'emp'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
                           {/* 1. Nom de la personne dans la première colonne */}
                           <td className="py-3.5 px-3.5 align-top">
                             <div>
@@ -775,8 +775,8 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                       </td>
                     </tr>
                   ) : (
-                    filteredDocuments.map((doc) => (
-                      <tr key={doc.id} className="hover:bg-slate-50/70 transition-colors">
+                    filteredDocuments.map((doc, idx) => (
+                      <tr key={`${doc.id || doc.reference || 'doc'}-${idx}`} className="hover:bg-slate-50/70 transition-colors">
                         {/* Title & Ref */}
                         <td className="py-3 px-3.5">
                           <div className="max-w-xs">
