@@ -690,37 +690,52 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     return INITIAL_WIFI_NETWORKS;
   });
 
-  // IT Accounts state (Informaticiens & Administrateurs)
+  // IT Accounts state — chargé depuis Supabase (accounts_view), localStorage comme cache
   const [itAccounts, setItAccounts] = useState<ITAccount[]>(() => {
     if (typeof window !== 'undefined') {
-      const blacklistRaw = localStorage.getItem('lebron_deleted_it_accounts');
-      const blacklist: { userId?: string; username?: string }[] = blacklistRaw ? JSON.parse(blacklistRaw) : [];
-      const filterDeleted = (accounts: ITAccount[]) => accounts.filter(a =>
-        !blacklist.some(d =>
-          (d.userId && a.userId && d.userId === a.userId) ||
-          (d.username && a.username && d.username.toLowerCase() === a.username.toLowerCase())
-        )
-      );
-
       const saved = localStorage.getItem('lebron_inv_it_accounts');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            return filterDeleted(parsed);
-          }
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         } catch (e) { console.error(e); }
       }
-      return filterDeleted(INITIAL_IT_ACCOUNTS);
     }
-    return INITIAL_IT_ACCOUNTS;
+    return [];
   });
 
+  // Chargement depuis Supabase au montage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(itAccounts));
-    }
-  }, [itAccounts]);
+    supabase
+      .from('accounts_view')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) { console.error('accounts_view load error:', error); return; }
+        if (!data || data.length === 0) return;
+        const mapped: ITAccount[] = data.map((r: any) => ({
+          id:        r.id,
+          userId:    r.user_id,
+          username:  r.username   || '',
+          fullName:  [r.first_name, r.last_name].filter(Boolean).join(' ') || '',
+          firstName: r.first_name || '',
+          lastName:  r.last_name  || '',
+          email:     r.email      || '',
+          role:      'Technicien Support & Maintenance' as const,
+          company:   r.company    || 'Lebrun S.A.',
+          site:      r.site       || 'Delmas 52',
+          poste:     r.poste      || r.department || '',
+          status:    r.status === 'Actif' ? 'active' : 'inactive',
+          password:  undefined,   // le hash n'est jamais renvoyé en clair
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+        }));
+        setItAccounts(mapped);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(mapped));
+        }
+      });
+  }, []);
 
   // Documents state
   const [documents, setDocuments] = useState<DocumentItem[]>(() => {
@@ -790,7 +805,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     void info;
     if (insertSuccessTimer.current) clearTimeout(insertSuccessTimer.current);
     setInsertSuccess({ id: Date.now() });
-    insertSuccessTimer.current = setTimeout(() => setInsertSuccess(null), 2600);
+    insertSuccessTimer.current = setTimeout(() => setInsertSuccess(null), 4000);
   };
 
   const dismissToast = (id: string) => {
@@ -2052,240 +2067,137 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   // IT Accounts Actions
   const addITAccount = async (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date().toISOString();
-    const newAcc: ITAccount = {
-      ...account,
-      id: `it-acc-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now
-    };
-
-    // Retirer de la liste noire si la personne était précédemment supprimée et est ré-ajoutée
-    if (typeof window !== 'undefined') {
-      const blacklistRaw = localStorage.getItem('lebron_deleted_it_accounts');
-      if (blacklistRaw) {
-        const blacklist: { userId?: string; username?: string }[] = JSON.parse(blacklistRaw);
-        const cleaned = blacklist.filter(d =>
-          !(d.userId && newAcc.userId && d.userId === newAcc.userId) &&
-          !(d.username && newAcc.username && d.username.toLowerCase() === newAcc.username.toLowerCase())
-        );
-        localStorage.setItem('lebron_deleted_it_accounts', JSON.stringify(cleaned));
-      }
+    const userId = account.userId;
+    if (!userId) {
+      showToast({ title: 'Erreur', message: 'Collaborateur introuvable.', type: 'error' });
+      return { success: false };
     }
-
     try {
-      let targetUserId = newAcc.userId;
+      const { data, error } = await supabase.rpc('upsert_account', {
+        p_user_id:  userId,
+        p_password: account.password || '',
+      });
+      if (error) throw error;
 
-      if (!targetUserId) {
-        const matchingEmp = employees.find(e =>
-          (e.fullName && e.fullName.toLowerCase() === newAcc.fullName.toLowerCase()) ||
-          (e.email && e.email.toLowerCase() === newAcc.email.toLowerCase())
-        );
-        if (matchingEmp?.employeeId) {
-          targetUserId = matchingEmp.employeeId;
-        }
-      }
-
-      newAcc.userId = targetUserId;
-
-      // Enregistrer le mot de passe dans user_applications uniquement (ne pas modifier le poste dans users)
-      if (newAcc.password && targetUserId) {
-        let appUpdated = false;
-
-        // Tentative 1: mise à jour par user_id
-        const { data: d1 } = await supabase
-          .from('user_applications')
-          .update({
-            password_source: newAcc.password,
-            username: newAcc.username
-          })
-          .eq('user_id', targetUserId)
-          .select();
-        if (d1 && d1.length > 0) appUpdated = true;
-
-        // Tentative 2: mise à jour par username
-        if (!appUpdated && newAcc.username) {
-          const { data: d2 } = await supabase
-            .from('user_applications')
-            .update({ password_source: newAcc.password })
-            .ilike('username', newAcc.username)
-            .select();
-          if (d2 && d2.length > 0) appUpdated = true;
-        }
-
-        // Tentative 3: insertion si pas encore dans la table
-        if (!appUpdated) {
-          const nextAppId = String(Date.now().toString().slice(-6));
-          await supabase.from('user_applications').insert({
-            app_account_id: nextAppId,
-            user_id: targetUserId,
-            username: newAcc.username,
-            password_source: newAcc.password,
-            application: 'Compte IT',
-            organisation: newAcc.company || 'Lebrun S.A.'
-          });
-        }
-      }
+      // La vue renvoie toutes les infos du collaborateur depuis users
+      const row = Array.isArray(data) ? data[0] : data;
+      const newAcc: ITAccount = {
+        id:        row.id,
+        userId:    row.user_id,
+        username:  row.username   || account.username,
+        fullName:  [row.first_name, row.last_name].filter(Boolean).join(' ') || account.fullName,
+        firstName: row.first_name || account.firstName,
+        lastName:  row.last_name  || account.lastName,
+        email:     row.email      || account.email,
+        role:      'Technicien Support & Maintenance' as const,
+        company:   row.company    || account.company,
+        site:      row.site       || account.site,
+        poste:     row.poste      || account.poste || '',
+        status:    row.status === 'Actif' ? 'active' : 'inactive',
+        password:  undefined,   // hash non renvoyé
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
 
       setItAccounts(prev => {
-        const next = [newAcc, ...prev.filter(a =>
-          a.id !== newAcc.id &&
-          a.username !== newAcc.username &&
-          (!targetUserId || a.userId !== targetUserId)
-        )];
+        const next = [newAcc, ...prev.filter(a => a.userId !== userId)];
         if (typeof window !== 'undefined') {
           localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
         }
         return next;
       });
 
-      showInsertSuccess({
-        title: 'Compte ajouté avec succès',
-        message: `${newAcc.fullName} (@${newAcc.username}) a été lié à la base de données.`,
-        type: 'success'
-      });
+      showInsertSuccess();
       return { success: true };
     } catch (err: any) {
-      console.error('Sync Supabase addITAccount error:', err);
-      showToast({
-        title: "Erreur d'enregistrement",
-        message: err?.message || 'Erreur réseau',
-        type: 'error'
-      });
+      console.error('addITAccount error:', err);
+      showToast({ title: "Erreur d'enregistrement", message: err?.message || 'Erreur réseau', type: 'error' });
       return { success: false, error: err?.message };
     }
   };
 
   const updateITAccount = async (id: string, updates: Partial<ITAccount>) => {
-    const targetAcc = itAccounts.find(a => a.id === id);
-    const userId = updates.userId || targetAcc?.userId;
-    const username = updates.username || targetAcc?.username;
-
+    const target = itAccounts.find(a => a.id === id);
+    const userId = updates.userId || target?.userId;
+    if (!userId) {
+      showToast({ title: 'Erreur', message: 'Compte introuvable.', type: 'error' });
+      return { success: false };
+    }
     try {
-      const payload: Record<string, any> = {};
-      if (updates.email) payload.email = updates.email;
-      if (updates.lastName) payload.nom = updates.lastName;
-      if (updates.firstName) payload.prenom = updates.firstName;
-      if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
-        const parts = updates.fullName.trim().split(/\s+/);
-        payload.prenom = parts[0] || '';
-        payload.nom = parts.slice(1).join(' ') || parts[0] || '';
-      }
-      if (updates.company) payload.entreprise = updates.company;
-      if (updates.site) payload.site = updates.site;
-      if (updates.phone !== undefined) payload.telephone = updates.phone;
-      if (updates.specialty || updates.role) payload.poste = updates.specialty || updates.role;
-      if (updates.status) payload.statut = updates.status === 'active' ? 'Actif' : 'Inactif';
+      const { data, error } = await supabase.rpc('upsert_account', {
+        p_user_id:  userId,
+        p_password: updates.password || '',
+      });
+      if (error) throw error;
 
-      if (Object.keys(payload).length > 0) {
-        if (userId) {
-          await supabase.from('users').update(payload).eq('user_id', userId);
-        } else if (username) {
-          await supabase.from('users').update(payload).eq('username', username);
-        }
-      }
-
-      // Synchroniser le mot de passe dans user_applications
-      if (updates.password) {
-        const appPayload: Record<string, any> = {
-          password_source: updates.password
-        };
-        if (updates.username) appPayload.username = updates.username;
-        if (updates.role) appPayload.application = updates.role;
-        if (updates.company) appPayload.organisation = updates.company;
-
-        let appUpdated = false;
-        if (userId) {
-          const { data } = await supabase.from('user_applications').update(appPayload).eq('user_id', userId).select();
-          if (data && data.length > 0) appUpdated = true;
-        }
-        if (!appUpdated && username) {
-          const { data } = await supabase.from('user_applications').update(appPayload).ilike('username', username).select();
-          if (data && data.length > 0) appUpdated = true;
-        }
-        if (!appUpdated && (userId || username)) {
-          const nextAppId = String(Date.now().toString().slice(-6));
-          await supabase.from('user_applications').insert({
-            app_account_id: nextAppId,
-            user_id: userId || null,
-            username: username || 'user',
-            password_source: updates.password,
-            application: updates.role || 'Compte IT',
-            organisation: updates.company || 'Lebrun S.A.'
-          });
-        }
-      }
+      const row = Array.isArray(data) ? data[0] : data;
+      const updated: ITAccount = {
+        ...target!,
+        ...updates,
+        id:        row?.id        || id,
+        username:  row?.username  || target?.username || '',
+        fullName:  row ? [row.first_name, row.last_name].filter(Boolean).join(' ') : (target?.fullName || ''),
+        firstName: row?.first_name || target?.firstName || '',
+        lastName:  row?.last_name  || target?.lastName  || '',
+        email:     row?.email      || target?.email     || '',
+        company:   row?.company    || target?.company   || 'Lebrun S.A.',
+        site:      row?.site       || target?.site      || 'Delmas 52',
+        poste:     row?.poste      || target?.poste     || '',
+        status:    row?.status === 'Actif' ? 'active' : 'inactive',
+        password:  undefined,
+        updatedAt: row?.updated_at || new Date().toISOString(),
+      };
 
       setItAccounts(prev => {
-        const updated = prev.map(acc => acc.id === id ? { ...acc, ...updates, updatedAt: new Date().toISOString() } : acc);
+        const next = prev.map(a => a.id === id ? updated : a);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(updated));
+          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
         }
-        return updated;
+        return next;
       });
 
-      showToast({
-        title: 'Compte Modifié',
-        message: 'Les informations et le mot de passe ont été synchronisés en base de données.',
-        type: 'info'
-      });
+      showInsertSuccess();
       return { success: true };
     } catch (err: any) {
-      console.error('Sync Supabase updateITAccount error:', err);
-      showToast({
-        title: "Erreur de modification",
-        message: err?.message || 'Erreur réseau',
-        type: 'error'
-      });
+      console.error('updateITAccount error:', err);
+      showToast({ title: 'Erreur de modification', message: err?.message || 'Erreur réseau', type: 'error' });
       return { success: false, error: err?.message };
     }
   };
 
   const deleteITAccount = async (id: string) => {
     const target = itAccounts.find(a => a.id === id);
-
-    // Sauvegarder dans la liste noire pour éviter la re-création par le sync Supabase
-    if (typeof window !== 'undefined' && target) {
-      const blacklistRaw = localStorage.getItem('lebron_deleted_it_accounts');
-      const blacklist: { userId?: string; username?: string }[] = blacklistRaw ? JSON.parse(blacklistRaw) : [];
-      blacklist.push({ userId: target.userId, username: target.username });
-      localStorage.setItem('lebron_deleted_it_accounts', JSON.stringify(blacklist));
-    }
-
+    const userId = target?.userId;
     try {
-      if (target?.userId) {
-        // Ne supprime que les privilèges d'application / mots de passe sans effacer la fiche employé
-        await supabase.from('user_applications').delete().eq('user_id', target.userId);
-      } else if (target?.username) {
-        await supabase.from('user_applications').delete().ilike('username', target.username);
+      if (userId) {
+        const { error } = await supabase.rpc('delete_account', { p_user_id: userId });
+        if (error) throw error;
       }
 
       setItAccounts(prev => {
-        const updated = prev.filter(a => a.id !== id);
+        const next = prev.filter(a => a.id !== id);
         if (typeof window !== 'undefined') {
-          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(updated));
+          localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
         }
-        return updated;
+        return next;
       });
 
       showToast({
-        title: 'Compte Retiré',
+        title: 'Compte supprimé',
         message: target ? `${target.fullName} a été retiré des comptes d'accès.` : 'Compte retiré.',
         type: 'info'
       });
       return { success: true };
     } catch (err: any) {
-      console.error('Sync Supabase deleteITAccount error:', err);
-      showToast({
-        title: "Erreur de suppression",
-        message: err?.message || 'Erreur réseau',
-        type: 'error'
-      });
+      console.error('deleteITAccount error:', err);
+      showToast({ title: 'Erreur de suppression', message: err?.message || 'Erreur réseau', type: 'error' });
       return { success: false, error: err?.message };
     }
   };
 
+
   // Documents Actions
+
   const addDocument = async (doc: Omit<DocumentItem, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
     const docId = doc.reference ? `DOC-${doc.reference.replace(/[^a-zA-Z0-9]/g, '')}` : `doc-${Date.now()}`;
