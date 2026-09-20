@@ -65,7 +65,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
     setError(null);
 
     if (!email.trim()) {
-      setError('Veuillez saisir votre identifiant (@username) ou email.');
+      setError('Veuillez saisir votre adresse email.');
       return;
     }
 
@@ -85,7 +85,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
           window.location.href = '/';
         }
       } else {
-        setError('Identifiant (@username ou email) ou mot de passe incorrect.');
+        setError('Email ou mot de passe incorrect. Vérifiez vos identifiants.');
       }
     }, 300);
   };
@@ -129,13 +129,13 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
               </div>
             )}
 
-            {/* Email / Username Field */}
+            {/* Email Field */}
             <div>
               <label 
                 htmlFor="email" 
                 className="block text-[11px] font-medium text-slate-700 mb-1"
               >
-                Identifiant IT (@username) ou Email
+                Adresse email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -143,11 +143,12 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
                 </div>
                 <input
                   id="email"
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ex: keugene ou it@lebrunsa.com"
+                  placeholder="username@gmail.com"
                   required
+
                   className="w-full pl-9 pr-3 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 transition-colors"
                 />
               </div>

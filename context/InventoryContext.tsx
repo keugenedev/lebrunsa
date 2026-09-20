@@ -870,114 +870,57 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applicationAccounts]);
 
-  // Authentification et connexion des utilisateurs
-  const login = (emailOrUsername: string, password?: string): boolean => {
-    const query = (emailOrUsername || '').trim().toLowerCase().replace(/^@/, '');
-    if (!query) return false;
+  // Authentification — connexion uniquement via email + mot de passe (itAccounts)
+  const login = (email: string, password?: string): boolean => {
+    const emailQuery = (email || '').trim().toLowerCase();
+    if (!emailQuery) return false;
 
-    // 1. Chercher dans les comptes IT (table users & user_applications)
-    const itAcc = itAccounts.find(a => 
-      a.username.toLowerCase() === query ||
-      a.email.toLowerCase() === query ||
-      (a.userId && a.userId.toLowerCase() === query)
-    );
-
-    if (itAcc) {
-      const expectedPassword = itAcc.password || itAcc.passwordHint;
-      if (expectedPassword && password && password.trim() !== expectedPassword.trim()) {
-        showToast({
-          title: "Échec de connexion",
-          message: "Mot de passe incorrect pour ce compte.",
-          type: "error"
-        });
-        return false;
-      }
-
-      const user = {
-        name: itAcc.fullName,
-        email: itAcc.email,
-        role: itAcc.role
-      };
-      setIsAuthenticated(true);
-      setCurrentUser(user);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('lebron_auth', 'true');
-        localStorage.setItem('lebron_user', JSON.stringify(user));
-      }
+    if (!password || !password.trim()) {
       showToast({
-        title: "Connexion réussie",
-        message: `Bienvenue, ${itAcc.fullName} !`,
-        type: "success"
+        title: "Mot de passe requis",
+        message: "Veuillez saisir votre mot de passe.",
+        type: "error"
       });
-      return true;
+      return false;
     }
 
-    // 2. Chercher dans les comptes applicatifs (user_applications)
-    const appAcc = applicationAccounts.find(a =>
-      a.username.toLowerCase() === query ||
-      (a.employeeId && a.employeeId.toLowerCase() === query)
+    // Chercher uniquement dans les comptes avec un mot de passe défini (section Comptes)
+    const itAcc = itAccounts.find(a =>
+      a.email && a.email.toLowerCase() === emailQuery
     );
-    if (appAcc) {
-      const expectedPassword = appAcc.password;
-      if (expectedPassword && password && password.trim() !== expectedPassword.trim()) {
-        showToast({
-          title: "Échec de connexion",
-          message: "Mot de passe applicatif incorrect.",
-          type: "error"
-        });
-        return false;
-      }
-      const linkedEmp = employees.find(e => e.employeeId === appAcc.employeeId);
-      const user = {
-        name: linkedEmp?.fullName || appAcc.username,
-        email: linkedEmp?.email || `${appAcc.username}@lebrunsa.com`,
-        role: appAcc.applications || 'Utilisateur Applicatif'
-      };
-      setIsAuthenticated(true);
-      setCurrentUser(user);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('lebron_auth', 'true');
-        localStorage.setItem('lebron_user', JSON.stringify(user));
-      }
+
+    if (!itAcc) {
       showToast({
-        title: "Connexion réussie",
-        message: `Bienvenue, ${user.name} !`,
-        type: "success"
+        title: "Accès refusé",
+        message: "Aucun compte trouvé pour cette adresse email. Contactez l'administrateur.",
+        type: "error"
       });
-      return true;
+      return false;
     }
 
-    // 3. Chercher dans le personnel / collaborateurs (users)
-    const emp = employees.find(e =>
-      e.employeeId.toLowerCase() === query ||
-      e.email.toLowerCase() === query ||
-      (e.username && e.username.toLowerCase() === query)
-    );
-    if (emp) {
-      const user = {
-        name: emp.fullName,
-        email: emp.email,
-        role: emp.jobTitle || 'Collaborateur'
-      };
-      setIsAuthenticated(true);
-      setCurrentUser(user);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('lebron_auth', 'true');
-        localStorage.setItem('lebron_user', JSON.stringify(user));
-      }
+    const expectedPassword = itAcc.password || itAcc.passwordHint;
+    if (!expectedPassword) {
       showToast({
-        title: "Connexion réussie",
-        message: `Bienvenue, ${emp.fullName} !`,
-        type: "success"
+        title: "Accès refusé",
+        message: "Aucun mot de passe configuré pour ce compte. Contactez l'administrateur.",
+        type: "error"
       });
-      return true;
+      return false;
     }
 
-    // 4. Compte générique admin ou fallback
+    if (password.trim() !== expectedPassword.trim()) {
+      showToast({
+        title: "Mot de passe incorrect",
+        message: "Le mot de passe saisi ne correspond pas. Veuillez réessayer.",
+        type: "error"
+      });
+      return false;
+    }
+
     const user = {
-      name: query.includes('@') ? query.split('@')[0] : query,
-      email: query.includes('@') ? query : `${query}@lebrunsa.com`,
-      role: 'Administrateur'
+      name: itAcc.fullName,
+      email: itAcc.email,
+      role: itAcc.poste || itAcc.specialty || itAcc.role
     };
     setIsAuthenticated(true);
     setCurrentUser(user);
@@ -987,11 +930,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
     showToast({
       title: "Connexion réussie",
-      message: `Connecté en tant que ${user.name}`,
+      message: `Bienvenue, ${itAcc.fullName} !`,
       type: "success"
     });
     return true;
   };
+
 
   // Chargement et synchronisation avec Supabase
   const sortByNewest = <T extends { createdAt?: string; id?: string }>(items: T[]): T[] => {
@@ -1429,68 +1373,72 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               );
             });
 
-            if (filteredCandidates.length === 0) return;
+            if (filteredCandidates.length > 0) {
+              setItAccounts(prev => {
+                const mappedIt: ITAccount[] = filteredCandidates.map((u: any, idx: number) => {
+                  const existingAcc = prev.find(a =>
+                    (u.user_id && a.userId === u.user_id) ||
+                    (u.username && a.username.toLowerCase() === u.username.toLowerCase()) ||
+                    (u.email && a.email.toLowerCase() === u.email.toLowerCase())
+                  );
 
-            setItAccounts(prev => {
-              const mappedIt: ITAccount[] = filteredCandidates.map((u: any, idx: number) => {
-                const existingAcc = prev.find(a => 
-                  (u.user_id && a.userId === u.user_id) ||
-                  (u.username && a.username.toLowerCase() === u.username.toLowerCase()) ||
-                  (u.email && a.email.toLowerCase() === u.email.toLowerCase())
-                );
+                  const appRow = (dbApps || []).find((r: any) =>
+                    (u.user_id && r.user_id === u.user_id) ||
+                    (u.username && r.username && r.username.toLowerCase() === u.username.toLowerCase())
+                  );
 
-                const appRow = (dbApps || []).find((r: any) => 
-                  (u.user_id && r.user_id === u.user_id) ||
-                  (u.username && r.username && r.username.toLowerCase() === u.username.toLowerCase())
-                );
+                  // Priorité au mot de passe existant local s'il existe, sinon Supabase
+                  const dbPassword = existingAcc?.password || appRow?.password_source || existingAcc?.passwordHint;
 
-                const dbPassword = appRow?.password_source || existingAcc?.password || existingAcc?.passwordHint || 'CP@2026';
+                  let role: ITRole = 'Technicien Support & Maintenance';
+                  const p = (u.poste || '').toLowerCase();
+                  const un = (u.username || '').toLowerCase();
+                  if (p.includes('super') || un === 'keugene' || (u.nom_complet || '').toLowerCase().includes('kensly')) {
+                    role = 'Super Administrateur IT';
+                  } else if (p.includes('système') || p.includes('directeur') || un === 'rmdguerrier' || (u.nom_complet || '').toLowerCase().includes('guerrier')) {
+                    role = 'Administrateur Systèmes & Réseaux';
+                  } else if (p.includes('télécom')) {
+                    role = 'Technicien Réseaux & Télécoms';
+                  } else if (p.includes('parc') || p.includes('gestionnaire')) {
+                    role = 'Gestionnaire Parc Informatique';
+                  } else if (existingAcc?.role) {
+                    role = existingAcc.role;
+                  }
 
-                let role: ITRole = 'Technicien Support & Maintenance';
-                const p = (u.poste || '').toLowerCase();
-                const un = (u.username || '').toLowerCase();
-                if (p.includes('super') || un === 'keugene' || (u.nom_complet || '').toLowerCase().includes('kensly')) {
-                  role = 'Super Administrateur IT';
-                } else if (p.includes('système') || p.includes('directeur') || un === 'rmdguerrier' || (u.nom_complet || '').toLowerCase().includes('guerrier')) {
-                  role = 'Administrateur Systèmes & Réseaux';
-                } else if (p.includes('télécom')) {
-                  role = 'Technicien Réseaux & Télécoms';
-                } else if (p.includes('parc') || p.includes('gestionnaire')) {
-                  role = 'Gestionnaire Parc Informatique';
-                } else if (existingAcc?.role) {
-                  role = existingAcc.role;
+                  return {
+                    id: existingAcc?.id || `it-acc-${u.user_id || idx + 1}`,
+                    userId: u.user_id,
+                    username: u.username || existingAcc?.username || (u.email ? u.email.split('@')[0] : `user-${idx + 1}`),
+                    fullName: u.nom_complet || `${u.prenom || ''} ${u.nom || ''}`.trim() || existingAcc?.fullName || 'Informaticien',
+                    firstName: u.prenom || existingAcc?.firstName || '',
+                    lastName: u.nom || existingAcc?.lastName || '',
+                    email: u.email || existingAcc?.email || '',
+                    role,
+                    company: u.entreprise || existingAcc?.company || 'Lebrun S.A.',
+                    site: u.site || existingAcc?.site || 'Delmas 52',
+                    phone: u.telephone || existingAcc?.phone || '',
+                    status: (u.statut === 'Inactif' ? 'inactive' : 'active') as 'active' | 'inactive',
+                    specialty: existingAcc?.specialty || u.poste || role,
+                    poste: existingAcc?.poste || u.poste || '',
+                    password: dbPassword,
+                    passwordHint: existingAcc?.passwordHint || dbPassword,
+                    notes: existingAcc?.notes || '',
+                    createdAt: existingAcc?.createdAt || u.created_at || '2024-01-05T08:00:00.000Z',
+                    updatedAt: u.created_at || new Date().toISOString()
+                  };
+                });
+
+                // Préserver les comptes locaux (non présents dans Supabase itCandidates)
+                const localOnly = prev.filter(a => !mappedIt.some(m =>
+                  m.id === a.id || m.userId === a.userId || m.username === a.username
+                ));
+                const merged = [...mappedIt, ...localOnly];
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(merged));
                 }
-
-                return {
-                  id: existingAcc?.id || `it-acc-${u.user_id || idx + 1}`,
-                  userId: u.user_id,
-                  username: u.username || existingAcc?.username || (u.email ? u.email.split('@')[0] : `user-${idx + 1}`),
-                  fullName: u.nom_complet || `${u.prenom || ''} ${u.nom || ''}`.trim() || existingAcc?.fullName || 'Informaticien',
-                  firstName: u.prenom || existingAcc?.firstName || '',
-                  lastName: u.nom || existingAcc?.lastName || '',
-                  email: u.email || existingAcc?.email || '',
-                  role,
-                  company: u.entreprise || existingAcc?.company || 'Lebrun S.A.',
-                  site: u.site || existingAcc?.site || 'Delmas 52',
-                  phone: u.telephone || existingAcc?.phone || '',
-                  status: (u.statut === 'Inactif' ? 'inactive' : 'active') as 'active' | 'inactive',
-                  specialty: u.poste || existingAcc?.specialty || role,
-                  password: dbPassword,
-                  passwordHint: existingAcc?.passwordHint || dbPassword,
-                  notes: existingAcc?.notes || `Compte informatique officiel rattaché à ${u.user_id}`,
-                  createdAt: existingAcc?.createdAt || u.created_at || '2024-01-05T08:00:00.000Z',
-                  updatedAt: u.created_at || new Date().toISOString()
-                };
+                return merged;
               });
-
-              // Preserve local-only accounts
-              const localOnly = prev.filter(a => !mappedIt.some(m => m.id === a.id || m.userId === a.userId || m.username === a.username));
-              const merged = [...mappedIt, ...localOnly];
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(merged));
-              }
-              return merged;
-            });
+            }
           }
         }
       } catch (err) {
@@ -1896,7 +1844,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  // IT Accounts Actions (Informaticiens)
+  // IT Accounts Actions
   const addITAccount = async (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
     const newAcc: ITAccount = {
@@ -1906,14 +1854,24 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       updatedAt: now
     };
 
+    // Retirer de la liste noire si la personne était précédemment supprimée et est ré-ajoutée
+    if (typeof window !== 'undefined') {
+      const blacklistRaw = localStorage.getItem('lebron_deleted_it_accounts');
+      if (blacklistRaw) {
+        const blacklist: { userId?: string; username?: string }[] = JSON.parse(blacklistRaw);
+        const cleaned = blacklist.filter(d =>
+          !(d.userId && newAcc.userId && d.userId === newAcc.userId) &&
+          !(d.username && newAcc.username && d.username.toLowerCase() === newAcc.username.toLowerCase())
+        );
+        localStorage.setItem('lebron_deleted_it_accounts', JSON.stringify(cleaned));
+      }
+    }
+
     try {
-      const parts = (newAcc.fullName || '').trim().split(/\s+/);
-      const prenom = newAcc.firstName || parts[0] || newAcc.username;
-      const nom = newAcc.lastName || parts.slice(1).join(' ') || prenom;
       let targetUserId = newAcc.userId;
 
       if (!targetUserId) {
-        const matchingEmp = employees.find(e => 
+        const matchingEmp = employees.find(e =>
           (e.fullName && e.fullName.toLowerCase() === newAcc.fullName.toLowerCase()) ||
           (e.email && e.email.toLowerCase() === newAcc.email.toLowerCase())
         );
@@ -1922,82 +1880,53 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (targetUserId) {
-        // Mettre à jour l'utilisateur existant dans la table users
-        await supabase.from('users').update({
-          poste: newAcc.specialty || newAcc.role,
-          statut: newAcc.status === 'active' ? 'Actif' : 'Inactif',
-          email: newAcc.email || undefined,
-          telephone: newAcc.phone || undefined,
-          entreprise: newAcc.company || undefined,
-          site: newAcc.site || undefined
-        }).eq('user_id', targetUserId);
-      } else {
-        // Créer un nouvel utilisateur s'il n'existe pas encore
-        targetUserId = `EMP-IT-${Math.floor(Math.random() * 900 + 100)}`;
-        const { error: userErr } = await supabase.from('users').insert({
-          user_id: targetUserId,
-          username: newAcc.username,
-          email: newAcc.email,
-          nom: nom,
-          prenom: prenom,
-          entreprise: newAcc.company,
-          site: newAcc.site,
-          telephone: newAcc.phone || null,
-          poste: newAcc.specialty || newAcc.role || 'Super Administrateur IT',
-          statut: newAcc.status === 'active' ? 'Actif' : 'Inactif'
-        });
-        if (userErr) {
-          console.warn('Supabase user insert warning:', userErr);
-        }
-      }
-
       newAcc.userId = targetUserId;
 
-      // Enregistrer le mot de passe dans user_applications (table officielle des accès & passwords)
-      if (newAcc.password) {
+      // Enregistrer le mot de passe dans user_applications uniquement (ne pas modifier le poste dans users)
+      if (newAcc.password && targetUserId) {
         let appUpdated = false;
-        if (targetUserId) {
-          const { data } = await supabase
-            .from('user_applications')
-            .update({
-              password_source: newAcc.password,
-              username: newAcc.username,
-              application: newAcc.role || 'Compte IT',
-              organisation: newAcc.company || 'Lebrun S.A.'
-            })
-            .eq('user_id', targetUserId)
-            .select();
-          if (data && data.length > 0) appUpdated = true;
-        }
+
+        // Tentative 1: mise à jour par user_id
+        const { data: d1 } = await supabase
+          .from('user_applications')
+          .update({
+            password_source: newAcc.password,
+            username: newAcc.username
+          })
+          .eq('user_id', targetUserId)
+          .select();
+        if (d1 && d1.length > 0) appUpdated = true;
+
+        // Tentative 2: mise à jour par username
         if (!appUpdated && newAcc.username) {
-          const { data } = await supabase
+          const { data: d2 } = await supabase
             .from('user_applications')
-            .update({
-              password_source: newAcc.password,
-              username: newAcc.username,
-              application: newAcc.role || 'Compte IT',
-              organisation: newAcc.company || 'Lebrun S.A.'
-            })
+            .update({ password_source: newAcc.password })
             .ilike('username', newAcc.username)
             .select();
-          if (data && data.length > 0) appUpdated = true;
+          if (d2 && d2.length > 0) appUpdated = true;
         }
+
+        // Tentative 3: insertion si pas encore dans la table
         if (!appUpdated) {
           const nextAppId = String(Date.now().toString().slice(-6));
           await supabase.from('user_applications').insert({
             app_account_id: nextAppId,
-            user_id: targetUserId || null,
+            user_id: targetUserId,
             username: newAcc.username,
             password_source: newAcc.password,
-            application: newAcc.role || 'Compte IT',
+            application: 'Compte IT',
             organisation: newAcc.company || 'Lebrun S.A.'
           });
         }
       }
 
       setItAccounts(prev => {
-        const next = [newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username && (!targetUserId || a.userId !== targetUserId))];
+        const next = [newAcc, ...prev.filter(a =>
+          a.id !== newAcc.id &&
+          a.username !== newAcc.username &&
+          (!targetUserId || a.userId !== targetUserId)
+        )];
         if (typeof window !== 'undefined') {
           localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
         }
