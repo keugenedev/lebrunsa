@@ -58,6 +58,21 @@ export default function ApplicationsView() {
     );
   };
 
+  const isCaribeAccount = (acc: ApplicationAccount): boolean => {
+    const org = (acc.organization || '').toLowerCase();
+    const app = (acc.applications || '').toLowerCase();
+    const user = (acc.username || '').toLowerCase();
+    const emp = getLinkedEmployee(acc);
+    const empCompany = (emp?.company || '').toLowerCase();
+
+    return (
+      org.includes('caribe') ||
+      user.includes('caribe') ||
+      app.includes('dealer') ||
+      empCompany.includes('caribe')
+    );
+  };
+
   const filteredAccounts = useMemo(() => {
     return applicationAccounts.filter(acc => {
       if (orgFilter !== 'all' && !acc.organization.toLowerCase().includes(orgFilter.toLowerCase())) return false;
@@ -86,9 +101,21 @@ export default function ApplicationsView() {
       }
       return true;
     }).sort((a, b) => {
-      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return bTime - aTime;
+      // 1. Tous les comptes Caribe Motors doivent être en premier dans la table
+      const isCaribeA = isCaribeAccount(a);
+      const isCaribeB = isCaribeAccount(b);
+      if (isCaribeA && !isCaribeB) return -1;
+      if (!isCaribeA && isCaribeB) return 1;
+
+      // 2. Ensuite la logique : nouvel ajout en 1ère position, puis descente
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
+
+      // 3. Ordre naturel des identifiants (app-1, app-2, ...)
+      const idA = String(a.id || '');
+      const idB = String(b.id || '');
+      return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
     });
   }, [applicationAccounts, orgFilter, appFilter, searchQuery, employees]);
 

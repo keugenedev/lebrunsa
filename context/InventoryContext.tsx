@@ -363,6 +363,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // Master data versioning - keeps cache synchronized with Supabase
   const CURRENT_DATA_VERSION = '2026-09-19-v18-supabase-realtime-sync';
 
+  // Tri prioritaire : Tous les comptes Caribe Motors en premier dans la table, puis logique antéchronologique (nouveaux ajouts en tête)
+  const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
+    return [...items].sort((a, b) => {
+      // 1. Tous les comptes Caribe Motors doivent être en premier dans la table
+      const isCaribeA = (a.organization || '').toLowerCase().includes('caribe') ||
+                        (a.username || '').toLowerCase().includes('caribe') ||
+                        (a.applications || '').toLowerCase().includes('dealer');
+      const isCaribeB = (b.organization || '').toLowerCase().includes('caribe') ||
+                        (b.username || '').toLowerCase().includes('caribe') ||
+                        (b.applications || '').toLowerCase().includes('dealer');
+      if (isCaribeA && !isCaribeB) return -1;
+      if (!isCaribeA && isCaribeB) return 1;
+
+      // 2. Ensuite la logique : nouvel ajout en 1ère position, puis descente
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
+
+      // 3. Ordre naturel des identifiants (app-1, app-2, ...)
+      const idA = String(a.id || '');
+      const idB = String(b.id || '');
+      return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  };
+
   if (typeof window !== 'undefined') {
     const version = localStorage.getItem('lebron_inv_data_version');
     if (version !== CURRENT_DATA_VERSION) {
@@ -490,7 +515,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+            return sortApplicationAccounts(parsed);
           }
         } catch (e) { console.error(e); }
       }
@@ -1061,6 +1086,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
               const appId = existingAcc?.id || (strId ? `app-${strId}` : `app-${row.username}`);
 
+              const numId = Number(strId);
+              let deducedCreated = existingAcc?.createdAt;
+              if (!deducedCreated && !isNaN(numId) && numId > 23) {
+                deducedCreated = new Date(Date.now() - (1000000 - Math.min(numId, 999999)) * 1000).toISOString();
+              }
+
               return {
                 id: appId,
                 username: row.username || existingAcc?.username || '',
@@ -1071,13 +1102,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 organization: row.organisation || existingAcc?.organization || (matchedEmp?.company || 'Lebrun S.A.'),
                 employeeId: matchedEmp ? matchedEmp.id : (existingAcc?.employeeId || row.user_id),
                 windowsUsername: existingAcc?.windowsUsername || matchedEmp?.accounts?.windowsUsername || (matchedEmp ? matchedEmp.fullName : ''),
-                windowsPassword: existingAcc?.windowsPassword || matchedEmp?.accounts?.windowsPassword || '1234'
+                windowsPassword: existingAcc?.windowsPassword || matchedEmp?.accounts?.windowsPassword || '1234',
+                createdAt: deducedCreated
               };
             });
 
             const localOnly = prev.filter(localAcc => 
-              localAcc.id.startsWith('app-1') && 
-              !dbApps.some((r: any) => r.username?.toLowerCase() === localAcc.username.toLowerCase())
+              !dbApps.some((r: any) => 
+                String(r.app_account_id) === localAcc.id.replace('app-', '') ||
+                (r.username && localAcc.username && r.username.toLowerCase() === localAcc.username.toLowerCase())
+              )
             );
 
             const seenApps = new Set<string>();
@@ -1087,7 +1121,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               seenApps.add(k);
               return true;
             });
-            const merged = sortByNewest(deduplicated);
+            const merged = sortApplicationAccounts(deduplicated);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_applications', JSON.stringify(merged));
             }
@@ -2467,9 +2501,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       : (account.employeeId?.startsWith('EMP-') ? account.employeeId : null);
 
     const nextAppId = String(Date.now().toString().slice(-6));
+    const nowIso = new Date().toISOString();
     const newAcc: ApplicationAccount = {
       ...account,
-      id: `app-${nextAppId}`
+      id: `app-${nextAppId}`,
+      createdAt: nowIso
     };
 
     try {
@@ -2493,7 +2529,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }
 
       setApplicationAccounts(prev => {
-        const next = [newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username)];
+        const next = sortApplicationAccounts([newAcc, ...prev.filter(a => a.id !== newAcc.id && a.username !== newAcc.username)]);
         if (typeof window !== 'undefined') {
           localStorage.setItem('lebron_inv_applications', JSON.stringify(next));
         }

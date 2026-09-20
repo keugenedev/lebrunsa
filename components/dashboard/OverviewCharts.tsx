@@ -483,9 +483,9 @@ export default function OverviewCharts() {
     const chart = new ChartJS(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Postes IT', 'Imprimantes', 'Réseau', 'Onduleurs UPS', 'Personnel', 'Applications GP'],
+        labels: ['Applications GP', 'Postes IT', 'Imprimantes', 'Réseau', 'Onduleurs UPS', 'Personnel'],
         datasets: [{
-          data: [totalIT, totalPrinters, totalNetwork, totalUPS, totalEmployees, totalAppAccounts],
+          data: [totalAppAccounts, totalIT, totalPrinters, totalNetwork, totalUPS, totalEmployees],
           backgroundColor: [
             '#0f172a',
             '#1e293b',
