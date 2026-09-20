@@ -755,12 +755,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const showToast = (toast: Omit<ToastMessage, 'id'>) => {
-    // Modification ou suppression réussie : animation seule, au centre de l'écran, sans texte
-    if (
+    // Réussite (ajout, modification, suppression, téléchargement, export...) : animation seule,
+    // au centre de l'écran, sans texte. Les erreurs, avertissements et infos gardent leur message.
+    const isSuccess = toast.type === 'success' && !/^connexion/i.test(toast.title);
+    const isEditOrDelete =
       toast.type !== 'error' &&
       !/^erreur/i.test(toast.title) &&
-      /(modifi|mis à jour|supprim|retiré)/i.test(toast.title)
-    ) {
+      /(modifi|mis à jour|supprim|retiré)/i.test(toast.title);
+    if (isSuccess || isEditOrDelete) {
       showInsertSuccess();
       return;
     }
