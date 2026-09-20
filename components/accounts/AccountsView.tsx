@@ -2,19 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
-import { ITAccount, ITRole } from '@/types/inventory';
+import { ITAccount } from '@/types/inventory';
 import { 
   Plus, 
   Search, 
   Download, 
-  Edit2, 
   Trash2, 
-  Filter,
-  Eye,
-  EyeOff,
-  Copy,
-  Check,
-  Key
+  KeyRound
 } from 'lucide-react';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
@@ -30,22 +24,6 @@ export default function AccountsView() {
 
   const [search, setSearch] = useState('');
   const [deletingAccount, setDeletingAccount] = useState<ITAccount | null>(null);
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const togglePasswordVisibility = (id: string) => {
-    setRevealedPasswords(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
-
-  const copyToClipboard = (id: string, text?: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   // Combined search: header search + view search
   const activeSearch = search || globalSearch || '';
@@ -53,7 +31,7 @@ export default function AccountsView() {
   // KPI Calculations
   const stats = useMemo(() => {
     const total = itAccounts.length;
-    const withPassword = itAccounts.filter(a => a.password || a.passwordHint).length;
+    const withPassword = itAccounts.filter(a => a.hasPassword).length;
 
     return {
       total,
@@ -92,10 +70,10 @@ export default function AccountsView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
           <h1 className="text-sm font-medium text-slate-800 tracking-tight">
-            Comptes & Mots de Passe Utilisateurs
+            Comptes & Accès Utilisateurs
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
-            Attribution des accès et mots de passe de connexion pour le personnel de Lebrun S.A.
+            Accès de connexion du personnel. Vous définissez le mot de passe de chaque personne : il n&apos;est jamais affiché ici.
           </p>
         </div>
 
@@ -105,7 +83,7 @@ export default function AccountsView() {
             className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Nouveau Compte</span>
+            <span>Nouvel accès</span>
           </button>
           <button
             onClick={() => exportCSV('accounts')}
@@ -126,7 +104,7 @@ export default function AccountsView() {
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-          <p className="text-xs font-medium text-slate-500">Mots de passe configurés</p>
+          <p className="text-xs font-medium text-slate-500">Accès activés (mot de passe défini)</p>
           <p className="text-xl font-bold text-emerald-600 mt-1">{stats.withPassword}</p>
         </div>
       </div>
@@ -145,7 +123,7 @@ export default function AccountsView() {
         </div>
       </div>
 
-      {/* Clean Table : Code | Nom | Email | Poste | Password | Actions */}
+      {/* Table : Code | Nom | Email | Poste | Actions */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -155,22 +133,21 @@ export default function AccountsView() {
                 <th className="py-3 px-3.5">Nom</th>
                 <th className="py-3 px-3.5">Email</th>
                 <th className="py-3 px-3.5">Poste</th>
-                <th className="py-3 px-3.5">Password</th>
                 <th className="py-3 px-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredAccounts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-slate-400">
+                  <td colSpan={5} className="py-10 text-center text-slate-400">
                     <p className="text-sm font-semibold text-slate-600">Aucun compte trouvé</p>
-                    <p className="text-xs text-slate-400 mt-1">Attribuez un mot de passe à un collaborateur pour lui donner accès.</p>
+                    <p className="text-xs text-slate-400 mt-1">Créez l&apos;accès d&apos;un collaborateur en définissant son mot de passe.</p>
                     <button
                       onClick={() => openAccountModal()}
                       className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Attribuer un mot de passe
+                      Créer un accès
                     </button>
                   </td>
                 </tr>
@@ -206,45 +183,16 @@ export default function AccountsView() {
                       </span>
                     </td>
 
-                    {/* Password */}
-                    <td className="py-3 px-3.5 whitespace-nowrap">
-                      {account.password || account.passwordHint ? (
-                        <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg shadow-2xs">
-                          <Key className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="font-mono text-xs font-semibold text-slate-800 tracking-wider">
-                            {revealedPasswords[account.id] ? (account.password || account.passwordHint) : '••••••••'}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => togglePasswordVisibility(account.id)}
-                            className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors cursor-pointer"
-                            title={revealedPasswords[account.id] ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                          >
-                            {revealedPasswords[account.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(account.id, account.password || account.passwordHint)}
-                            className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors cursor-pointer"
-                            title="Copier le mot de passe"
-                          >
-                            {copiedId === account.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-[11px] italic">Non défini</span>
-                      )}
-                    </td>
-
                     {/* Actions */}
                     <td className="py-3 px-3.5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openAccountModal(account)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                          title="Modifier le mot de passe"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors cursor-pointer"
+                          title="Réinitialiser le mot de passe : vous définissez un nouveau mot de passe pour cette personne"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <KeyRound className="w-3.5 h-3.5" />
+                          Réinitialiser
                         </button>
                         <button
                           onClick={() => handleDelete(account)}

@@ -76,16 +76,16 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      const ok = login(email, password);
+    setTimeout(async () => {
+      const res = await login(email, password);
       setIsLoading(false);
-      if (ok) {
+      if (res.ok) {
         if (onSuccess) onSuccess();
         if (isStandalonePage && typeof window !== 'undefined') {
           window.location.href = '/';
         }
       } else {
-        setError('Email ou mot de passe incorrect. Vérifiez vos identifiants.');
+        setError(res.message);
       }
     }, 300);
   };

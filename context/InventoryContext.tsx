@@ -158,7 +158,7 @@ interface InventoryContextType {
   // Authentication
   isAuthenticated: boolean;
   currentUser: { name: string; email: string; role: string } | null;
-  login: (email: string, password?: string) => boolean;
+  login: (email: string, password?: string) => Promise<{ ok: true } | { ok: false; message: string }>;
   logout: () => void;
 
   isAddModalOpen: boolean;
@@ -286,8 +286,8 @@ interface InventoryContextType {
   editingAccount: ITAccount | null;
   openAccountModal: (account?: ITAccount) => void;
   closeAccountModal: () => void;
-  addITAccount: (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => Promise<any>;
-  updateITAccount: (id: string, updates: Partial<ITAccount>) => Promise<any>;
+  addITAccount: (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>, password: string) => Promise<any>;
+  setAccountPassword: (account: ITAccount, password: string) => Promise<any>;
   deleteITAccount: (id: string) => Promise<any>;
 
   // Modals & Actions Documents
@@ -721,7 +721,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           site:      r.site       || 'Delmas 52',
           poste:     r.poste      || r.department || '',
           status:    r.status === 'Actif' ? 'active' : 'inactive',
-          password:  undefined,
+          hasPassword: typeof r.has_password === 'boolean' ? r.has_password : Boolean(r.password_hash),
           createdAt: r.created_at,
           updatedAt: r.updated_at,
         }));
@@ -1038,70 +1038,56 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [phones]);
 
-  // Authentification — connexion uniquement via email + mot de passe (itAccounts)
-  const login = (email: string, password?: string): boolean => {
+  // Message clair quand le script SQL des comptes n'a pas encore été exécuté dans Supabase
+  const accountsRpcMessage = (error: { message: string; code?: string }) =>
+    error.code === 'PGRST202' || /could not find the function/i.test(error.message)
+      ? "La base n'est pas à jour : exécutez le script accounts_setup.sql dans le SQL Editor de Supabase."
+      : error.message;
+
+  // Authentification : e-mail + mot de passe, vérifiés côté base (le mot de passe est haché, jamais lisible).
+  // En cas d'échec, le message précis est renvoyé pour être affiché sur la page de connexion.
+  const login = async (email: string, password?: string): Promise<{ ok: true } | { ok: false; message: string }> => {
     const emailQuery = (email || '').trim().toLowerCase();
-    if (!emailQuery) return false;
+    if (!emailQuery) return { ok: false, message: 'Veuillez saisir votre adresse email.' };
+    if (!password || !password.trim()) return { ok: false, message: 'Veuillez saisir votre mot de passe.' };
 
-    if (!password || !password.trim()) {
+    try {
+      const { data, error } = await supabase.rpc('verify_login', { p_email: emailQuery, p_password: password });
+      if (error) return { ok: false, message: accountsRpcMessage(error) };
+
+      const row = Array.isArray(data) ? data[0] : data;
+      const status = row?.r_status as string | undefined;
+
+      if (status === 'no_account' || !status) {
+        return { ok: false, message: "Aucun compte trouvé pour cette adresse email. Contactez l'administrateur." };
+      }
+      if (status === 'no_password') {
+        return { ok: false, message: "Aucun mot de passe n'est défini pour ce compte. Contactez l'administrateur." };
+      }
+      if (status !== 'ok') {
+        return { ok: false, message: 'Email ou mot de passe incorrect. Vérifiez vos identifiants.' };
+      }
+
+      const user = {
+        name: row.r_full_name || emailQuery,
+        email: row.r_email || emailQuery,
+        role: row.r_poste || ''
+      };
+      setIsAuthenticated(true);
+      setCurrentUser(user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lebron_auth', 'true');
+        localStorage.setItem('lebron_user', JSON.stringify(user));
+      }
       showToast({
-        title: "Mot de passe requis",
-        message: "Veuillez saisir votre mot de passe.",
-        type: "error"
+        title: "Connexion réussie",
+        message: `Bienvenue, ${user.name} !`,
+        type: "success"
       });
-      return false;
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, message: err?.message || 'Erreur réseau. Vérifiez votre connexion.' };
     }
-
-    // Chercher uniquement dans les comptes avec un mot de passe défini (section Comptes)
-    const itAcc = itAccounts.find(a =>
-      a.email && a.email.toLowerCase() === emailQuery
-    );
-
-    if (!itAcc) {
-      showToast({
-        title: "Accès refusé",
-        message: "Aucun compte trouvé pour cette adresse email. Contactez l'administrateur.",
-        type: "error"
-      });
-      return false;
-    }
-
-    const expectedPassword = itAcc.password || itAcc.passwordHint;
-    if (!expectedPassword) {
-      showToast({
-        title: "Accès refusé",
-        message: "Aucun mot de passe configuré pour ce compte. Contactez l'administrateur.",
-        type: "error"
-      });
-      return false;
-    }
-
-    if (password.trim() !== expectedPassword.trim()) {
-      showToast({
-        title: "Mot de passe incorrect",
-        message: "Le mot de passe saisi ne correspond pas. Veuillez réessayer.",
-        type: "error"
-      });
-      return false;
-    }
-
-    const user = {
-      name: itAcc.fullName,
-      email: itAcc.email,
-      role: itAcc.poste || itAcc.specialty || itAcc.role
-    };
-    setIsAuthenticated(true);
-    setCurrentUser(user);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('lebron_auth', 'true');
-      localStorage.setItem('lebron_user', JSON.stringify(user));
-    }
-    showToast({
-      title: "Connexion réussie",
-      message: `Bienvenue, ${itAcc.fullName} !`,
-      type: "success"
-    });
-    return true;
   };
 
 
@@ -1920,16 +1906,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // IT Accounts Actions
-  const addITAccount = async (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addITAccount = async (account: Omit<ITAccount, 'id' | 'createdAt' | 'updatedAt'>, password: string) => {
     const userId = account.userId;
     if (!userId) {
       showToast({ title: 'Erreur', message: 'Collaborateur introuvable.', type: 'error' });
       return { success: false };
     }
     try {
+      // Le mot de passe est défini par l'administrateur ; il est haché côté base et n'est plus jamais renvoyé
       const { data, error } = await supabase.rpc('upsert_account', {
         p_user_id:  userId,
-        p_password: account.password || '',
+        p_password: password,
       });
       if (error) throw error;
 
@@ -1948,7 +1935,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         site:      row.site       || account.site,
         poste:     row.poste      || account.poste || '',
         status:    row.status === 'Actif' ? 'active' : 'inactive',
-        password:  undefined,   // hash non renvoyé
+        hasPassword: typeof row.has_password === 'boolean' ? row.has_password : Boolean(row.password_hash),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -1970,40 +1957,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateITAccount = async (id: string, updates: Partial<ITAccount>) => {
-    const target = itAccounts.find(a => a.id === id);
-    const userId = updates.userId || target?.userId;
-    if (!userId) {
+  // Définit (ou réinitialise) le mot de passe d'une personne. Il est haché côté base, jamais relu ni affiché.
+  const setAccountPassword = async (account: ITAccount, password: string) => {
+    if (!account.userId) {
       showToast({ title: 'Erreur', message: 'Compte introuvable.', type: 'error' });
       return { success: false };
     }
     try {
-      const { data, error } = await supabase.rpc('upsert_account', {
-        p_user_id:  userId,
-        p_password: updates.password || '',
-      });
+      const { error } = await supabase.rpc('upsert_account', { p_user_id: account.userId, p_password: password });
       if (error) throw error;
 
-      const row = Array.isArray(data) ? data[0] : data;
-      const updated: ITAccount = {
-        ...target!,
-        ...updates,
-        id:        row?.id        || id,
-        username:  row?.username  || target?.username || '',
-        fullName:  row ? [row.first_name, row.last_name].filter(Boolean).join(' ') : (target?.fullName || ''),
-        firstName: row?.first_name || target?.firstName || '',
-        lastName:  row?.last_name  || target?.lastName  || '',
-        email:     row?.email      || target?.email     || '',
-        company:   row?.company    || target?.company   || 'Lebrun S.A.',
-        site:      row?.site       || target?.site      || 'Delmas 52',
-        poste:     row?.poste      || target?.poste     || '',
-        status:    row?.status === 'Actif' ? 'active' : 'inactive',
-        password:  undefined,
-        updatedAt: row?.updated_at || new Date().toISOString(),
-      };
-
       setItAccounts(prev => {
-        const next = prev.map(a => a.id === id ? updated : a);
+        const next = prev.map(a => (a.id === account.id ? { ...a, hasPassword: true, updatedAt: new Date().toISOString() } : a));
         if (typeof window !== 'undefined') {
           localStorage.setItem('lebron_inv_it_accounts', JSON.stringify(next));
         }
@@ -2013,8 +1978,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       showInsertSuccess();
       return { success: true };
     } catch (err: any) {
-      console.error('updateITAccount error:', err);
-      showToast({ title: 'Erreur de modification', message: err?.message || 'Erreur réseau', type: 'error' });
+      console.error('setAccountPassword error:', err);
+      showToast({ title: 'Erreur de modification', message: accountsRpcMessage(err), type: 'error' });
       return { success: false, error: err?.message };
     }
   };
@@ -4122,7 +4087,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         openAccountModal,
         closeAccountModal,
         addITAccount,
-        updateITAccount,
+        setAccountPassword,
         deleteITAccount,
         documents,
         isDocumentModalOpen,

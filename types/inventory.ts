@@ -274,8 +274,7 @@ export interface ITAccount {
   status: 'active' | 'inactive';
   specialty?: string; // Infrastructure, Windows Server, Réseau, Helpdesk, GP
   poste?: string; // Poste réel du collaborateur conservé (ex: Administrateur, Informaticien, etc.)
-  password?: string; // Mot de passe réel stocké dans la base de données Supabase
-  passwordHint?: string; // Mot de passe / Session
+  hasPassword?: boolean; // Un mot de passe est défini (jamais le mot de passe lui-même : il est haché en base)
   notes?: string;
   createdAt: string;
   updatedAt: string;
