@@ -202,13 +202,13 @@ export default function WorkstationDetailsModal({
               </div>
             </div>
 
-            {(asset.notes || (ws as any)?.obs) && (
+            {(asset.notes || ws?.observations || (ws as any)?.obs) && (
               <div className="pt-2 border-t border-slate-200/80">
                 <span className="text-[10px] text-slate-400 block uppercase font-medium">Notes & Observations Spécifiques</span>
                 <div className="font-medium text-slate-800 mt-0.5 text-xs bg-white p-2.5 rounded-lg border border-slate-200/80 space-y-1">
                   {asset.notes && <p>{asset.notes}</p>}
-                  {(ws as any)?.obs && (ws as any)?.obs !== asset.notes && (
-                    <p className="text-slate-600 italic">Poste: {(ws as any).obs}</p>
+                  {ws?.observations && ws.observations !== asset.notes && (
+                    <p className="text-slate-600 italic">Poste: {ws.observations}</p>
                   )}
                 </div>
               </div>

@@ -101,17 +101,7 @@ export default function AssetModal() {
         setKeyboardModel(ws.keyboard || (it as any).keyboard || (it as any).clavier || 'Clavier Dell cable');
         setKeyboardDetails(ws.keyboardDetails || 'Clavier Alpha numerique');
         setKeyboardObs(ws.keyboardObs || (it as any).keyboardObs || 'Good');
-        const cleanObsFromText = (text?: string) => {
-          if (!text || text === 'Good') return '';
-          return text
-            .split('•')
-            .map(s => s.trim())
-            .filter(s => s && !s.match(/Windows\s+\d+/i) && !s.match(/^Écran/i) && !s.match(/^Intel/i) && !s.match(/^\d+\s*(GB|TB)/i))
-            .join(' • ');
-        };
-
-        const initialObs = cleanObsFromText(ws.observations) || cleanObsFromText(it.notes);
-        setGeneralObs(initialObs);
+        setGeneralObs(ws.observations || it.notes || '');
       } else {
         // Fallback from notes if notes has screen info
         const snMatch = it.notes?.match(/\(SN:\s*([^\)]+)\)/i);
@@ -125,16 +115,7 @@ export default function AssetModal() {
         setKeyboardModel((it as any).keyboard || (it as any).clavier || 'Clavier Dell cable');
         setKeyboardDetails('Clavier Alpha numerique');
         setKeyboardObs((it as any).keyboardObs || 'Good');
-
-        const cleanObsFromText = (text?: string) => {
-          if (!text || text === 'Good') return '';
-          return text
-            .split('•')
-            .map(s => s.trim())
-            .filter(s => s && !s.match(/Windows\s+\d+/i) && !s.match(/^Écran/i) && !s.match(/^Intel/i) && !s.match(/^\d+\s*(GB|TB)/i))
-            .join(' • ');
-        };
-        setGeneralObs(cleanObsFromText(it.notes));
+        setGeneralObs(it.notes || '');
       }
     } else {
       const rand = Math.floor(Math.random() * 900 + 100);
@@ -202,11 +183,7 @@ export default function AssetModal() {
         observations: generalObs || ''
       };
 
-      const notesSummary = [
-        keyboardObs && keyboardObs !== 'Good' ? `Clavier: ${keyboardObs}` : '',
-        mouseObs && mouseObs !== 'Good' ? `Souris: ${mouseObs}` : '',
-        generalObs && generalObs !== 'Good' ? generalObs : ''
-      ].filter(Boolean).join(' • ');
+      const notesSummary = generalObs || '';
 
       const payload: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'> = {
         name,

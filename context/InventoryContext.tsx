@@ -555,7 +555,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-09-21-v20-marjorie-persistence-fix';
+  const CURRENT_DATA_VERSION = '2026-09-21-v21-restore-all-obs';
 
   // Tri prioritaire : Tous les comptes Caribe Motors en premier dans la table, puis logique antéchronologique (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {

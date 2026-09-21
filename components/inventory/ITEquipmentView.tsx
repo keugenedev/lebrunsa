@@ -347,6 +347,11 @@ export default function ITEquipmentView() {
                 </div>
               )}
             </div>
+            {(asset.notes || ws?.observations) && (asset.notes !== 'Good' && ws?.observations !== 'Good') && (
+              <div className="text-[10px] text-slate-600 italic font-medium bg-amber-50/60 px-1.5 py-0.5 rounded border border-amber-200/60 truncate max-w-[240px] mt-1" title={asset.notes || ws?.observations}>
+                Obs: {asset.notes || ws?.observations}
+              </div>
+            )}
           </div>
         );
       }
