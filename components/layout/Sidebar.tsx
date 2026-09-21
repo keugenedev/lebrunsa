@@ -72,39 +72,38 @@ export default function Sidebar() {
     <aside
       className={`${
         isCollapsed ? 'w-[72px]' : 'w-60'
-      } shrink-0 bg-white border-r border-slate-200/90 flex flex-col justify-between select-none shadow-2xs z-20 transition-all duration-300 ease-in-out relative`}
+      } shrink-0 bg-white border-r border-slate-200/90 flex flex-col justify-between select-none shadow-2xs z-50 transition-all duration-300 ease-in-out relative overflow-visible`}
     >
-      {/* Collapse Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3.5 top-5 bg-white border border-slate-200 text-slate-400 hover:text-slate-700 rounded-full p-1 shadow-sm z-30 transition-all cursor-pointer hover:shadow-md hover:border-slate-300"
-        title={isCollapsed ? 'Agrandir le menu' : 'Réduire le menu'}
-      >
-        {isCollapsed
-          ? <ChevronRight className="w-3.5 h-3.5" />
-          : <ChevronLeft className="w-3.5 h-3.5" />
-        }
-      </button>
-
-      {/* Top: Logo */}
+      {/* Top: Logo + Toggle Button */}
       <div
-        className={`border-b border-slate-100 flex items-center justify-center bg-white transition-all duration-300 ${
-          isCollapsed ? 'py-3 px-2' : 'py-3.5 px-5'
+        className={`border-b border-slate-100 flex items-center bg-white transition-all duration-300 ${
+          isCollapsed ? 'flex-col gap-2 py-3 px-2' : 'justify-between py-3.5 px-4'
         }`}
       >
         <div
           onClick={() => setActiveTab('overview')}
-          className="cursor-pointer flex items-center justify-center w-full"
+          className="cursor-pointer flex items-center justify-center"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/Lebrunog.png"
             alt="Logo Lebrun S.A."
             className={`object-contain transition-all duration-300 ${
-              isCollapsed ? 'h-8 max-w-[44px]' : 'h-14 max-w-[170px]'
+              isCollapsed ? 'h-7 max-w-[40px]' : 'h-12 max-w-[150px]'
             }`}
           />
         </div>
+
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all cursor-pointer shrink-0"
+          title={isCollapsed ? 'Agrandir le menu' : 'Réduire le menu'}
+        >
+          {isCollapsed
+            ? <ChevronRight className="w-3.5 h-3.5" />
+            : <ChevronLeft className="w-3.5 h-3.5" />
+          }
+        </button>
       </div>
 
       {/* Navigation Links */}
