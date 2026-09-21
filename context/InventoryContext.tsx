@@ -555,7 +555,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-09-19-v18-supabase-realtime-sync';
+  const CURRENT_DATA_VERSION = '2026-09-21-v20-marjorie-persistence-fix';
 
   // Tri prioritaire : Tous les comptes Caribe Motors en premier dans la table, puis logique antéchronologique (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
@@ -586,6 +586,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const version = localStorage.getItem('lebron_inv_data_version');
     if (version !== CURRENT_DATA_VERSION) {
       localStorage.setItem('lebron_inv_data_version', CURRENT_DATA_VERSION);
+      localStorage.removeItem('lebron_inv_employees');
+      localStorage.removeItem('lebron_inv_it');
     }
   }
 
@@ -1266,44 +1268,53 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           .order('created_at', { ascending: false, nullsFirst: false });
 
         if (!usrErr && dbUsers && dbUsers.length > 0) {
-          const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
-            const firstName = r.prenom || '';
-            const lastName = r.nom || '';
-            const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
-            const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
+          setEmployees(prev => {
+            const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
+              const firstName = r.prenom || '';
+              const lastName = r.nom || '';
+              const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
+              const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
 
-            return {
-              id: empId,
-              employeeId: empId,
-              fullName: fullName || 'Collaborateur',
-              firstName,
-              lastName,
-              email: (r.email && r.email !== 'NOT' ? r.email : '') || '',
-              phone: r.telephone || '',
-              company: (r.entreprise as Employee['company']) || 'Lebrun S.A.',
-              site: r.site || 'Delmas 52',
-              location: r.site || 'Delmas 52',
-              department: r.departement || '',
-              jobTitle: r.poste || '',
-              hireDate: r.created_at ? r.created_at.slice(0, 10) : '2024-01-15',
-              status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : 'active') as Employee['status'],
-              createdAt: r.created_at || new Date().toISOString(),
-              accounts: {
-                windowsUsername: r.username || fullName,
-                windowsPassword: '1234',
-                appUsername: r.username || '',
-                appPassword: '',
-                applications: 'Microsoft GP',
-                organization: r.entreprise || 'Lebrun S.A.'
-              }
-            };
+              const existingLocal = prev.find(e => e.id === empId || e.employeeId === empId || (e.fullName && e.fullName.toLowerCase() === fullName.toLowerCase()));
+              const initLocal = INITIAL_EMPLOYEES.find(e => e.id === empId || e.employeeId === empId || (e.fullName && e.fullName.toLowerCase() === fullName.toLowerCase()));
+
+              return {
+                id: empId,
+                employeeId: empId,
+                fullName: fullName || 'Collaborateur',
+                firstName,
+                lastName,
+                email: (r.email && r.email !== 'NOT' ? r.email : '') || '',
+                phone: r.telephone || '',
+                company: (r.entreprise as Employee['company']) || 'Lebrun S.A.',
+                site: r.site || 'Delmas 52',
+                location: r.site || 'Delmas 52',
+                department: r.departement || '',
+                jobTitle: r.poste || '',
+                hireDate: r.created_at ? r.created_at.slice(0, 10) : '2024-01-15',
+                status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : 'active') as Employee['status'],
+                createdAt: r.created_at || new Date().toISOString(),
+                notes: r.notes !== undefined && r.notes !== null ? r.notes : (r.observations !== undefined && r.observations !== null ? r.observations : (existingLocal?.notes ?? initLocal?.notes ?? '')),
+                workstation: existingLocal?.workstation ?? initLocal?.workstation,
+                accounts: {
+                  windowsUsername: r.username || fullName,
+                  windowsPassword: '1234',
+                  appUsername: r.username || '',
+                  appPassword: '',
+                  applications: 'Microsoft GP',
+                  organization: r.entreprise || 'Lebrun S.A.'
+                }
+              };
+            });
+
+            const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || dbE.id === e.id));
+            const merged = [...localOnly, ...mappedFromDb];
+
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lebron_inv_employees', JSON.stringify(merged));
+            }
+            return merged;
           });
-
-          // Supabase est la source de vérité — ordre created_at DESC garanti par la requête
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('lebron_inv_employees', JSON.stringify(mappedFromDb));
-          }
-          setEmployees(mappedFromDb);
         }
 
 
@@ -1460,53 +1471,60 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
               const tag = r.equipment_id ? String(r.equipment_id) : `AST-PC-${(r.id || idx + 1).toString().padStart(3, '0')}`;
               const existingLocal = prev.find(a => a.assetTag === tag || a.id === tag);
+              const initLocal = INITIAL_IT_ASSETS.find(a => a.assetTag === tag || a.id === tag);
 
               const rowPerson = (r.prenom && r.nom) ? `${r.prenom} ${r.nom}` : (r.nom || r.prenom || r.assigne_a);
-              const pcSerial = r.numero_serie_pc || r.numero_serie || existingLocal?.serialNumber || 'N/A';
-              const pcName = r.nom_pc || r.nom || existingLocal?.name || `Poste ${tag}`;
+              const pcSerial = r.numero_serie_pc || r.numero_serie || existingLocal?.serialNumber || initLocal?.serialNumber || 'N/A';
+              const pcName = r.nom_pc || r.nom || existingLocal?.name || initLocal?.name || `Poste ${tag}`;
+
+              const obsValue = r.observations !== undefined && r.observations !== null
+                ? r.observations
+                : (r.notes !== undefined && r.notes !== null
+                    ? r.notes
+                    : (existingLocal?.notes !== undefined ? existingLocal.notes : (initLocal?.notes || '')));
 
               return {
                 id: tag,
                 assetTag: tag,
                 name: pcName,
-                brand: r.marque || existingLocal?.brand || 'Dell',
-                model: r.modele || existingLocal?.model || 'OptiPlex Workstation',
+                brand: r.marque || existingLocal?.brand || initLocal?.brand || 'Dell',
+                model: r.modele || existingLocal?.model || initLocal?.model || 'OptiPlex Workstation',
                 serialNumber: pcSerial,
                 category: 'it' as const,
-                subCategory: (r.type_poste?.toLowerCase().includes('laptop') ? 'laptop' : existingLocal?.subCategory || 'desktop') as ITAsset['subCategory'],
-                cpu: r.cpu || existingLocal?.cpu || 'Intel Core i5',
-                ram: r.ram || existingLocal?.ram || '8 GB RAM',
-                storage: r.stockage || existingLocal?.storage || '500 GB SSD',
-                os: r.windows_os || existingLocal?.os || '',
-                assignedTo: rowPerson || existingLocal?.assignedTo,
-                assignedPersonnelId: r.user_id || existingLocal?.assignedPersonnelId,
-                assignedDepartment: r.departement || existingLocal?.assignedDepartment,
-                company: r.entreprise || existingLocal?.company || 'Lebrun S.A.',
-                location: r.site || existingLocal?.location || 'Delmas 52',
-                status: (r.etat_general === 'En service' || r.statut === 'in_use' ? 'in_use' : r.etat_general === 'Maintenance' || r.statut === 'maintenance' ? 'maintenance' : existingLocal?.status || 'available') as ITAsset['status'],
-                notes: r.observations || r.notes || existingLocal?.notes || '',
-                purchaseDate: r.created_at ? r.created_at.slice(0, 10) : (existingLocal?.purchaseDate || '2024-01-15'),
-                warrantyExpiry: existingLocal?.warrantyExpiry || '2027-01-15',
-                purchaseCost: existingLocal?.purchaseCost || 850,
+                subCategory: (r.type_poste?.toLowerCase().includes('laptop') ? 'laptop' : existingLocal?.subCategory || initLocal?.subCategory || 'desktop') as ITAsset['subCategory'],
+                cpu: r.cpu || existingLocal?.cpu || initLocal?.cpu || 'Intel Core i5',
+                ram: r.ram || existingLocal?.ram || initLocal?.ram || '8 GB RAM',
+                storage: r.stockage || existingLocal?.storage || initLocal?.storage || '500 GB SSD',
+                os: r.windows_os !== undefined && r.windows_os !== null ? r.windows_os : (existingLocal?.os || initLocal?.os || ''),
+                assignedTo: rowPerson !== undefined && rowPerson !== null && rowPerson !== '' ? rowPerson : (existingLocal?.assignedTo || initLocal?.assignedTo),
+                assignedPersonnelId: r.user_id !== undefined && r.user_id !== null ? r.user_id : (existingLocal?.assignedPersonnelId || initLocal?.assignedPersonnelId),
+                assignedDepartment: r.departement !== undefined && r.departement !== null ? r.departement : (existingLocal?.assignedDepartment || initLocal?.assignedDepartment),
+                company: r.entreprise || existingLocal?.company || initLocal?.company || 'Lebrun S.A.',
+                location: r.site || existingLocal?.location || initLocal?.location || 'Delmas 52',
+                status: (r.etat_general === 'En service' || r.statut === 'in_use' ? 'in_use' : r.etat_general === 'Maintenance' || r.statut === 'maintenance' ? 'maintenance' : existingLocal?.status || initLocal?.status || 'available') as ITAsset['status'],
+                notes: obsValue,
+                purchaseDate: r.created_at ? r.created_at.slice(0, 10) : (existingLocal?.purchaseDate || initLocal?.purchaseDate || '2024-01-15'),
+                warrantyExpiry: existingLocal?.warrantyExpiry || initLocal?.warrantyExpiry || '2027-01-15',
+                purchaseCost: existingLocal?.purchaseCost || initLocal?.purchaseCost || 850,
                 workstation: {
-                  type: r.type_poste?.toLowerCase().includes('laptop') ? 'Laptop' : (existingLocal?.workstation?.type || 'Desktop'),
+                  type: r.type_poste?.toLowerCase().includes('laptop') ? 'Laptop' : (existingLocal?.workstation?.type || initLocal?.workstation?.type || 'Desktop'),
                   pcName: pcName,
                   pcSerial: pcSerial,
-                  pcSpecs: r.details_pc || existingLocal?.workstation?.pcSpecs || '',
-                  monitorModel: r.ecran || existingLocal?.workstation?.monitorModel || '',
-                  monitorSerial: r.numero_serie_ecran || existingLocal?.workstation?.monitorSerial || '',
-                  monitorObs: r.observation_ecran || existingLocal?.workstation?.monitorObs || 'Good',
-                  keyboard: r.clavier || existingLocal?.workstation?.keyboard || '',
-                  keyboardDetails: r.details_clavier || existingLocal?.workstation?.keyboardDetails || '',
-                  keyboardObs: r.observation_clavier || existingLocal?.workstation?.keyboardObs || 'Good',
-                  mouse: r.souris || existingLocal?.workstation?.mouse || '',
-                  mouseDetails: r.details_souris || existingLocal?.workstation?.mouseDetails || '',
-                  mouseObs: r.observation_souris || existingLocal?.workstation?.mouseObs || 'Good',
-                  generalState: r.etat_general || existingLocal?.workstation?.generalState || 'Good',
-                  observations: r.observations || existingLocal?.workstation?.observations || ''
+                  pcSpecs: r.details_pc !== undefined && r.details_pc !== null ? r.details_pc : (existingLocal?.workstation?.pcSpecs || initLocal?.workstation?.pcSpecs || ''),
+                  monitorModel: r.ecran !== undefined && r.ecran !== null ? r.ecran : (existingLocal?.workstation?.monitorModel || initLocal?.workstation?.monitorModel || ''),
+                  monitorSerial: r.numero_serie_ecran !== undefined && r.numero_serie_ecran !== null ? r.numero_serie_ecran : (existingLocal?.workstation?.monitorSerial || initLocal?.workstation?.monitorSerial || ''),
+                  monitorObs: r.observation_ecran !== undefined && r.observation_ecran !== null ? r.observation_ecran : (existingLocal?.workstation?.monitorObs || initLocal?.workstation?.monitorObs || 'Good'),
+                  keyboard: r.clavier !== undefined && r.clavier !== null ? r.clavier : (existingLocal?.workstation?.keyboard || initLocal?.workstation?.keyboard || ''),
+                  keyboardDetails: r.details_clavier !== undefined && r.details_clavier !== null ? r.details_clavier : (existingLocal?.workstation?.keyboardDetails || initLocal?.workstation?.keyboardDetails || ''),
+                  keyboardObs: r.observation_clavier !== undefined && r.observation_clavier !== null ? r.observation_clavier : (existingLocal?.workstation?.keyboardObs || initLocal?.workstation?.keyboardObs || 'Good'),
+                  mouse: r.souris !== undefined && r.souris !== null ? r.souris : (existingLocal?.workstation?.mouse || initLocal?.workstation?.mouse || ''),
+                  mouseDetails: r.details_souris !== undefined && r.details_souris !== null ? r.details_souris : (existingLocal?.workstation?.mouseDetails || initLocal?.workstation?.mouseDetails || ''),
+                  mouseObs: r.observation_souris !== undefined && r.observation_souris !== null ? r.observation_souris : (existingLocal?.workstation?.mouseObs || initLocal?.workstation?.mouseObs || 'Good'),
+                  generalState: r.etat_general || existingLocal?.workstation?.generalState || initLocal?.workstation?.generalState || 'Good',
+                  observations: obsValue
                 },
-                createdAt: r.created_at || existingLocal?.createdAt || new Date().toISOString(),
-                updatedAt: r.created_at || existingLocal?.updatedAt || new Date().toISOString()
+                createdAt: r.created_at || existingLocal?.createdAt || initLocal?.createdAt || new Date().toISOString(),
+                updatedAt: r.created_at || existingLocal?.updatedAt || initLocal?.updatedAt || new Date().toISOString()
               };
             });
 
@@ -2571,25 +2589,26 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       const specsStr = [updates.os, updates.cpu, updates.ram, updates.storage].filter(Boolean).join(' ');
       if (specsStr) payload.details_pc = specsStr;
 
-      const kb = updates.workstation?.keyboard || updates.keyboard;
-      const kbObs = updates.workstation?.keyboardObs || updates.keyboardObs;
-      if (kb) payload.clavier = kb;
-      if (kbObs) payload.observation_clavier = kbObs;
+      const kb = updates.workstation?.keyboard !== undefined ? updates.workstation.keyboard : updates.keyboard;
+      const kbObs = updates.workstation?.keyboardObs !== undefined ? updates.workstation.keyboardObs : updates.keyboardObs;
+      if (kb !== undefined) payload.clavier = kb;
+      if (kbObs !== undefined) payload.observation_clavier = kbObs;
 
-      const m = updates.workstation?.mouse || updates.mouse;
-      const mObs = updates.workstation?.mouseObs || updates.mouseObs;
-      if (m) payload.souris = m;
-      if (mObs) payload.observation_souris = mObs;
+      const m = updates.workstation?.mouse !== undefined ? updates.workstation.mouse : updates.mouse;
+      const mObs = updates.workstation?.mouseObs !== undefined ? updates.workstation.mouseObs : updates.mouseObs;
+      if (m !== undefined) payload.souris = m;
+      if (mObs !== undefined) payload.observation_souris = mObs;
 
-      if (updates.workstation?.monitorModel) payload.ecran = updates.workstation.monitorModel;
-      if (updates.workstation?.monitorSerial) payload.numero_serie_ecran = updates.workstation.monitorSerial;
-      if (updates.workstation?.monitorObs) payload.observation_ecran = updates.workstation.monitorObs;
+      if (updates.workstation?.monitorModel !== undefined) payload.ecran = updates.workstation.monitorModel;
+      if (updates.workstation?.monitorSerial !== undefined) payload.numero_serie_ecran = updates.workstation.monitorSerial;
+      if (updates.workstation?.monitorObs !== undefined) payload.observation_ecran = updates.workstation.monitorObs;
 
       if (updates.status !== undefined) {
         payload.etat_general = updates.status === 'in_use' ? 'En service' : updates.status === 'maintenance' ? 'Maintenance' : 'En réserve';
       }
 
       if (updates.notes !== undefined) payload.observations = updates.notes;
+      else if (updates.workstation?.observations !== undefined) payload.observations = updates.workstation.observations;
 
       // Assignee sync with it_equipment columns
       if (updates.assignedPersonnelId !== undefined || updates.assignedTo !== undefined) {

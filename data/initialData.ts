@@ -1063,7 +1063,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "assignedDepartment": "Ventes & Commercial",
     "location": "Pétion-Ville",
     "status": "in_use",
-    "notes": "Windows 10 Pro Intel Core i7 @ 3.40 GHz 1 TB SSD 8 GB RAM • Écran Dell 27\" (SN: CN-0FM54-WSL00-38H-HTTL-A00)",
+    "notes": "",
     "keyboard": "Clavier Dell Sans-Fil",
     "keyboardObs": "Good",
     "mouse": "Dell",
@@ -1083,7 +1083,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
       "mouseDetails": "Dell",
       "mouseObs": "Good",
       "generalState": "Good",
-      "observations": "Windows 10 Pro Intel Core i7 @ 3.40 GHz 1 TB SSD 8 GB RAM • Écran Dell 27\" (SN: CN-0FM54-WSL00-38H-HTTL-A00)"
+      "observations": ""
     },
     "purchaseDate": "2026-09-18",
     "warrantyExpiry": "2026-01-15",
@@ -2133,7 +2133,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     "location": "Pétion-Ville",
     "status": "active",
     "hireDate": "2026-09-18",
-    "notes": "Windows 10 Pro Intel Core i7 @ 3.40 GHz 1 TB SSD 8 GB RAM • Écran Dell 27\" (SN: CN-0FM54-WSL00-38H-HTTL-A00)",
+    "notes": "",
     "workstation": {
       "type": "Desktop",
       "pcName": "Poste Dell CARG7S10C2",
@@ -2149,7 +2149,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseDetails": "Dell",
       "mouseObs": "Good",
       "generalState": "Good",
-      "observations": "Windows 10 Pro Intel Core i7 @ 3.40 GHz 1 TB SSD 8 GB RAM • Écran Dell 27\" (SN: CN-0FM54-WSL00-38H-HTTL-A00)"
+      "observations": ""
     },
     "accounts": {
       "windowsUsername": "Marjorie Lamarre",
