@@ -290,7 +290,7 @@ export default function NetworkView() {
               >
                 <option value="all">Toutes les entreprises</option>
                 <option value="Lebrun">Lebrun S.A.</option>
-                <option value="Autobiz">Autobiz S.A.</option>
+                <option value="Autobiz">Autobiz S.A.</option><option value="Caribe">Caribe Motors</option><option value="Leader">Leader Foods</option><option value="Tirezone">Tirezone</option>
               </select>
             </div>
           </div>

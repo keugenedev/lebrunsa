@@ -227,14 +227,14 @@ export default function OverviewView() {
             </span>
           </div>
         </div>
-              {/* Metric 7: Téléphones */}
+              {/* Metric 7: T�l�phones */}
         <div 
           onClick={() => setActiveTab('phones')}
           className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all cursor-pointer group hover:border-slate-300 flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between text-slate-500">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Téléphones</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">T�l�phones</span>
               <Smartphone className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
             </div>
             <div className="mt-2 flex items-baseline gap-1.5">

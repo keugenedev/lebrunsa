@@ -227,11 +227,23 @@ export default function OverviewCharts() {
       const c = (comp || '').toLowerCase();
       const tg = (tag || '').toUpperCase();
       const em = (email || '').toLowerCase();
-      if (t.includes('autobiz')) return c.includes('auto') || tg.includes('AUT') || em.includes('autobiz');
-      if (t.includes('lebrun')) return c.includes('lebrun') || tg.includes('LEB') || em.includes('lebrun');
-      if (t.includes('caribe')) return c.includes('caribe') || tg.includes('CAR') || em.includes('caribe');
-      if (t.includes('leader')) return c.includes('leader') || tg.includes('LFD') || em.includes('leader');
-      if (t.includes('tirezone')) return c.includes('tire') || tg.includes('TRZ') || em.includes('tirezone');
+
+      if (t.includes('caribe') && c.includes('caribe')) return true;
+      if (t.includes('leader') && c.includes('leader')) return true;
+      if (t.includes('tirezone') && c.includes('tire')) return true;
+      if (t.includes('autobiz') && c.includes('auto')) return true;
+      if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe')) return true;
+
+      if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('lebrun')) {
+        return false;
+      }
+
+      if (t.includes('caribe')) return tg.includes('CAR') || em.includes('caribe');
+      if (t.includes('leader')) return tg.includes('LFD') || em.includes('leader');
+      if (t.includes('tirezone')) return tg.includes('TRZ') || em.includes('tirezone');
+      if (t.includes('autobiz')) return tg.includes('AUT') || em.includes('autobiz');
+      if (t.includes('lebrun')) return tg.includes('LEB') || em.includes('lebrun');
+
       return c.includes(t);
     };
 

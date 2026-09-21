@@ -515,7 +515,7 @@ export default function ITEquipmentView() {
                 <option value="Lebrun">Lebrun S.A.</option>
                 <option value="Autobiz">Autobiz S.A.</option>
                 <option value="Caribe Motors">Caribe Motors</option>
-                <option value="Leader Foods">Leader Foods</option>
+                <option value="Leader Foods">Leader Foods</option><option value="Tirezone">Tirezone</option>
               </select>
 
               {/* Site */}
