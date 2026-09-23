@@ -31,6 +31,7 @@ export default function Header() {
       case 'accounts': return 'Comptes';
       case 'documents': return 'Documents & Procédures';
       case 'phones': return 'Téléphones & Portables';
+      case 'tags': return 'Tags & Code-Barres';
       case 'settings': return 'Paramètres & Configuration';
       default: return 'Gestion de Parc';
     }
@@ -47,6 +48,7 @@ export default function Header() {
       case 'accounts': return 'Rechercher compte, nom, rôle, email...';
       case 'documents': return 'Rechercher document, procédure, contrat, référence...';
       case 'phones': return 'Rechercher téléphone, marque, modèle, IMEI, personne...';
+      case 'tags': return 'Rechercher tag, code-barres, entreprise, site, équipement...';
       default: return 'Rechercher équipement, numéro de série, collaborateur...';
     }
   };

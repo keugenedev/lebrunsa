@@ -16,6 +16,7 @@ import {
   UserCheck,
   FileText,
   Smartphone,
+  Tag,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -56,6 +57,7 @@ export default function Sidebar() {
     { id: 'accounts', label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck },
     { id: 'documents', label: 'Documents', count: documents?.length || 0, icon: FileText },
     { id: 'phones', label: 'Téléphones', count: phones.length, icon: Smartphone },
+    { id: 'tags', label: 'Tag', icon: Tag },
     { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
     { id: 'settings', label: 'Configuration', icon: Settings }
   ];

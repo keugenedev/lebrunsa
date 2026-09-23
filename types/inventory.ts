@@ -11,6 +11,7 @@ export type NavigationTab =
   | 'personnel'
   | 'accounts'
   | 'documents'
+  | 'tags'
   | 'plans' 
   | 'starlink' 
   | 'electronics' 
