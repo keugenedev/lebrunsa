@@ -794,25 +794,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .order('created_at', { ascending: false }) as AccountsLoadResult;
 
-      if (result.error) {
-        const viewError = serializeSupabaseError(result.error);
+      // La vue peut répondre sans erreur mais vide (droits ou sécurité de ligne côté Supabase).
+      // Dans ce cas on interroge aussi la fonction get_accounts, qui n'est pas soumise à ces restrictions.
+      const viewEmpty = !result.error && (!result.data || result.data.length === 0);
+      if (result.error || viewEmpty) {
+        const viewError = result.error ? serializeSupabaseError(result.error) : null;
         const rpcResult = await supabase.rpc('get_accounts') as AccountsLoadResult;
 
         if (rpcResult.error) {
           const rpcError = serializeSupabaseError(rpcResult.error);
-          console.error('accounts_view load error:', {
-            view: viewError,
-            rpc: rpcError,
-            message: describeAccountsLoadError(rpcError.message ? rpcError : viewError)
+          if (viewError) {
+            console.error('accounts_view load error:', {
+              view: viewError,
+              rpc: rpcError,
+              message: describeAccountsLoadError(rpcError.message ? rpcError : viewError)
+            });
+            return;
+          }
+          // Vue vide et fonction indisponible : on garde le résultat (vide) de la vue.
+        } else if (viewError || (rpcResult.data && rpcResult.data.length > 0)) {
+          console.warn('accounts_view load fallback used:', {
+            view: viewError ?? 'vide',
+            fallback: 'get_accounts'
           });
-          return;
+          result = rpcResult;
         }
-
-        console.warn('accounts_view load fallback used:', {
-          view: viewError,
-          fallback: 'get_accounts'
-        });
-        result = rpcResult;
       }
 
       const { data, error } = result;
