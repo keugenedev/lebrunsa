@@ -1665,7 +1665,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const addEmployee = async (emp: Omit<Employee, 'id'>) => {
     const cleanUserId = emp.employeeId || `EMP-LEB-${Math.floor(Math.random() * 900 + 100)}`;
     const cleanUsername = emp.accounts?.appUsername || cleanUserId.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const cleanEmail = emp.email || `${cleanUsername}@lebrunsa.com`;
+    // L'email est facultatif : s'il est vide, il reste vide (aucune adresse inventée).
+    const cleanEmail = (emp.email || '').trim();
 
     const parts = (emp.fullName || '').trim().split(/\s+/);
     const prenom = emp.firstName || parts[0] || cleanUsername;
@@ -1682,10 +1683,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     };
 
     try {
-      const { data, error } = await supabase.from('users').insert({
+      const userRow = {
         user_id: cleanUserId,
         username: cleanUsername,
-        email: cleanEmail,
+        email: cleanEmail || null,
         nom: nom,
         prenom: prenom,
         entreprise: emp.company || 'Lebrun S.A.',
@@ -1694,7 +1695,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         departement: emp.department || null,
         poste: emp.jobTitle || null,
         statut: emp.status === 'active' ? 'Actif' : emp.status === 'on_leave' ? 'En mission' : 'Inactif'
-      }).select();
+      };
+
+      let { error } = await supabase.from('users').insert(userRow).select();
+      // Si la colonne email refuse NULL, on enregistre une chaîne vide plutôt que d'inventer une adresse.
+      if (error && !cleanEmail && error.code === '23502') {
+        ({ error } = await supabase.from('users').insert({ ...userRow, email: '' }).select());
+      }
 
       if (error) {
         console.error('Supabase addEmployee insert error:', error);
@@ -1736,6 +1743,74 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const oldFullName = targetEmp?.fullName;
     const oldEmployeeId = targetEmp?.employeeId;
 
+    // 1. Enregistrement en base d'abord : « succès » n'est affiché que si la base a accepté la modification.
+    let dbFailure: string | null = null;
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.lastName !== undefined) payload.nom = updates.lastName;
+      if (updates.firstName !== undefined) payload.prenom = updates.firstName;
+      if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
+        const parts = updates.fullName.trim().split(/\s+/);
+        payload.prenom = parts[0] || '';
+        payload.nom = parts.slice(1).join(' ') || parts[0] || '';
+      }
+      // Email facultatif : vidé => NULL en base, jamais d'adresse inventée.
+      if (updates.email !== undefined) payload.email = updates.email.trim() || null;
+      if (updates.phone !== undefined) payload.telephone = updates.phone;
+      if (updates.company !== undefined) payload.entreprise = updates.company;
+      if (updates.site !== undefined) payload.site = updates.site;
+      if (updates.department !== undefined) payload.departement = updates.department;
+      if (updates.jobTitle !== undefined) payload.poste = updates.jobTitle;
+      if (updates.status !== undefined) {
+        payload.statut = updates.status === 'active' ? 'Actif' : updates.status === 'on_leave' ? 'En mission' : 'Inactif';
+      }
+
+      const targetEmpId = updates.employeeId || targetEmp?.employeeId || id;
+      let updatedInDb = false;
+
+      if (targetEmpId) {
+        let { data, error } = await supabase.from('users').update(payload).eq('user_id', targetEmpId).select();
+        // Si la colonne email refuse NULL, on enregistre une chaîne vide plutôt que d'inventer une adresse.
+        if (error && payload.email === null && error.code === '23502') {
+          ({ data, error } = await supabase.from('users').update({ ...payload, email: '' }).eq('user_id', targetEmpId).select());
+        }
+        if (error) {
+          dbFailure = error.message;
+        } else if (data && data.length > 0) {
+          updatedInDb = true;
+        }
+      }
+
+      if (!dbFailure && !updatedInDb && (updates.email || targetEmp?.email)) {
+        const targetEmail = updates.email || targetEmp?.email;
+        if (targetEmail) {
+          const { data, error } = await supabase.from('users').update(payload).eq('email', targetEmail).select();
+          if (!error && data && data.length > 0) {
+            updatedInDb = true;
+          }
+        }
+      }
+
+      if (!dbFailure && !updatedInDb && (updates.fullName || targetEmp?.fullName)) {
+        const targetName = updates.fullName || targetEmp?.fullName;
+        if (targetName) {
+          await supabase.from('users').update(payload).eq('nom_complet', targetName);
+        }
+      }
+    } catch (err) {
+      console.warn('Sync Supabase updateEmployee error:', err);
+    }
+
+    if (dbFailure) {
+      showToast({
+        title: "Erreur d'enregistrement",
+        message: `Modification non enregistrée: ${dbFailure}`,
+        type: 'error'
+      });
+      return { success: false, error: dbFailure };
+    }
+
+    // 2. La base a accepté : mise à jour locale, puis synchronisation des éléments liés.
     setEmployees(prev => prev.map(e => (e.id === id || e.employeeId === id) ? { ...e, ...updates } : e));
 
     showToast({
@@ -1837,54 +1912,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       }));
     }
 
-    try {
-      const payload: Record<string, any> = {};
-      if (updates.lastName !== undefined) payload.nom = updates.lastName;
-      if (updates.firstName !== undefined) payload.prenom = updates.firstName;
-      if (updates.fullName !== undefined && updates.firstName === undefined && updates.lastName === undefined) {
-        const parts = updates.fullName.trim().split(/\s+/);
-        payload.prenom = parts[0] || '';
-        payload.nom = parts.slice(1).join(' ') || parts[0] || '';
-      }
-      if (updates.email !== undefined) payload.email = updates.email;
-      if (updates.phone !== undefined) payload.telephone = updates.phone;
-      if (updates.company !== undefined) payload.entreprise = updates.company;
-      if (updates.site !== undefined) payload.site = updates.site;
-      if (updates.department !== undefined) payload.departement = updates.department;
-      if (updates.jobTitle !== undefined) payload.poste = updates.jobTitle;
-      if (updates.status !== undefined) {
-        payload.statut = updates.status === 'active' ? 'Actif' : updates.status === 'on_leave' ? 'En mission' : 'Inactif';
-      }
-
-      const targetEmpId = updates.employeeId || targetEmp?.employeeId || id;
-      let updatedInDb = false;
-
-      if (targetEmpId) {
-        const { data, error } = await supabase.from('users').update(payload).eq('user_id', targetEmpId).select();
-        if (!error && data && data.length > 0) {
-          updatedInDb = true;
-        }
-      }
-
-      if (!updatedInDb && (updates.email || targetEmp?.email)) {
-        const targetEmail = updates.email || targetEmp?.email;
-        if (targetEmail) {
-          const { data, error } = await supabase.from('users').update(payload).eq('email', targetEmail).select();
-          if (!error && data && data.length > 0) {
-            updatedInDb = true;
-          }
-        }
-      }
-
-      if (!updatedInDb && (updates.fullName || targetEmp?.fullName)) {
-        const targetName = updates.fullName || targetEmp?.fullName;
-        if (targetName) {
-          await supabase.from('users').update(payload).eq('nom_complet', targetName);
-        }
-      }
-    } catch (err) {
-      console.warn('Sync Supabase updateEmployee error:', err);
-    }
+    return { success: true };
   };
 
   const deleteEmployee = async (id: string) => {

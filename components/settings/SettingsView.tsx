@@ -72,7 +72,7 @@ export default function SettingsView() {
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
               <span className="text-slate-500">Sites Opérationnels :</span>
-              <span className="font-semibold text-slate-900">Delmas 52 • Pétion-Ville • Delmas 60 • Canapé-Vert</span>
+              <span className="font-semibold text-slate-900">Delmas 52 • Pétion-Ville • Delmas 60 • Canapé-Vert • Aéroport Depot</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
               <span className="text-slate-500">Réseau & Parc :</span>

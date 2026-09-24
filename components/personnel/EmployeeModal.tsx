@@ -33,7 +33,7 @@ export default function EmployeeModal() {
       setCompany(editingEmployee.company || 'Lebrun S.A.');
       setSite(editingEmployee.site || '');
       setFullName(editingEmployee.fullName);
-      setEmail(editingEmployee.email);
+      setEmail(editingEmployee.email || '');
       setPhone(editingEmployee.phone || '');
       setDepartment(editingEmployee.department || '');
       setJobTitle(editingEmployee.jobTitle || '');
@@ -79,7 +79,8 @@ export default function EmployeeModal() {
         lastName,
         firstName,
         fullName,
-        email: email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@lebrunsa.com`,
+        // L'email est facultatif : s'il est vide, il reste vide (aucune adresse inventée).
+        email: email.trim(),
         phone,
         department,
         jobTitle,
@@ -249,6 +250,7 @@ export default function EmployeeModal() {
                   <option value="Pétion-Ville">Pétion-Ville</option>
                   <option value="Delmas 60">Delmas 60</option>
                   <option value="Canapé-Vert">Canapé-Vert</option>
+                  <option value="Aéroport Depot">Aéroport Depot</option>
                 </select>
               </div>
             </div>

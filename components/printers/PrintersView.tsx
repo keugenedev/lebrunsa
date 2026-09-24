@@ -48,7 +48,7 @@ export default function PrintersView() {
   
   const [copiedSerial, setCopiedSerial] = useState<string | null>(null);
   const companies = ['Lebrun S.A.', 'Autobiz', 'Caribe Motors', 'Leader Foods', 'Tirezone'];
-  const sites = ['Delmas 52', 'Pétion-Ville', 'Delmas 60', 'Canapé-Vert'];
+  const sites = ['Delmas 52', 'Pétion-Ville', 'Delmas 60', 'Canapé-Vert', 'Aéroport Depot'];
   const types = ['Multifonction', 'Laser', 'Laser (Cheque)', 'Étiquette', 'Matricielle', 'Jet d\'encre'];
 
   const filteredPrinters = useMemo(() => {

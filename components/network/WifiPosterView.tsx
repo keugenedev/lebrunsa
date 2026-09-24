@@ -110,7 +110,8 @@ export default function WifiPosterView() {
     { id: 'Delmas 52', label: 'Delmas 52 (Tirezone & Autobiz)' },
     { id: 'Pétion-Ville', label: 'Pétion-Ville' },
     { id: 'Delmas 60', label: 'Delmas 60' },
-    { id: 'Canapé-Vert', label: 'Canapé-Vert' }
+    { id: 'Canapé-Vert', label: 'Canapé-Vert' },
+    { id: 'Aéroport Depot', label: 'Aéroport Depot' }
   ];
 
   const filteredNetworks = wifiNetworks.filter(net => {
@@ -511,6 +512,7 @@ export default function WifiPosterView() {
                       <option value="Pétion-Ville">Pétion-Ville</option>
                       <option value="Delmas 60">Delmas 60</option>
                       <option value="Canapé-Vert">Canapé-Vert</option>
+                      <option value="Aéroport Depot">Aéroport Depot</option>
                     </select>
                   </div>
                   <div>

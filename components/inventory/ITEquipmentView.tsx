@@ -534,6 +534,7 @@ export default function ITEquipmentView() {
                 <option value="Pétion-Ville">Pétion-Ville</option>
                 <option value="Delmas 60">Delmas 60</option>
                 <option value="Canapé-Vert">Canapé-Vert</option>
+                <option value="Aéroport Depot">Aéroport Depot</option>
               </select>
 
               {/* Statut */}
