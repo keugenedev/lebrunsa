@@ -25,10 +25,12 @@ import {
   ShieldCheck, 
   Briefcase,
   Layers,
-  KeyRound
+  KeyRound,
+  User
 } from 'lucide-react';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { downloadSingleBadgeCR80PDF } from '@/lib/printBadgePDF';
 
 export default function PersonnelView() {
   const { 
@@ -51,18 +53,39 @@ export default function PersonnelView() {
       sortable: true,
       render: (emp) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full border border-slate-200 bg-slate-100 p-0.5 flex items-center justify-center font-bold text-xs text-slate-700 shrink-0 shadow-2xs">
-            {emp.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          <div className="h-10 w-10 rounded-full border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center font-bold text-xs text-slate-700 shrink-0 shadow-2xs">
+            {emp.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={emp.photoUrl} alt={emp.fullName} className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-5 h-5 text-slate-400" />
+            )}
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-800">
               {emp.fullName}
             </p>
-            <p className="text-xs font-semibold text-slate-600 mt-0.5 flex items-center gap-1.5">
+            <p className="text-xs font-semibold text-slate-600 mt-0.5 flex items-center flex-wrap gap-1.5">
               <span className="flex h-1.5 w-1.5 rounded-full bg-slate-400"></span>
               <span className="font-mono">{emp.employeeId}</span>
               <span className="text-slate-300">•</span>
               <span className="text-slate-500 font-normal">{emp.company}</span>
+              {emp.nif && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="font-mono text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                    NIF: {emp.nif}
+                  </span>
+                </>
+              )}
+              {emp.bloodGroup && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="font-mono font-bold text-[10px] text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
+                    GS: {emp.bloodGroup}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -251,8 +274,8 @@ export default function PersonnelView() {
           return bTime - aTime;
         })}
         columns={columns}
-        searchPlaceholder="Rechercher collaborateur par nom, matricule, département, email..."
-        searchFields={['fullName', 'employeeId', 'department', 'email', 'jobTitle', 'location']}
+        searchPlaceholder="Rechercher collaborateur par nom, matricule, département, email, NIF, groupe sanguin..."
+        searchFields={['fullName', 'employeeId', 'department', 'email', 'jobTitle', 'location', 'nif', 'bloodGroup']}
         filters={[
           {
             key: 'department',
@@ -296,8 +319,13 @@ export default function PersonnelView() {
           <div className="lebron-card w-full max-w-2xl bg-white border border-slate-200 shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white font-medium text-base flex items-center justify-center shadow-sm">
-                  {selectedEmployee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white font-medium text-base flex items-center justify-center shadow-sm overflow-hidden border border-slate-200">
+                  {selectedEmployee.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={selectedEmployee.photoUrl} alt={selectedEmployee.fullName} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-6 h-6 text-white/60" />
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -322,18 +350,26 @@ export default function PersonnelView() {
             </div>
 
             {/* Employee Contact & Info Cards */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[11px] text-slate-400 font-medium">Email Professionnel</span>
-                <div className="text-slate-800 font-semibold mt-0.5 truncate">{selectedEmployee.email}</div>
+                <div className="text-slate-800 font-semibold mt-0.5 truncate">{selectedEmployee.email || 'N/A'}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[11px] text-slate-400 font-medium">Téléphone</span>
-                <div className="text-slate-800 font-semibold mt-0.5">{selectedEmployee.phone}</div>
+                <div className="text-slate-800 font-semibold mt-0.5">{selectedEmployee.phone || 'N/A'}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[11px] text-slate-400 font-medium">NIF</span>
+                <div className="text-slate-800 font-semibold font-mono mt-0.5">{selectedEmployee.nif || 'Non renseigné'}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[11px] text-slate-400 font-medium">Groupe Sanguin</span>
+                <div className="text-slate-800 font-bold font-mono mt-0.5">{selectedEmployee.bloodGroup || 'Non renseigné'}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[11px] text-slate-400 font-medium">Site d&apos;affectation</span>
-                <div className="text-slate-800 font-semibold mt-0.5">{selectedEmployee.location}</div>
+                <div className="text-slate-800 font-semibold mt-0.5">{selectedEmployee.location || selectedEmployee.site || 'N/A'}</div>
               </div>
             </div>
 
@@ -593,6 +629,18 @@ export default function PersonnelView() {
             })()}
 
             <div className="mt-6 pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  if (selectedEmployee) {
+                    downloadSingleBadgeCR80PDF(selectedEmployee);
+                  }
+                }}
+                className="px-3.5 py-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Télécharger le badge d'accès en PDF (format 5.40cm x 8.56cm)"
+              >
+                <i className="ri-id-card-line text-sm text-red-600"></i>
+                <span>Badge d&apos;Accès (PDF)</span>
+              </button>
               <button
                 onClick={() => {
                   if (selectedEmployee) {

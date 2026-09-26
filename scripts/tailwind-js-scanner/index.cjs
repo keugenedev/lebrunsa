@@ -24,7 +24,7 @@ const path = require("node:path");
 
 const SOURCE_EXTENSIONS = new Set([
   ".tsx", ".ts", ".jsx", ".js", ".mjs", ".cjs", ".mts", ".cts",
-  ".html", ".htm", ".md", ".mdx", ".vue", ".svelte", ".astro",
+  ".html", ".htm", ".vue", ".svelte", ".astro",
 ]);
 const IGNORED_DIRS = new Set([
   "node_modules", ".git", ".next", ".svn", ".hg", ".turbo", ".vercel",
@@ -137,11 +137,14 @@ function walk(root, rules, onDir, onFile) {
 }
 
 function addToken(token, out) {
-  if (token.length > MAX_TOKEN_LENGTH) return;
-  out.add(token);
-  if (HAS_FRAGMENT_CHAR_RE.test(token)) {
-    for (const part of token.split(FRAGMENT_SPLIT_RE)) {
-      if (part && part.length <= MAX_TOKEN_LENGTH) out.add(part);
+  if (!token || token.length > MAX_TOKEN_LENGTH || token.includes("://") || token.includes("${")) return;
+  const clean = token.replace(/^[;{}(),=]+|[;{}(),=]+$/g, "");
+  if (!clean || clean.length > MAX_TOKEN_LENGTH || clean.includes("://") || clean.includes("${")) return;
+  out.add(clean);
+  if (HAS_FRAGMENT_CHAR_RE.test(clean)) {
+    for (const part of clean.split(FRAGMENT_SPLIT_RE)) {
+      const p = part.replace(/^[;{}(),=]+|[;{}(),=]+$/g, "");
+      if (p && p.length <= MAX_TOKEN_LENGTH && !p.includes("://") && !p.includes("${")) out.add(p);
     }
   }
 }

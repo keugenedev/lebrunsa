@@ -32,6 +32,7 @@ export default function Header() {
       case 'documents': return 'Documents & Procédures';
       case 'phones': return 'Téléphones & Portables';
       case 'tags': return 'Tags & Code-Barres';
+      case 'badges': return 'Badges & Cartes d\'Accès';
       case 'settings': return 'Paramètres & Configuration';
       default: return 'Gestion de Parc';
     }
@@ -49,6 +50,7 @@ export default function Header() {
       case 'documents': return 'Rechercher document, procédure, contrat, référence...';
       case 'phones': return 'Rechercher téléphone, marque, modèle, IMEI, personne...';
       case 'tags': return 'Rechercher tag, code-barres, entreprise, site, équipement...';
+      case 'badges': return 'Rechercher badge, collaborateur, matricule, poste, Caribe Motors...';
       default: return 'Rechercher équipement, numéro de série, collaborateur...';
     }
   };
@@ -92,7 +94,7 @@ export default function Header() {
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Scanner Code-barres Trigger Button */}
         <button
-          onClick={openBarcodeScanner}
+          onClick={() => openBarcodeScanner()}
           className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 text-xs font-semibold transition-all cursor-pointer shrink-0"
           title="Ouvrir la station de lecture code-barres"
         >

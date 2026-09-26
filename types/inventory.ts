@@ -12,6 +12,7 @@ export type NavigationTab =
   | 'accounts'
   | 'documents'
   | 'tags'
+  | 'badges'
   | 'plans' 
   | 'starlink' 
   | 'electronics' 
@@ -248,6 +249,9 @@ export interface Employee {
   status: 'active' | 'on_leave' | 'inactive';
   hireDate: string;
   notes?: string;
+  bloodGroup?: string; // Groupe sanguin (ex: O+, A+, B+, AB+, etc.)
+  nif?: string; // NIF (Numéro d'Identification Fiscale)
+  photoUrl?: string; // Photo d'identité (URL ou base64)
   createdAt?: string;
   workstation?: WorkstationDetails;
   accounts?: UserAccountDetails;

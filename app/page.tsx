@@ -15,6 +15,7 @@ import ApplicationsView from '@/components/applications/ApplicationsView';
 import AccountsView from '@/components/accounts/AccountsView';
 import DocumentsView from '@/components/documents/DocumentsView';
 import TagsPrintView from '@/components/tags/TagsPrintView';
+import BadgesView from '@/components/badges/BadgesView';
 import SettingsView from '@/components/settings/SettingsView';
 import BarcodeModal from '@/components/common/BarcodeModal';
 import BarcodeScannerModal from '@/components/common/BarcodeScannerModal';
@@ -82,6 +83,8 @@ function MainContent() {
         return <PhonesView />;
       case 'tags':
         return <TagsPrintView />;
+      case 'badges':
+        return <BadgesView />;
       case 'settings':
         return <SettingsView />;
       default:

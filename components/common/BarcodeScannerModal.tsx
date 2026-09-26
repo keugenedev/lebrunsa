@@ -13,9 +13,15 @@ import {
   Building, 
   MapPin, 
   Check, 
-  Volume2 
+  Volume2,
+  Laptop,
+  Monitor,
+  KeyRound,
+  IdCard,
+  Layers
 } from 'lucide-react';
 import Barcode from './Barcode';
+import { downloadSingleBadgeCR80PDF, downloadBadgePlancheA4PDF } from '@/lib/printBadgePDF';
 
 interface ScannedItem {
   type: 'printer' | 'employee' | 'it';
@@ -65,22 +71,26 @@ interface BarcodeScannerModalProps {
 }
 
 export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerModalProps) {
-  const { itAssets, printers, employees, openQRModal } = useInventory();
+  const { itAssets, printers, employees, openQRModal, applicationAccounts, scannerInitialCode } = useInventory();
   const [scanInput, setScanInput] = useState('');
   const [lastScanned, setLastScanned] = useState<ScannedItem | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [scanHistory, setScanHistory] = useState<ScannedItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus input when modal opens
+  // Auto-focus input when modal opens ou auto-scan initial code
   useEffect(() => {
     if (isOpen) {
       setErrorMessage(null);
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+      if (scannerInitialCode) {
+        processBarcode(scannerInitialCode);
+      } else {
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 100);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, scannerInitialCode]);
 
   if (!isOpen) return null;
 
@@ -256,66 +266,252 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
 
         {/* Last Scanned Result Card */}
         {lastScanned && (
-          <div className="mt-5 p-4 rounded-xl bg-white border border-slate-300 shadow-sm space-y-3 animate-in fade-in">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4" />
+          <div className="mt-5 p-4 rounded-xl bg-white border border-slate-300 shadow-sm space-y-3.5 animate-in fade-in max-h-[60vh] overflow-y-auto">
+            {lastScanned.type === 'employee' ? (
+              // VUE DÉTAILLÉE : COLLABORATEUR • POSTE IT • APPLICATIONS
+              <div className="space-y-3.5">
+                {/* 1. En-tête Collaborateur */}
+                <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                      {lastScanned.raw.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase tracking-wider">
+                          Collaborateur Identifié
+                        </span>
+                        <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          {lastScanned.raw.employeeId}
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-1">{lastScanned.raw.fullName}</h4>
+                      <p className="text-[11px] text-slate-500">
+                        {lastScanned.raw.jobTitle} • {lastScanned.raw.department}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right text-[11px] space-y-0.5 shrink-0">
+                    <div className="font-bold text-slate-800">{lastScanned.raw.company}</div>
+                    <div className="text-slate-500">{lastScanned.raw.site || lastScanned.raw.location}</div>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Matériel Identifié avec Succès
+
+                {/* Données administratives, fiscales & médicales */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] font-medium text-slate-400 uppercase">NIF (Identifiant Fiscal)</span>
+                    <div className="font-mono font-bold text-slate-800 text-[11px] mt-0.5">
+                      {lastScanned.raw.nif || 'Non renseigné'}
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] font-medium text-slate-400 uppercase">Groupe Sanguin</span>
+                    <div className="font-mono font-bold text-red-600 text-[11px] mt-0.5">
+                      {lastScanned.raw.bloodGroup || 'Non renseigné'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. POSTE IT RELIÉ (Matériel Dell / HP) */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
+                      <Laptop className="w-3.5 h-3.5 text-slate-700" />
+                      <span>Poste IT Relié ({lastScanned.raw.workstation?.type || 'Machine'})</span>
+                    </span>
+                    <span className="font-mono font-bold text-[11px] text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                      {lastScanned.raw.workstation?.pcName || 'N/A'}
+                    </span>
+                  </div>
+
+                  {lastScanned.raw.workstation ? (
+                    <div className="space-y-2 text-[11px] text-slate-600">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase block">Numéro de série S/N PC</span>
+                          <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 inline-block mt-0.5">
+                            {lastScanned.raw.workstation.pcSerial || 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase block">Écran assigné</span>
+                          <span className="font-semibold text-slate-800 block mt-0.5">
+                            {lastScanned.raw.workstation.monitorModel || 'Écran standard'}
+                          </span>
+                          {lastScanned.raw.workstation.monitorSerial && (
+                            <span className="text-[10px] text-slate-400 font-mono block">
+                              SN: {lastScanned.raw.workstation.monitorSerial}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {lastScanned.raw.workstation.pcSpecs && (
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase block">Configuration & Spécifications</span>
+                          <span className="font-mono text-[10.5px] text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 block mt-0.5">
+                            {lastScanned.raw.workstation.pcSpecs}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60">
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase block">Clavier</span>
+                          <span className="text-slate-700">{lastScanned.raw.workstation.keyboard || 'Logitech standard'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase block">Souris</span>
+                          <span className="text-slate-700">{lastScanned.raw.workstation.mouse || 'Logitech standard'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-slate-400 italic">
+                      Aucun poste informatique assigné directement.
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. APPLICATIONS & ACCÈS MÉTIER */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
+                      <KeyRound className="w-3.5 h-3.5 text-slate-700" />
+                      <span>Applications & Accès Système</span>
+                    </span>
+                    <span className="font-bold text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      {lastScanned.raw.accounts?.applications || 'Microsoft GP'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase">Utilisateur Applicatif</span>
+                      <div className="font-mono font-bold text-slate-900 mt-0.5">
+                        {lastScanned.raw.accounts?.appUsername || lastScanned.raw.accounts?.windowsUsername || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase">Organisation ERP</span>
+                      <div className="font-semibold text-slate-800 mt-0.5">
+                        {lastScanned.raw.accounts?.organization || lastScanned.raw.company}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase">Session Windows</span>
+                      <div className="font-mono text-slate-700 mt-0.5">
+                        {lastScanned.raw.accounts?.windowsUsername || lastScanned.raw.fullName}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase">Mot de Passe App</span>
+                      <div className="font-mono text-slate-700 mt-0.5">
+                        ••••••••
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Code-barres authentique de l'employé */}
+                <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="space-y-0.5 text-[11px] text-slate-600 font-mono">
+                    <div className="font-bold text-slate-800">Code 128 Collaborateur</div>
+                    <div>ID : {lastScanned.raw.employeeId}</div>
+                  </div>
+                  <Barcode 
+                    value={lastScanned.raw.employeeId} 
+                    width={1.2} 
+                    height={36} 
+                    fontSize={10} 
+                    displayValue={false} 
+                  />
+                </div>
+
+                {/* Actions collaborateurs */}
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => downloadSingleBadgeCR80PDF(lastScanned.raw)}
+                    className="py-1.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+                  >
+                    <IdCard className="w-3.5 h-3.5" />
+                    <span>Badge d&apos;Accès (PDF)</span>
+                  </button>
+                  <button
+                    onClick={() => downloadBadgePlancheA4PDF(lastScanned.raw)}
+                    className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Planche A4</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // MATÉRIEL IT OU IMPRIMANTE CLASSIQUE
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                        Matériel Identifié avec Succès
+                      </span>
+                      <h4 className="text-xs font-bold text-slate-900">{lastScanned.title}</h4>
+                    </div>
+                  </div>
+                  <span className="font-mono text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-800">
+                    {lastScanned.serialNumber}
                   </span>
-                  <h4 className="text-xs font-bold text-slate-900">{lastScanned.title}</h4>
+                </div>
+
+                {/* Barcode representation */}
+                <div className="flex items-center justify-between p-2.5 bg-slate-50/80 rounded-lg border border-slate-200/80">
+                  <div className="space-y-1 text-[11px] text-slate-600 font-mono">
+                    <div className="flex items-center gap-1">
+                      <Building className="w-3 h-3 text-slate-400" />
+                      <strong>Société :</strong> {lastScanned.company}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      <strong>Site :</strong> {lastScanned.location}
+                    </div>
+                  </div>
+                  <Barcode 
+                    value={lastScanned.serialNumber} 
+                    width={1.2} 
+                    height={38} 
+                    fontSize={10} 
+                    displayValue={true} 
+                  />
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      openQRModal({
+                        id: lastScanned.id,
+                        assetTag: lastScanned.serialNumber,
+                        name: lastScanned.title,
+                        category: 'it',
+                        location: lastScanned.location,
+                        company: lastScanned.company,
+                        status: 'in_use' as any
+                      } as any);
+                    }}
+                    className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Imprimer Étiquette Code-Barres</span>
+                  </button>
                 </div>
               </div>
-              <span className="font-mono text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-800">
-                {lastScanned.serialNumber}
-              </span>
-            </div>
-
-            {/* Barcode representation */}
-            <div className="flex items-center justify-between p-2.5 bg-slate-50/80 rounded-lg border border-slate-200/80">
-              <div className="space-y-1 text-[11px] text-slate-600 font-mono">
-                <div className="flex items-center gap-1">
-                  <Building className="w-3 h-3 text-slate-400" />
-                  <strong>Société :</strong> {lastScanned.company}
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-slate-400" />
-                  <strong>Site :</strong> {lastScanned.location}
-                </div>
-              </div>
-              <Barcode 
-                value={lastScanned.serialNumber} 
-                width={1.2} 
-                height={38} 
-                fontSize={10} 
-                displayValue={true} 
-              />
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-              <button
-                onClick={() => {
-                  onClose();
-                  openQRModal({
-                    id: lastScanned.id,
-                    assetTag: lastScanned.serialNumber,
-                    name: lastScanned.title,
-                    category: 'it',
-                    location: lastScanned.location,
-                    company: lastScanned.company,
-                    status: 'in_use' as any
-                  } as any);
-                }}
-                className="py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Imprimer Étiquette Code-Barres</span>
-              </button>
-            </div>
+            )}
           </div>
         )}
 

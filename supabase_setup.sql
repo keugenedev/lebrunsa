@@ -56,6 +56,10 @@ CREATE POLICY "allow_all_docs" ON documents FOR ALL USING (true) WITH CHECK (tru
 ALTER TABLE users ADD COLUMN IF NOT EXISTS departement TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS poste TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS telephone TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS nif TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS blood_group TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS groupe_sanguin TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT;
 
 -- S'assurer que la contrainte UNIQUE existe sur username
 DO $$ 
@@ -157,3 +161,27 @@ UPDATE documents SET file_type = 'pdf' WHERE file_type IS NULL;
 UPDATE documents SET last_updated = created_at::date WHERE last_updated IS NULL;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ==============================================================================
+-- 6. CONFIGURATION DU BUCKET SUPABASE STORAGE 'photos' (PHOTOS COLLABORATEURS)
+-- À exécuter dans le SQL Editor pour activer le stockage officiel des photos d'identité
+-- ==============================================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'photos',
+  'photos',
+  true,
+  10485760, -- 10 Mo
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO UPDATE 
+SET public = true,
+    file_size_limit = 10485760,
+    allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+-- Politiques de lecture / écriture publique pour le bucket photos
+DROP POLICY IF EXISTS "Public Access Photos" ON storage.objects;
+CREATE POLICY "Public Access Photos" 
+ON storage.objects FOR ALL 
+USING (bucket_id = 'photos') 
+WITH CHECK (bucket_id = 'photos');

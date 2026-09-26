@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { Employee } from '@/types/inventory';
-import { X, UserPlus, UserCheck, Building, Mail, Phone, MapPin, Briefcase, FileText } from 'lucide-react';
+import { X, UserPlus, UserCheck, Building, Mail, Phone, MapPin, Briefcase, FileText, UploadCloud, Camera, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { formatNif } from '@/lib/formatNif';
+import { uploadEmployeePhoto } from '@/lib/uploadPhoto';
 
 export default function EmployeeModal() {
   const { 
@@ -22,12 +24,23 @@ export default function EmployeeModal() {
   const [site, setSite] = useState('');
   const [department, setDepartment] = useState('');
   const [jobTitle, setJobTitle] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
+  const [nif, setNif] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [location, setLocation] = useState('');
   const [status, setStatus] = useState<'active' | 'on_leave' | 'inactive'>('active');
   const [hireDate, setHireDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState('');
 
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
+    setPhotoError(null);
+    setIsUploadingPhoto(false);
+    setIsDraggingPhoto(false);
     if (editingEmployee) {
       setEmployeeId(editingEmployee.employeeId);
       setCompany(editingEmployee.company || 'Lebrun S.A.');
@@ -37,6 +50,9 @@ export default function EmployeeModal() {
       setPhone(editingEmployee.phone || '');
       setDepartment(editingEmployee.department || '');
       setJobTitle(editingEmployee.jobTitle || '');
+      setBloodGroup(editingEmployee.bloodGroup || '');
+      setNif(editingEmployee.nif ? formatNif(editingEmployee.nif) : '');
+      setPhotoUrl(editingEmployee.photoUrl || '');
       setLocation(editingEmployee.location || '');
       setStatus(editingEmployee.status);
       setHireDate(editingEmployee.hireDate);
@@ -51,6 +67,9 @@ export default function EmployeeModal() {
       setPhone('');
       setDepartment('');
       setJobTitle('');
+      setBloodGroup('');
+      setNif('');
+      setPhotoUrl('');
       setLocation('');
       setStatus('active');
       setHireDate(new Date().toISOString().slice(0, 10));
@@ -59,6 +78,52 @@ export default function EmployeeModal() {
   }, [editingEmployee, isEmployeeModalOpen]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handlePhotoFile = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Format non supporté. Veuillez sélectionner une image (JPG, PNG, WebP).');
+      return;
+    }
+    setPhotoError(null);
+    setIsUploadingPhoto(true);
+    try {
+      const url = await uploadEmployeePhoto(file, employeeId || 'collab');
+      setPhotoUrl(url);
+    } catch (err: any) {
+      setPhotoError(err?.message || "Erreur lors du traitement de l'image.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handlePhotoDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPhoto(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await handlePhotoFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handlePhotoDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPhoto(true);
+  };
+
+  const handlePhotoDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPhoto(false);
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      await handlePhotoFile(e.target.files[0]);
+    }
+    e.target.value = '';
+  };
 
   if (!isEmployeeModalOpen) return null;
 
@@ -84,6 +149,9 @@ export default function EmployeeModal() {
         phone,
         department,
         jobTitle,
+        bloodGroup: bloodGroup.trim(),
+        nif: nif.trim() ? formatNif(nif) : '',
+        photoUrl: photoUrl.trim(),
         location: site,
         status,
         hireDate,
@@ -172,7 +240,7 @@ export default function EmployeeModal() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">Email Professionnel</label>
                 <input
@@ -196,6 +264,19 @@ export default function EmployeeModal() {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">NIF (Identifiant Fiscal)</label>
+                <input
+                  type="text"
+                  value={nif}
+                  onChange={(e) => setNif(formatNif(e.target.value))}
+                  onBlur={() => setNif(formatNif(nif))}
+                  placeholder="000-000-000-0"
+                  maxLength={13}
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-mono focus:outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">Statut Collaborateur</label>
                 <select
                   value={status}
@@ -207,6 +288,112 @@ export default function EmployeeModal() {
                   <option value="inactive">Inactif</option>
                 </select>
               </div>
+            </div>
+
+            {/* Zone Photo d'identité (Upload / Drag & Drop PC & Téléphone - Zéro saisie d'URL externe) */}
+            <div className="pt-2 border-t border-slate-200/70 mt-3">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Photo d&apos;identité officielle</span>
+                </span>
+                <span className="text-[11px] text-slate-400 font-normal">
+                  PC (glisser-déposer) ou Téléphone (galerie / appareil photo)
+                </span>
+              </label>
+
+              {/* Input file caché compatible PC et mobile */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileInputChange}
+                className="hidden"
+              />
+
+              {photoUrl ? (
+                /* Aperçu photo chargée */
+                <div className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photoUrl} alt="Aperçu collaborateur" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Photo d&apos;identité chargée avec succès</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                        Sera enregistrée sous URL sécurisée dans la base Supabase.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      disabled={isUploadingPhoto}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Changer</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isUploadingPhoto}
+                      onClick={() => setPhotoUrl('')}
+                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      <span>Retirer</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Zone de glisser-déposer & sélection */
+                <div
+                  onDragOver={handlePhotoDragOver}
+                  onDragLeave={handlePhotoDragLeave}
+                  onDrop={handlePhotoDrop}
+                  onClick={() => !isUploadingPhoto && fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-4 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                    isDraggingPhoto
+                      ? 'border-slate-800 bg-slate-100/90 scale-[1.005]'
+                      : 'border-slate-300 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50'
+                  }`}
+                >
+                  {isUploadingPhoto ? (
+                    <div className="py-2 flex flex-col items-center gap-2 text-slate-600">
+                      <Loader2 className="w-6 h-6 animate-spin text-slate-800" />
+                      <span className="text-xs font-semibold text-slate-800">
+                        Téléversement et sécurisation de la photo en cours...
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
+                        <UploadCloud className="w-5 h-5 text-slate-700" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800">
+                          Glisser-déposer la photo ici, ou <span className="text-slate-900 underline underline-offset-2">cliquer pour sélectionner</span>
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Depuis votre PC (fichiers locaux) ou Téléphone (caméra / galerie) • JPG, PNG, WebP
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {photoError && (
+                <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                  <span>⚠️</span> {photoError}
+                </p>
+              )}
             </div>
           </div>
 
@@ -255,7 +442,7 @@ export default function EmployeeModal() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
                   Département
@@ -285,6 +472,19 @@ export default function EmployeeModal() {
                   onChange={(e) => setJobTitle(e.target.value)}
                   placeholder="ex: Poste à renseigner..."
                   className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
+                  Groupe Sanguin (facultatif)
+                </label>
+                <input
+                  type="text"
+                  value={bloodGroup}
+                  onChange={(e) => setBloodGroup(e.target.value.toUpperCase())}
+                  placeholder="ex: O+, A+, B+..."
+                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-mono uppercase focus:outline-none focus:border-slate-400"
                 />
               </div>
             </div>
@@ -324,7 +524,7 @@ export default function EmployeeModal() {
           </button>
           <button
             type="button"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingPhoto}
             onClick={(e) => {
               const form = (e.currentTarget.closest('.bg-white') as HTMLElement)?.querySelector('form');
               if (form) form.requestSubmit();
@@ -335,6 +535,11 @@ export default function EmployeeModal() {
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Enregistrement en cours...</span>
+              </>
+            ) : isUploadingPhoto ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Téléversement photo...</span>
               </>
             ) : (
               editingEmployee ? 'Enregistrer les modifications' : 'Créer le Collaborateur'

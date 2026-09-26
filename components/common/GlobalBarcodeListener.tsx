@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 
 export default function GlobalBarcodeListener() {
-  const { itAssets = [], printers = [], employees = [], openQRModal } = useInventory();
+  const { itAssets = [], printers = [], employees = [], openQRModal, openBarcodeScanner } = useInventory();
   const bufferRef = useRef<string>('');
   const lastKeyTimeRef = useRef<number>(0);
 
@@ -87,16 +87,8 @@ export default function GlobalBarcodeListener() {
 
           if (foundEmp) {
             e.preventDefault();
-            if (openQRModal) {
-              openQRModal({
-                id: foundEmp.id,
-                assetTag: foundEmp.workstation?.pcSerial || foundEmp.employeeId,
-                name: `${foundEmp.fullName} (${foundEmp.workstation?.pcName || 'Poste Dell'})`,
-                category: 'it',
-                location: foundEmp.site || foundEmp.location || 'Delmas 52',
-                company: foundEmp.company || 'Lebrun S.A.',
-                status: 'in_use' as any
-              } as any);
+            if (openBarcodeScanner) {
+              openBarcodeScanner(foundEmp.employeeId || scannedCode);
             }
             return;
           }

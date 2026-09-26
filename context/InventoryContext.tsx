@@ -49,6 +49,7 @@ import {
 } from '@/lib/printAssignmentSheet';
 import { buildPhoneDocRef, downloadPhoneSheetPDF, PhoneSheetOptions } from '@/lib/printPhoneSheet';
 import { generatePhoneCode } from '@/lib/phones';
+import { formatNif } from '@/lib/formatNif';
 
 // Documents : colonnes ajoutées après coup (site, type, taille, date). Tant que le SQL correspondant
 // n'a pas été exécuté dans Supabase, on retente sans elles pour ne jamais bloquer l'enregistrement.
@@ -242,7 +243,8 @@ interface InventoryContextType {
   openBarcodeModal: (asset: AnyAsset) => void;
   closeBarcodeModal: () => void;
   isBarcodeScannerOpen: boolean;
-  openBarcodeScanner: () => void;
+  scannerInitialCode: string | null;
+  openBarcodeScanner: (initialCode?: string) => void;
   closeBarcodeScanner: () => void;
 
   // Authentication
@@ -442,6 +444,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [scannerInitialCode, setScannerInitialCode] = useState<string | null>(null);
 
   // Network Modal
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
@@ -555,7 +558,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-09-21-v21-restore-all-obs';
+  const CURRENT_DATA_VERSION = '2026-09-25-v22-clean-blood-groups';
 
   // Tri prioritaire : Tous les comptes Caribe Motors en premier dans la table, puis logique antéchronologique (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
@@ -603,7 +606,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             return parsed
               .map((e: any) => ({
                 ...e,
-                id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId)
+                id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId),
+                nif: undefined // Effacement des anciens NIFs locaux en cache
               }))
               .filter((e: any) => {
                 const k = e.employeeId || e.id;
@@ -1299,6 +1303,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 jobTitle: r.poste || '',
                 hireDate: r.created_at ? r.created_at.slice(0, 10) : '2024-01-15',
                 status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : 'active') as Employee['status'],
+                bloodGroup: (r.blood_group || r.groupe_sanguin || '').trim(),
+                nif: (() => {
+                  const raw = (r.nif || r.identifiant_fiscal || '').trim();
+                  return raw ? formatNif(raw) : undefined;
+                })(),
+                photoUrl: (r.photo_url || '').trim() || undefined,
                 createdAt: r.created_at || new Date().toISOString(),
                 notes: r.notes !== undefined && r.notes !== null ? r.notes : (r.observations !== undefined && r.observations !== null ? r.observations : (existingLocal?.notes ?? initLocal?.notes ?? '')),
                 workstation: existingLocal?.workstation ?? initLocal?.workstation,
@@ -1643,8 +1653,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     setQrTargetAsset(null);
   };
 
-  const openBarcodeScanner = () => setIsBarcodeScannerOpen(true);
-  const closeBarcodeScanner = () => setIsBarcodeScannerOpen(false);
+  const openBarcodeScanner = (initialCode?: string) => {
+    if (initialCode) setScannerInitialCode(initialCode);
+    setIsBarcodeScannerOpen(true);
+  };
+  const closeBarcodeScanner = () => {
+    setIsBarcodeScannerOpen(false);
+    setScannerInitialCode(null);
+  };
 
   const openAddModal = (category: AssetCategory = 'it', editItem?: AnyAsset) => {
     setInitialCategoryForModal(category);
@@ -1685,11 +1701,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       firstName: prenom,
       lastName: nom,
       email: cleanEmail,
+      nif: emp.nif ? formatNif(emp.nif) : undefined,
       createdAt: new Date().toISOString()
     };
 
     try {
-      const userRow = {
+      const userRow: Record<string, any> = {
         user_id: cleanUserId,
         username: cleanUsername,
         email: cleanEmail || null,
@@ -1702,8 +1719,24 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         poste: emp.jobTitle || null,
         statut: emp.status === 'active' ? 'Actif' : emp.status === 'on_leave' ? 'En mission' : 'Inactif'
       };
+      if (emp.nif) userRow.nif = formatNif(emp.nif);
+      if (emp.bloodGroup) {
+        userRow.blood_group = emp.bloodGroup.trim();
+        userRow.groupe_sanguin = emp.bloodGroup.trim();
+      }
+      if (emp.photoUrl) {
+        userRow.photo_url = emp.photoUrl.trim();
+      }
 
       let { error } = await supabase.from('users').insert(userRow).select();
+      // Si la colonne nif, blood_group, groupe_sanguin ou photo_url n'existe pas encore en base, repli sans ces colonnes
+      if (error && (error.message?.includes('nif') || error.message?.includes('blood_group') || error.message?.includes('groupe_sanguin') || error.message?.includes('photo_url') || error.message?.includes('column'))) {
+        delete userRow.nif;
+        delete userRow.blood_group;
+        delete userRow.groupe_sanguin;
+        delete userRow.photo_url;
+        ({ error } = await supabase.from('users').insert(userRow).select());
+      }
       // Si la colonne email refuse NULL, on enregistre une chaîne vide plutôt que d'inventer une adresse.
       if (error && !cleanEmail && error.code === '23502') {
         ({ error } = await supabase.from('users').insert({ ...userRow, email: '' }).select());
@@ -1770,12 +1803,40 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (updates.status !== undefined) {
         payload.statut = updates.status === 'active' ? 'Actif' : updates.status === 'on_leave' ? 'En mission' : 'Inactif';
       }
+      if (updates.nif !== undefined) {
+        payload.nif = updates.nif ? formatNif(updates.nif) : null;
+        updates.nif = payload.nif || undefined;
+      }
+      if (updates.bloodGroup !== undefined) {
+        payload.blood_group = updates.bloodGroup ? updates.bloodGroup.trim() : null;
+      }
+      if (updates.photoUrl !== undefined) {
+        payload.photo_url = updates.photoUrl ? updates.photoUrl.trim() : null;
+      }
 
       const targetEmpId = updates.employeeId || targetEmp?.employeeId || id;
       let updatedInDb = false;
 
       if (targetEmpId) {
         let { data, error } = await supabase.from('users').update(payload).eq('user_id', targetEmpId).select();
+        // Si la colonne blood_group n'existe pas dans la table mais groupe_sanguin existe
+        if (error && error.message?.includes('blood_group')) {
+          const altPayload = { ...payload };
+          delete altPayload.blood_group;
+          if (updates.bloodGroup !== undefined) {
+            altPayload.groupe_sanguin = updates.bloodGroup ? updates.bloodGroup.trim() : null;
+          }
+          ({ data, error } = await supabase.from('users').update(altPayload).eq('user_id', targetEmpId).select());
+        }
+        // Si les colonnes nif/blood_group/groupe_sanguin/photo_url ne sont pas encore présentes en base, repli sans celles-ci
+        if (error && (error.message?.includes('nif') || error.message?.includes('blood_group') || error.message?.includes('groupe_sanguin') || error.message?.includes('photo_url') || error.message?.includes('column'))) {
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.nif;
+          delete fallbackPayload.blood_group;
+          delete fallbackPayload.groupe_sanguin;
+          delete fallbackPayload.photo_url;
+          ({ data, error } = await supabase.from('users').update(fallbackPayload).eq('user_id', targetEmpId).select());
+        }
         // Si la colonne email refuse NULL, on enregistre une chaîne vide plutôt que d'inventer une adresse.
         if (error && payload.email === null && error.code === '23502') {
           ({ data, error } = await supabase.from('users').update({ ...payload, email: '' }).eq('user_id', targetEmpId).select());
@@ -1784,6 +1845,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           dbFailure = error.message;
         } else if (data && data.length > 0) {
           updatedInDb = true;
+          // Synchronise aussi groupe_sanguin si la colonne existe dans la table
+          if (updates.bloodGroup !== undefined) {
+            try {
+              const bgVal = updates.bloodGroup ? updates.bloodGroup.trim() : null;
+              await supabase.from('users').update({ groupe_sanguin: bgVal }).eq('user_id', targetEmpId);
+            } catch (_) {}
+          }
         }
       }
 
@@ -1817,7 +1885,24 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. La base a accepté : mise à jour locale, puis synchronisation des éléments liés.
-    setEmployees(prev => prev.map(e => (e.id === id || e.employeeId === id) ? { ...e, ...updates } : e));
+    setEmployees(prev => {
+      const updated = prev.map(e => {
+        if (e.id === id || e.employeeId === id) {
+          return {
+            ...e,
+            ...updates,
+            bloodGroup: updates.bloodGroup !== undefined ? (updates.bloodGroup ? updates.bloodGroup.trim() : '') : e.bloodGroup,
+            nif: updates.nif !== undefined ? (updates.nif ? formatNif(updates.nif) : undefined) : e.nif,
+            photoUrl: updates.photoUrl !== undefined ? (updates.photoUrl ? updates.photoUrl.trim() : undefined) : e.photoUrl,
+          };
+        }
+        return e;
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lebron_inv_employees', JSON.stringify(updated));
+      }
+      return updated;
+    });
 
     showToast({
       title: 'Fiche Collaborateur Modifiée',
@@ -4160,6 +4245,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         openBarcodeModal: openQRModal,
         closeBarcodeModal: closeQRModal,
         isBarcodeScannerOpen,
+        scannerInitialCode,
         openBarcodeScanner,
         closeBarcodeScanner,
         isAuthenticated,
