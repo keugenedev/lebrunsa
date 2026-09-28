@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { InventoryProvider, useInventory } from '@/context/InventoryContext';
+import { isCarlHens } from '@/lib/permissions';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import OverviewView from '@/components/dashboard/OverviewView';
@@ -39,7 +40,8 @@ function MainContent() {
     activeTab, 
     isAuthenticated, 
     isBarcodeScannerOpen, 
-    closeBarcodeScanner 
+    closeBarcodeScanner,
+    currentUser
   } = useInventory();
   const [mounted, setMounted] = React.useState(false);
 
@@ -59,7 +61,13 @@ function MainContent() {
     return <LoginPage />;
   }
 
+  const isRestrictedCarl = isCarlHens(currentUser);
+
   const renderActiveTab = () => {
+    if (isRestrictedCarl) {
+      return <PersonnelView />;
+    }
+
     switch (activeTab) {
       case 'overview':
         return <OverviewView />;
@@ -109,21 +117,23 @@ function MainContent() {
       </div>
 
       {/* Global Modals & Listeners */}
-      <BarcodeModal />
-      <BarcodeScannerModal 
-        isOpen={isBarcodeScannerOpen} 
-        onClose={closeBarcodeScanner} 
-      />
-      <GlobalBarcodeListener />
-      <AssetModal />
+      {!isRestrictedCarl && <BarcodeModal />}
+      {!isRestrictedCarl && (
+        <BarcodeScannerModal 
+          isOpen={isBarcodeScannerOpen} 
+          onClose={closeBarcodeScanner} 
+        />
+      )}
+      {!isRestrictedCarl && <GlobalBarcodeListener />}
+      {!isRestrictedCarl && <AssetModal />}
       <EmployeeModal />
-      <PrinterModal />
-      <NetworkModal />
-      <UPSModal />
-      <PhoneModal />
-      <ApplicationModal />
-      <AccountModal />
-      <DocumentModal />
+      {!isRestrictedCarl && <PrinterModal />}
+      {!isRestrictedCarl && <NetworkModal />}
+      {!isRestrictedCarl && <UPSModal />}
+      {!isRestrictedCarl && <PhoneModal />}
+      {!isRestrictedCarl && <ApplicationModal />}
+      {!isRestrictedCarl && <AccountModal />}
+      {!isRestrictedCarl && <DocumentModal />}
       <QuickSearchModal />
       <SuccessAnimation />
       <ToastNotification />

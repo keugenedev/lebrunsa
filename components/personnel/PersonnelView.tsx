@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { Employee, ITAsset, TelecomPlan, StarlinkKit } from '@/types/inventory';
 import DataTable, { Column } from '@/components/common/DataTable';
+import { isCarlHens } from '@/lib/permissions';
 import { 
   Users, 
   UserPlus, 
@@ -40,8 +41,11 @@ export default function PersonnelView() {
     getEmployeeAssignedAssets, 
     exportCSV,
     applicationAccounts,
-    downloadAssignmentSheet
+    downloadAssignmentSheet,
+    currentUser
   } = useInventory();
+
+  const isRestrictedCarl = isCarlHens(currentUser);
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
@@ -213,26 +217,42 @@ export default function PersonnelView() {
           >
             <i className="ri-file-pdf-2-line text-lg"></i>
           </button>
-          <button
-            type="button"
-            onClick={() => openEmployeeModal(emp)}
-            title="Modifier collaborateur"
-            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-700 cursor-pointer"
-          >
-            <i className="ri-pencil-line text-lg"></i>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeletingEmployee(emp)}
-            title="Supprimer"
-            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
-          >
-            <i className="ri-delete-bin-line text-lg"></i>
-          </button>
+          {!isRestrictedCarl && (
+            <button
+              type="button"
+              onClick={() => openEmployeeModal(emp)}
+              title="Modifier collaborateur"
+              className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-700 cursor-pointer"
+            >
+              <i className="ri-pencil-line text-lg"></i>
+            </button>
+          )}
+          {!isRestrictedCarl && (
+            <button
+              type="button"
+              onClick={() => setDeletingEmployee(emp)}
+              title="Supprimer"
+              className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-900 cursor-pointer"
+            >
+              <i className="ri-delete-bin-line text-lg"></i>
+            </button>
+          )}
         </div>
       )
     }
   ];
+
+  const displayedEmployees = useMemo(() => {
+    const list = isRestrictedCarl
+      ? employees.filter(e => (e.company || '').toLowerCase().includes('caribe'))
+      : employees;
+
+    return [...list].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [employees, isRestrictedCarl]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -240,10 +260,12 @@ export default function PersonnelView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
           <h1 className="text-sm font-medium text-slate-800 tracking-tight">
-            Personnel & Collaborateurs
+            {isRestrictedCarl ? 'Personnel & Collaborateurs — Caribe Motors' : 'Personnel & Collaborateurs'}
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
-            Suivi nominatif des équipements IT, flottes mobiles et affectations des salariés de Lebrun S.A.
+            {isRestrictedCarl 
+              ? 'Ajout et suivi des collaborateurs de Caribe Motors' 
+              : 'Suivi nominatif des équipements IT, flottes mobiles et affectations des salariés de Lebrun S.A.'}
           </p>
         </div>
 
@@ -268,11 +290,7 @@ export default function PersonnelView() {
 
       {/* Main Data Table */}
       <DataTable
-        items={[...employees].sort((a, b) => {
-          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return bTime - aTime;
-        })}
+        items={displayedEmployees}
         columns={columns}
         searchPlaceholder="Rechercher collaborateur par nom, matricule, département, email, NIF, groupe sanguin..."
         searchFields={['fullName', 'employeeId', 'department', 'email', 'jobTitle', 'location', 'nif', 'bloodGroup']}
@@ -281,6 +299,7 @@ export default function PersonnelView() {
             key: 'department',
             label: 'Département',
             options: [
+              { label: 'Administration & Direction', value: 'Administration & Direction' },
               { label: 'Direction IT & Cloud', value: 'Direction IT & Cloud' },
               { label: 'Data & IA', value: 'Data & Intelligence Artificielle' },
               { label: 'DevOps & Télécoms', value: 'DevOps & Télécoms' },
@@ -290,16 +309,28 @@ export default function PersonnelView() {
               { label: 'Direction Générale', value: 'Direction Générale & RH' }
             ]
           },
-          {
-            key: 'company',
-            label: 'Entreprise',
-            options: [
-              { label: 'Lebrun S.A.', value: 'Lebrun S.A.' },
-              { label: 'Autobiz', value: 'Autobiz' },
-              { label: 'Caribe Motors', value: 'Caribe Motors' },
-              { label: 'Leader Foods', value: 'Leader Foods' }
-            ]
-          },
+          ...(isRestrictedCarl
+            ? [
+                {
+                  key: 'company',
+                  label: 'Entreprise',
+                  options: [
+                    { label: 'Caribe Motors', value: 'Caribe Motors' }
+                  ]
+                }
+              ]
+            : [
+                {
+                  key: 'company',
+                  label: 'Entreprise',
+                  options: [
+                    { label: 'Lebrun S.A.', value: 'Lebrun S.A.' },
+                    { label: 'Autobiz', value: 'Autobiz' },
+                    { label: 'Caribe Motors', value: 'Caribe Motors' },
+                    { label: 'Leader Foods', value: 'Leader Foods' }
+                  ]
+                }
+              ]),
           {
             key: 'status',
             label: 'Statut',
@@ -653,16 +684,18 @@ export default function PersonnelView() {
                 <i className="ri-file-pdf-2-line text-sm text-slate-700"></i>
                 <span>Fiche d&apos;Affectation (PDF)</span>
               </button>
-              <button
-                onClick={() => {
-                  const emp = selectedEmployee;
-                  setSelectedEmployee(null);
-                  openEmployeeModal(emp);
-                }}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors cursor-pointer"
-              >
-                Modifier la fiche
-              </button>
+              {!isRestrictedCarl && (
+                <button
+                  onClick={() => {
+                    const emp = selectedEmployee;
+                    setSelectedEmployee(null);
+                    openEmployeeModal(emp);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors cursor-pointer"
+                >
+                  Modifier la fiche
+                </button>
+              )}
               <button
                 onClick={() => setSelectedEmployee(null)}
                 className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-xs"

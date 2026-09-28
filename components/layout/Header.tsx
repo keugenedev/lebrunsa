@@ -9,6 +9,7 @@ import {
   Building2, 
   Barcode 
 } from 'lucide-react';
+import { isCarlHens } from '@/lib/permissions';
 
 export default function Header() {
   const { 
@@ -16,8 +17,11 @@ export default function Header() {
     exportCSV, 
     setIsSpotlightOpen, 
     setActiveTab, 
-    openBarcodeScanner
+    openBarcodeScanner,
+    currentUser
   } = useInventory();
+
+  const isRestrictedCarl = isCarlHens(currentUser);
 
   const getTabLabel = (tab: NavigationTab) => {
     switch (tab) {
@@ -61,14 +65,14 @@ export default function Header() {
       <div className="flex items-center gap-1.5 sm:gap-2 text-xs shrink-0 min-w-0">
         <div 
           className="flex items-center gap-1.5 text-slate-700 font-semibold cursor-pointer hover:text-slate-900 transition-colors shrink-0" 
-          onClick={() => setActiveTab('overview')}
+          onClick={() => setActiveTab(isRestrictedCarl ? 'personnel' : 'overview')}
         >
           <Building2 className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-          <span className="whitespace-nowrap">Lebrun S.A.</span>
+          <span className="whitespace-nowrap">{isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.'}</span>
         </div>
         <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
         <span className="text-slate-900 font-bold tracking-tight whitespace-nowrap truncate max-w-[180px] sm:max-w-[260px] md:max-w-none">
-          {getTabLabel(activeTab)}
+          {isRestrictedCarl ? 'Personnel & Collaborateurs' : getTabLabel(activeTab)}
         </span>
       </div>
 
@@ -80,7 +84,7 @@ export default function Header() {
         >
           <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 mr-2 transition-colors shrink-0" />
           <span className="flex-1 text-slate-400 group-hover:text-slate-600 truncate text-xs">
-            {getSearchPlaceholder(activeTab)}
+            {isRestrictedCarl ? 'Rechercher collaborateur Caribe Motors...' : getSearchPlaceholder(activeTab)}
           </span>
           <div className="hidden md:flex items-center gap-0.5 font-mono text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs shrink-0 ml-1.5">
             <span>Ctrl</span>
@@ -93,18 +97,24 @@ export default function Header() {
       {/* Right Controls - Identical to Main Page, robust on 15.6" PCs */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Scanner Code-barres Trigger Button */}
-        <button
-          onClick={() => openBarcodeScanner()}
-          className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 text-xs font-semibold transition-all cursor-pointer shrink-0"
-          title="Ouvrir la station de lecture code-barres"
-        >
-          <Barcode className="w-4 h-4 text-slate-500 shrink-0" />
-          <span className="hidden sm:inline whitespace-nowrap">Scanner Code-barres</span>
-        </button>
+        {!isRestrictedCarl && (
+          <button
+            onClick={() => openBarcodeScanner()}
+            className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 text-xs font-semibold transition-all cursor-pointer shrink-0"
+            title="Ouvrir la station de lecture code-barres"
+          >
+            <Barcode className="w-4 h-4 text-slate-500 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">Scanner Code-barres</span>
+          </button>
+        )}
 
         {/* Quick Export Excel */}
         <button
           onClick={() => {
+            if (isRestrictedCarl) {
+              exportCSV('personnel');
+              return;
+            }
             const validTabs: Record<string, any> = {
               printers: 'printers',
               personnel: 'personnel',

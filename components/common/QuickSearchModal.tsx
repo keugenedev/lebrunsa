@@ -13,6 +13,7 @@ import {
   FileText,
   Smartphone
 } from 'lucide-react';
+import { isCarlHens } from '@/lib/permissions';
 
 export default function QuickSearchModal() {
   const { 
@@ -24,12 +25,14 @@ export default function QuickSearchModal() {
     documents,
     phones,
     setActiveTab,
-    setSearchQuery
+    setSearchQuery,
+    currentUser
   } = useInventory();
 
   const [query, setQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
   const inputRef = useRef<HTMLInputElement>(null);
+  const isRestrictedCarl = isCarlHens(currentUser);
 
   useEffect(() => {
     if (isSpotlightOpen) {
@@ -42,7 +45,22 @@ export default function QuickSearchModal() {
   if (!isSpotlightOpen) return null;
 
   // Unifier les imprimantes HP réelles, postes Dell et collaborateurs
-  const allResults = [
+  const allResults = isRestrictedCarl ? [
+    // Uniquement collaborateurs Caribe Motors
+    ...employees
+      .filter(e => (e.company || '').toLowerCase().includes('caribe'))
+      .map(e => ({
+        id: e.id,
+        name: `${e.fullName} (${e.jobTitle || 'Caribe Motors'})`,
+        subtitle: `${e.company || 'Caribe Motors'} • ${e.department || 'Personnel'} • Poste: ${e.workstation?.pcName || 'Dell'}`,
+        tag: e.employeeId,
+        category: 'personnel',
+        typeLabel: 'Collaborateur Caribe Motors',
+        icon: Users,
+        tab: 'personnel' as const,
+        data: e
+      }))
+  ] : [
     // 16 Imprimantes HP réelles
     ...printers.map(p => ({
       id: p.id,
@@ -128,7 +146,7 @@ export default function QuickSearchModal() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher imprimante, IP, poste Dell, n° de série, collaborateur, référence de document..."
+            placeholder={isRestrictedCarl ? "Rechercher collaborateur Caribe Motors..." : "Rechercher imprimante, IP, poste Dell, n° de série, collaborateur, référence de document..."}
             className="flex-1 bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden font-medium"
           />
 
@@ -141,16 +159,17 @@ export default function QuickSearchModal() {
         </div>
 
         {/* Quick Filter Pills */}
-        <div className="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex items-center gap-2 text-xs">
-          <span className="text-slate-400 text-[11px] font-semibold mr-1">Filtrer par :</span>
-          {[
-            { id: 'all', label: 'Tous les actifs' },
-            { id: 'printers', label: 'Imprimantes' },
-            { id: 'it', label: 'Postes Dell' },
-            { id: 'personnel', label: 'Personnel' },
-            { id: 'phones', label: 'Téléphones' },
-            { id: 'documents', label: 'Documents' }
-          ].map(f => (
+        {!isRestrictedCarl && (
+          <div className="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex items-center gap-2 text-xs">
+            <span className="text-slate-400 text-[11px] font-semibold mr-1">Filtrer par :</span>
+            {[
+              { id: 'all', label: 'Tous les actifs' },
+              { id: 'printers', label: 'Imprimantes' },
+              { id: 'it', label: 'Postes Dell' },
+              { id: 'personnel', label: 'Personnel' },
+              { id: 'phones', label: 'Téléphones' },
+              { id: 'documents', label: 'Documents' }
+            ].map(f => (
             <button
               key={f.id}
               onClick={() => setActiveCategoryFilter(f.id)}
@@ -164,6 +183,7 @@ export default function QuickSearchModal() {
             </button>
           ))}
         </div>
+        )}
 
         {/* Results List */}
         <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 p-2">

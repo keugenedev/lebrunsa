@@ -50,6 +50,7 @@ import {
 import { buildPhoneDocRef, downloadPhoneSheetPDF, PhoneSheetOptions } from '@/lib/printPhoneSheet';
 import { generatePhoneCode } from '@/lib/phones';
 import { formatNif } from '@/lib/formatNif';
+import { isCarlHens } from '@/lib/permissions';
 
 // Documents : colonnes ajoutées après coup (site, type, taille, date). Tant que le SQL correspondant
 // n'a pas été exécuté dans Supabase, on retente sans elles pour ne jamais bloquer l'enregistrement.
@@ -427,7 +428,50 @@ interface InventoryContextType {
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
 export function InventoryProvider({ children }: { children: React.ReactNode }) {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lebron_auth') === 'true';
+    }
+    return false;
+  });
+
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lebron_user');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return null;
+  });
+
+  const [activeTab, setActiveTabState] = useState<NavigationTab>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('lebron_user');
+        if (saved && isCarlHens(JSON.parse(saved))) {
+          return 'personnel';
+        }
+      } catch (e) {}
+    }
+    return 'overview';
+  });
+
+  const setActiveTab = useCallback((tab: NavigationTab) => {
+    if (isCarlHens(currentUser)) {
+      setActiveTabState('personnel');
+      return;
+    }
+    setActiveTabState(tab);
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (isCarlHens(currentUser) && activeTab !== 'personnel') {
+      setActiveTabState('personnel');
+    }
+  }, [currentUser, activeTab]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [currency, setCurrency] = useState<'EUR' | 'USD'>('EUR');
   
@@ -529,24 +573,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     setIsDocumentModalOpen(false);
     setEditingDocument(null);
   };
-
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('lebron_auth') === 'true';
-    }
-    return false;
-  });
-
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: string } | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lebron_user');
-      if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
-      }
-    }
-    return null;
-  });
 
   const logout = () => {
     setIsAuthenticated(false);
@@ -1197,6 +1223,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       };
       setIsAuthenticated(true);
       setCurrentUser(user);
+      if (isCarlHens(user)) {
+        setActiveTabState('personnel');
+      }
       if (typeof window !== 'undefined') {
         localStorage.setItem('lebron_auth', 'true');
         localStorage.setItem('lebron_user', JSON.stringify(user));
@@ -1685,6 +1714,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   // Employee Actions
   const addEmployee = async (emp: Omit<Employee, 'id'>) => {
+    const isCarl = isCarlHens(currentUser);
+    const targetCompany = isCarl ? 'Caribe Motors' : (emp.company || 'Lebrun S.A.');
+    const targetSite = isCarl ? (emp.site || 'Pétion-Ville') : (emp.site || 'Delmas 52');
+    const targetPhotoUrl = isCarl ? undefined : (emp.photoUrl?.trim() || undefined);
+
     const cleanUserId = emp.employeeId || `EMP-LEB-${Math.floor(Math.random() * 900 + 100)}`;
     const cleanUsername = emp.accounts?.appUsername || cleanUserId.toLowerCase().replace(/[^a-z0-9]/g, '');
     // L'email est facultatif : s'il est vide, il reste vide (aucune adresse inventée).
@@ -1698,6 +1732,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       ...emp,
       id: cleanUserId,
       employeeId: cleanUserId,
+      company: targetCompany,
+      site: targetSite,
+      photoUrl: targetPhotoUrl,
       firstName: prenom,
       lastName: nom,
       email: cleanEmail,
@@ -1712,8 +1749,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         email: cleanEmail || null,
         nom: nom,
         prenom: prenom,
-        entreprise: emp.company || 'Lebrun S.A.',
-        site: emp.site || 'Delmas 52',
+        entreprise: targetCompany,
+        site: targetSite,
         telephone: emp.phone || null,
         departement: emp.department || null,
         poste: emp.jobTitle || null,
@@ -1724,8 +1761,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         userRow.blood_group = emp.bloodGroup.trim();
         userRow.groupe_sanguin = emp.bloodGroup.trim();
       }
-      if (emp.photoUrl) {
-        userRow.photo_url = emp.photoUrl.trim();
+      if (targetPhotoUrl) {
+        userRow.photo_url = targetPhotoUrl;
       }
 
       let { error } = await supabase.from('users').insert(userRow).select();
@@ -1778,6 +1815,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+    if (isCarlHens(currentUser)) {
+      showToast({
+        title: "Action non autorisée",
+        message: "Votre compte permet uniquement l'ajout de personnel Caribe Motors.",
+        type: "error"
+      });
+      return { success: false, error: "Action non autorisée" };
+    }
+
     const targetEmp = employees.find(e => e.id === id || e.employeeId === id);
     const oldFullName = targetEmp?.fullName;
     const oldEmployeeId = targetEmp?.employeeId;
@@ -2007,6 +2053,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteEmployee = async (id: string) => {
+    if (isCarlHens(currentUser)) {
+      showToast({
+        title: "Action non autorisée",
+        message: "Votre compte ne dispose pas des droits de suppression.",
+        type: "error"
+      });
+      return { success: false, error: "Action non autorisée" };
+    }
+
     const target = employees.find(e => e.id === id || e.employeeId === id);
     const oldFullName = target?.fullName;
     const empMatricule = target?.employeeId || id;
@@ -3809,9 +3864,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     let filename = `LebrunSA_Inventaire_${today}.xlsx`;
     let sheetTitle = 'Inventaire';
 
-    if (cat === 'personnel') {
-      filename = `LebrunSA_Personnel_${today}.xlsx`;
-      sheetTitle = 'Personnel';
+    const isCarl = isCarlHens(currentUser);
+    if (isCarl || cat === 'personnel') {
+      filename = isCarl ? `CaribeMotors_Personnel_${today}.xlsx` : `LebrunSA_Personnel_${today}.xlsx`;
+      sheetTitle = isCarl ? 'Personnel Caribe' : 'Personnel';
       headers = [
         'Matricule',
         'Nom & Prénom',
@@ -3828,7 +3884,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         'Application Métier',
         'Notes & Observations'
       ];
-      rows = employees.map(e => [
+      const targetEmployees = isCarl
+        ? employees.filter(e => (e.company || '').toLowerCase().includes('caribe'))
+        : employees;
+      rows = targetEmployees.map(e => [
         e.employeeId,
         e.fullName,
         e.company || 'Lebrun S.A.',

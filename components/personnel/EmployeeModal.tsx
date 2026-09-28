@@ -6,6 +6,7 @@ import { Employee } from '@/types/inventory';
 import { X, UserPlus, UserCheck, Building, Mail, Phone, MapPin, Briefcase, FileText, UploadCloud, Camera, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatNif } from '@/lib/formatNif';
 import { uploadEmployeePhoto } from '@/lib/uploadPhoto';
+import { isCarlHens, canUploadPhoto } from '@/lib/permissions';
 
 export default function EmployeeModal() {
   const { 
@@ -13,8 +14,12 @@ export default function EmployeeModal() {
     closeEmployeeModal, 
     editingEmployee, 
     addEmployee, 
-    updateEmployee 
+    updateEmployee,
+    currentUser
   } = useInventory();
+
+  const isRestrictedCarl = isCarlHens(currentUser);
+  const allowPhotoUpload = canUploadPhoto(currentUser);
 
   const [employeeId, setEmployeeId] = useState('');
   const [fullName, setFullName] = useState('');
@@ -43,8 +48,8 @@ export default function EmployeeModal() {
     setIsDraggingPhoto(false);
     if (editingEmployee) {
       setEmployeeId(editingEmployee.employeeId);
-      setCompany(editingEmployee.company || 'Lebrun S.A.');
-      setSite(editingEmployee.site || '');
+      setCompany(isRestrictedCarl ? 'Caribe Motors' : (editingEmployee.company || 'Lebrun S.A.'));
+      setSite(isRestrictedCarl ? 'Pétion-Ville' : (editingEmployee.site || ''));
       setFullName(editingEmployee.fullName);
       setEmail(editingEmployee.email || '');
       setPhone(editingEmployee.phone || '');
@@ -52,16 +57,16 @@ export default function EmployeeModal() {
       setJobTitle(editingEmployee.jobTitle || '');
       setBloodGroup(editingEmployee.bloodGroup || '');
       setNif(editingEmployee.nif ? formatNif(editingEmployee.nif) : '');
-      setPhotoUrl(editingEmployee.photoUrl || '');
-      setLocation(editingEmployee.location || '');
+      setPhotoUrl(allowPhotoUpload ? (editingEmployee.photoUrl || '') : '');
+      setLocation(isRestrictedCarl ? 'Pétion-Ville' : (editingEmployee.location || ''));
       setStatus(editingEmployee.status);
       setHireDate(editingEmployee.hireDate);
       setNotes(editingEmployee.notes || '');
     } else {
       const rand = Math.floor(Math.random() * 900 + 100);
       setEmployeeId(`EMP-LEB-${rand}`);
-      setCompany('Lebrun S.A.');
-      setSite('');
+      setCompany(isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.');
+      setSite(isRestrictedCarl ? 'Pétion-Ville' : '');
       setFullName('');
       setEmail('');
       setPhone('');
@@ -70,12 +75,12 @@ export default function EmployeeModal() {
       setBloodGroup('');
       setNif('');
       setPhotoUrl('');
-      setLocation('');
+      setLocation(isRestrictedCarl ? 'Pétion-Ville' : '');
       setStatus('active');
       setHireDate(new Date().toISOString().slice(0, 10));
       setNotes('');
     }
-  }, [editingEmployee, isEmployeeModalOpen]);
+  }, [editingEmployee, isEmployeeModalOpen, isRestrictedCarl, allowPhotoUpload]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -137,10 +142,14 @@ export default function EmployeeModal() {
       const firstName = nameParts.length > 1 ? nameParts[0] : fullName;
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
+      const finalCompany = isRestrictedCarl ? 'Caribe Motors' : company;
+      const finalSite = isRestrictedCarl ? (site || 'Pétion-Ville') : site;
+      const finalPhotoUrl = allowPhotoUpload ? photoUrl.trim() : '';
+
       const payload = {
         employeeId,
-        company,
-        site,
+        company: finalCompany,
+        site: finalSite,
         lastName,
         firstName,
         fullName,
@@ -151,8 +160,8 @@ export default function EmployeeModal() {
         jobTitle,
         bloodGroup: bloodGroup.trim(),
         nif: nif.trim() ? formatNif(nif) : '',
-        photoUrl: photoUrl.trim(),
-        location: site,
+        photoUrl: finalPhotoUrl,
+        location: finalSite,
         status,
         hireDate,
         notes,
@@ -291,110 +300,112 @@ export default function EmployeeModal() {
             </div>
 
             {/* Zone Photo d'identité (Upload / Drag & Drop PC & Téléphone - Zéro saisie d'URL externe) */}
-            <div className="pt-2 border-t border-slate-200/70 mt-3">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Photo d&apos;identité officielle</span>
-                </span>
-                <span className="text-[11px] text-slate-400 font-normal">
-                  PC (glisser-déposer) ou Téléphone (galerie / appareil photo)
-                </span>
-              </label>
+            {allowPhotoUpload && (
+              <div className="pt-2 border-t border-slate-200/70 mt-3">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Photo d&apos;identité officielle</span>
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-normal">
+                    PC (glisser-déposer) ou Téléphone (galerie / appareil photo)
+                  </span>
+                </label>
 
-              {/* Input file caché compatible PC et mobile */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileInputChange}
-                className="hidden"
-              />
+                {/* Input file caché compatible PC et mobile */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
 
-              {photoUrl ? (
-                /* Aperçu photo chargée */
-                <div className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="relative w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photoUrl} alt="Aperçu collaborateur" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-xs">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Photo d&apos;identité chargée avec succès</span>
+                {photoUrl ? (
+                  /* Aperçu photo chargée */
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="relative w-14 h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-100 shrink-0 shadow-2xs">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={photoUrl} alt="Aperçu collaborateur" className="w-full h-full object-cover" />
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                        Sera enregistrée sous URL sécurisée dans la base Supabase.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      disabled={isUploadingPhoto}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Camera className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Changer</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isUploadingPhoto}
-                      onClick={() => setPhotoUrl('')}
-                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                      <span>Retirer</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Zone de glisser-déposer & sélection */
-                <div
-                  onDragOver={handlePhotoDragOver}
-                  onDragLeave={handlePhotoDragLeave}
-                  onDrop={handlePhotoDrop}
-                  onClick={() => !isUploadingPhoto && fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-4 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                    isDraggingPhoto
-                      ? 'border-slate-800 bg-slate-100/90 scale-[1.005]'
-                      : 'border-slate-300 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50'
-                  }`}
-                >
-                  {isUploadingPhoto ? (
-                    <div className="py-2 flex flex-col items-center gap-2 text-slate-600">
-                      <Loader2 className="w-6 h-6 animate-spin text-slate-800" />
-                      <span className="text-xs font-semibold text-slate-800">
-                        Téléversement et sécurisation de la photo en cours...
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
-                        <UploadCloud className="w-5 h-5 text-slate-700" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800">
-                          Glisser-déposer la photo ici, ou <span className="text-slate-900 underline underline-offset-2">cliquer pour sélectionner</span>
-                        </p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Depuis votre PC (fichiers locaux) ou Téléphone (caméra / galerie) • JPG, PNG, WebP
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Photo d&apos;identité chargée avec succès</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                          Sera enregistrée sous URL sécurisée dans la base Supabase.
                         </p>
                       </div>
-                    </>
-                  )}
-                </div>
-              )}
+                    </div>
 
-              {photoError && (
-                <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
-                  <span>⚠️</span> {photoError}
-                </p>
-              )}
-            </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={isUploadingPhoto}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Camera className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Changer</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isUploadingPhoto}
+                        onClick={() => setPhotoUrl('')}
+                        className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        <span>Retirer</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Zone de glisser-déposer & sélection */
+                  <div
+                    onDragOver={handlePhotoDragOver}
+                    onDragLeave={handlePhotoDragLeave}
+                    onDrop={handlePhotoDrop}
+                    onClick={() => !isUploadingPhoto && fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl p-4 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                      isDraggingPhoto
+                        ? 'border-slate-800 bg-slate-100/90 scale-[1.005]'
+                        : 'border-slate-300 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50'
+                    }`}
+                  >
+                    {isUploadingPhoto ? (
+                      <div className="py-2 flex flex-col items-center gap-2 text-slate-600">
+                        <Loader2 className="w-6 h-6 animate-spin text-slate-800" />
+                        <span className="text-xs font-semibold text-slate-800">
+                          Téléversement et sécurisation de la photo en cours...
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600">
+                          <UploadCloud className="w-5 h-5 text-slate-700" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800">
+                            Glisser-déposer la photo ici, ou <span className="text-slate-900 underline underline-offset-2">cliquer pour sélectionner</span>
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            Depuis votre PC (fichiers locaux) ou Téléphone (caméra / galerie) • JPG, PNG, WebP
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {photoError && (
+                  <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                    <span>⚠️</span> {photoError}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Section 2: Affectation & Entreprise */}
@@ -409,17 +420,23 @@ export default function EmployeeModal() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
                   Entreprise <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-                >
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                </select>
+                {isRestrictedCarl ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
+                    Caribe Motors
+                  </div>
+                ) : (
+                  <select
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                  </select>
+                )}
               </div>
 
               <div>

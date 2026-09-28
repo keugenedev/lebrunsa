@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { isCarlHens } from '@/lib/permissions';
 
 export default function Sidebar() {
   const {
@@ -41,28 +42,35 @@ export default function Sidebar() {
   } = useInventory();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isRestrictedCarl = isCarlHens(currentUser);
+
+  const caribeCount = employees.filter(e => (e.company || '').toLowerCase().includes('caribe')).length;
 
   const navItems: {
     id: NavigationTab | 'scanner';
     label: string;
     count?: number;
     icon: React.ComponentType<{ className?: string }>;
-  }[] = [
-    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'printers', label: 'Imprimantes', count: printers.length, icon: Printer },
-    { id: 'it', label: 'Postes IT & Matériel', count: itAssets.length, icon: Laptop },
-    { id: 'network', label: 'Réseau', count: networkAssets?.length || 5, icon: Network },
-    { id: 'ups', label: 'Onduleurs UPS', count: upsAssets?.length || 7, icon: Zap },
-    { id: 'applications', label: 'Applications', count: applicationAccounts?.length || 13, icon: KeyRound },
-    { id: 'personnel', label: 'Personnel', count: employees.length, icon: Users },
-    { id: 'accounts', label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck },
-    { id: 'documents', label: 'Documents', count: documents?.length || 0, icon: FileText },
-    { id: 'phones', label: 'Téléphones', count: phones.length, icon: Smartphone },
-    { id: 'tags', label: 'Tag', icon: Tag },
-    { id: 'badges', label: 'Badges', count: employees.length, icon: IdCard },
-    { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
-    { id: 'settings', label: 'Configuration', icon: Settings }
-  ];
+  }[] = isRestrictedCarl
+    ? [
+        { id: 'personnel', label: 'Personnel Caribe', count: caribeCount, icon: Users }
+      ]
+    : [
+        { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'printers', label: 'Imprimantes', count: printers.length, icon: Printer },
+        { id: 'it', label: 'Postes IT & Matériel', count: itAssets.length, icon: Laptop },
+        { id: 'network', label: 'Réseau', count: networkAssets?.length || 5, icon: Network },
+        { id: 'ups', label: 'Onduleurs UPS', count: upsAssets?.length || 7, icon: Zap },
+        { id: 'applications', label: 'Applications', count: applicationAccounts?.length || 13, icon: KeyRound },
+        { id: 'personnel', label: 'Personnel', count: employees.length, icon: Users },
+        { id: 'accounts', label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck },
+        { id: 'documents', label: 'Documents', count: documents?.length || 0, icon: FileText },
+        { id: 'phones', label: 'Téléphones', count: phones.length, icon: Smartphone },
+        { id: 'tags', label: 'Tag', icon: Tag },
+        { id: 'badges', label: 'Badges', count: employees.length, icon: IdCard },
+        { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
+        { id: 'settings', label: 'Configuration', icon: Settings }
+      ];
 
   const handleNavClick = (id: NavigationTab | 'scanner') => {
     if (id === 'scanner') {
@@ -85,7 +93,7 @@ export default function Sidebar() {
         }`}
       >
         <div
-          onClick={() => setActiveTab('overview')}
+          onClick={() => setActiveTab(isRestrictedCarl ? 'personnel' : 'overview')}
           className="cursor-pointer flex items-center justify-center"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -118,7 +126,7 @@ export default function Sidebar() {
       >
         {!isCollapsed && (
           <div className="px-3 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            Menu Principal
+            {isRestrictedCarl ? 'Caribe Motors' : 'Menu Principal'}
           </div>
         )}
 
