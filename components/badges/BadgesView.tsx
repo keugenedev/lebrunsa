@@ -35,6 +35,10 @@ export default function BadgesView() {
 
   // Rendu progressif pour une fluidité instantanée sans lag
   React.useEffect(() => {
+    if (searchQuery.trim()) {
+      setRenderLimit(50);
+      return;
+    }
     setRenderLimit(6);
     const timer = setTimeout(() => {
       setRenderLimit(100);
@@ -64,8 +68,8 @@ export default function BadgesView() {
       // Exclusion des badges de test résiduels
       if (isTestBadge(emp)) return false;
 
-      // Filtre marque
-      if (selectedBrandKey !== 'all') {
+      // Filtre marque (s'applique lors du parcours par onglet ; la recherche textuelle permet de trouver le collaborateur immédiatement)
+      if (selectedBrandKey !== 'all' && !searchQuery.trim()) {
         const brand = getBrandConfig(emp.company);
         if (brand.id !== selectedBrandKey) return false;
       }
@@ -468,6 +472,7 @@ export default function BadgesView() {
                 {/* Le Badge Rendu */}
                 <div className="w-full flex justify-center py-1">
                   <BadgeCard
+                    key={`badge-card-${emp.id}`}
                     employee={emp}
                     brandOverride={brand}
                     showBothSides={viewMode === 'both'}

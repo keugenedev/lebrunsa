@@ -146,37 +146,16 @@ export function buildVCardString(emp: Employee, brand: BrandConfig): string {
   const lastName = emp.lastName || '';
   const firstName = emp.firstName || '';
   const fullName = emp.fullName || `${firstName} ${lastName}`.trim();
-  const title = emp.jobTitle || 'Collaborateur';
   const org = brand.displayName;
   const tel = emp.phone || brand.phone;
 
-  if (brand.id === 'leader') {
-    return [
-      'BEGIN:VCARD',
-      'VERSION:2.1',
-      `FN:${fullName}`,
-      `ORG:${org}`,
-      `TITLE:${title}`,
-      `TEL:${tel}`,
-      `NOTE:ID:${emp.employeeId}`,
-      'END:VCARD'
-    ].join('\n');
-  }
-
-  const email = emp.email || brand.email;
-  const url = `https://${brand.website}`;
-
   return [
     'BEGIN:VCARD',
-    'VERSION:3.0',
-    `N:${lastName};${firstName};;;`,
+    'VERSION:2.1',
     `FN:${fullName}`,
     `ORG:${org}`,
-    `TITLE:${title}`,
-    `TEL;TYPE=WORK,VOICE:${tel}`,
-    `EMAIL;TYPE=WORK:${email}`,
-    `URL:${url}`,
-    `NOTE:ID ${emp.employeeId} - ${brand.displayName}`,
+    `TEL:${tel}`,
+    `NOTE:ID:${emp.employeeId}`,
     'END:VCARD'
   ].join('\n');
 }

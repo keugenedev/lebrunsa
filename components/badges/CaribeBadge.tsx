@@ -31,6 +31,11 @@ interface CaribeBadgeProps {
  * - Bas de carte épuré : ID Matricule et Code 128
  */
 export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee, brand, refId }: CaribeBadgeProps) {
+  const cleanId = (employee.id || employee.employeeId || 'caribe').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const gradientNavyId = `caribeNavy_${cleanId}`;
+  const gradientLimeId = `caribeLime_${cleanId}`;
+  const softGlowId = `caribeGlow_${cleanId}`;
+
   return (
     <div
       id={refId}
@@ -47,21 +52,21 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
       >
         <defs>
           {/* Dégradé Bleu Royal Caribe Motors */}
-          <linearGradient id="caribeGradientNavy" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradientNavyId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#0A2540" />
             <stop offset="50%" stopColor="#0F355C" />
             <stop offset="100%" stopColor="#071B30" />
           </linearGradient>
 
           {/* Dégradé Vert Lime Caribe Motors */}
-          <linearGradient id="caribeGradientLime" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradientLimeId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#64CE30" />
             <stop offset="50%" stopColor="#52BA23" />
             <stop offset="100%" stopColor="#3C9115" />
           </linearGradient>
 
           {/* Voile pastel doux */}
-          <linearGradient id="caribeSoftGlow" x1="100%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={softGlowId} x1="100%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#DDF6CE" stopOpacity="0.8" />
             <stop offset="100%" stopColor="#C6EDB0" stopOpacity="0.3" />
           </linearGradient>
@@ -70,19 +75,19 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
         {/* Vague 1 : Voile doux pastel */}
         <path
           d="M -10,140 C 75,100 165,175 298,125 L 298,205 C 185,250 80,175 -10,225 Z"
-          fill="url(#caribeSoftGlow)"
+          fill={`url(#${softGlowId})`}
         />
 
         {/* Vague 2 : Ruban dynamique Bleu Royal Caribe */}
         <path
           d="M -10,155 C 65,115 160,190 298,140 L 298,195 C 190,240 85,165 -10,215 Z"
-          fill="url(#caribeGradientNavy)"
+          fill={`url(#${gradientNavyId})`}
         />
 
         {/* Vague 3 : Vague d'accent Vert Lime */}
         <path
           d="M -10,185 C 80,215 175,150 298,185 L 298,210 C 180,175 90,235 -10,205 Z"
-          fill="url(#caribeGradientLime)"
+          fill={`url(#${gradientLimeId})`}
           opacity="0.9"
         />
 
@@ -254,7 +259,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
       </div>
 
       {/* 3. COORDONNÉES OFFICIELLES CARIBE MOTORS (WEB & EMAIL L'UN EN BAS DE L'AUTRE EN BLEU) */}
-      <div className="px-4 space-y-1 text-black">
+      <div className="px-3 space-y-1 text-black">
         {/* Site Web en Bleu sur sa propre ligne */}
         <div className="flex items-center gap-1.5 text-black">
           <Globe className="w-3.5 h-3.5 shrink-0 text-[#0066CC]" />
@@ -282,7 +287,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
         {/* Adresse 1 */}
         <div className="flex items-center gap-1.5 text-black">
           <MapPin className="w-3.5 h-3.5 shrink-0 text-[#52BA23]" />
-          <span className="font-bold text-[8.5px] text-black tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+          <span className="font-bold text-[7.8px] text-black tracking-tight leading-tight">
             {address1}
           </span>
         </div>
@@ -290,7 +295,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
         {/* Adresse 2 */}
         <div className="flex items-center gap-1.5 text-black">
           <MapPin className="w-3.5 h-3.5 shrink-0 text-[#52BA23]" />
-          <span className="font-bold text-[8.5px] text-black tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+          <span className="font-bold text-[7.8px] text-black tracking-tight leading-tight">
             {address2}
           </span>
         </div>

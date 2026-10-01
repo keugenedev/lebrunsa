@@ -14,8 +14,6 @@ interface BarcodeProps {
   lineColor?: string;
 }
 
-const barcodeCache = new Map<string, string>();
-
 export default React.memo(function Barcode({
   value,
   width = 1.6,
@@ -27,15 +25,9 @@ export default React.memo(function Barcode({
   lineColor = '#0f172a'
 }: BarcodeProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const cacheKey = `${value}_${width}_${height}_${displayValue}_${fontSize}_${background}_${lineColor}`;
 
   useEffect(() => {
     if (!svgRef.current || !value) return;
-
-    if (barcodeCache.has(cacheKey)) {
-      svgRef.current.innerHTML = barcodeCache.get(cacheKey)!;
-      return;
-    }
 
     try {
       JsBarcode(svgRef.current, value, {
@@ -53,13 +45,10 @@ export default React.memo(function Barcode({
         margin: 6,
         valid: () => true
       });
-      if (svgRef.current.innerHTML) {
-        barcodeCache.set(cacheKey, svgRef.current.innerHTML);
-      }
     } catch (err) {
       console.error('Erreur de génération Code 128:', err);
     }
-  }, [value, width, height, displayValue, fontSize, background, lineColor, cacheKey]);
+  }, [value, width, height, displayValue, fontSize, background, lineColor]);
 
   if (!value) return null;
 

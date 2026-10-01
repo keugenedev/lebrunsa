@@ -32,6 +32,11 @@ interface LeaderBadgeProps {
  * - Bas blanc épuré : ID matricule et Code-barres
  */
 export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
+  const cleanId = (employee.id || employee.employeeId || 'leader').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const curvePrimaryId = `lfCurvePrimary_${cleanId}`;
+  const curveLightId = `lfCurveLight_${cleanId}`;
+  const curveSoftId = `lfCurveSoft_${cleanId}`;
+
   return (
     <div
       id={refId}
@@ -48,20 +53,20 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
       >
         <defs>
           {/* Dégradé vert corporate Leader Foods vibrant */}
-          <linearGradient id="lfCurvePrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={curvePrimaryId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#78C620" />
             <stop offset="50%" stopColor="#70BD1B" />
             <stop offset="100%" stopColor="#4D8F10" />
           </linearGradient>
 
           {/* Dégradé vert clair lumineux */}
-          <linearGradient id="lfCurveLight" x1="100%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={curveLightId} x1="100%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#A4EA48" stopOpacity="0.75" />
             <stop offset="100%" stopColor="#D4F5A2" stopOpacity="0.25" />
           </linearGradient>
 
           {/* Dégradé vert pastel doux */}
-          <linearGradient id="lfCurveSoft" x1="0%" y1="50%" x2="100%" y2="50%">
+          <linearGradient id={curveSoftId} x1="0%" y1="50%" x2="100%" y2="50%">
             <stop offset="0%" stopColor="#EAF8DA" stopOpacity="0.8" />
             <stop offset="100%" stopColor="#D8F3BA" stopOpacity="0.4" />
           </linearGradient>
@@ -70,19 +75,19 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
         {/* Vague 1 : Voile doux pastel en arrière-plan (affiné et élégant) */}
         <path
           d="M -10,145 C 75,105 165,175 298,130 L 298,205 C 185,250 80,180 -10,225 Z"
-          fill="url(#lfCurveSoft)"
+          fill={`url(#${curveSoftId})`}
         />
 
         {/* Vague 2 : Courbe principale verte affinée (ruban dynamique ~45px d'épaisseur) */}
         <path
           d="M -10,160 C 65,120 160,190 298,145 L 298,195 C 190,240 85,165 -10,210 Z"
-          fill="url(#lfCurvePrimary)"
+          fill={`url(#${curvePrimaryId})`}
         />
 
         {/* Vague 3 : Onde lumineuse translucide croisée pour le relief */}
         <path
           d="M -10,175 C 80,210 175,145 298,180 L 298,215 C 180,175 90,240 -10,205 Z"
-          fill="url(#lfCurveLight)"
+          fill={`url(#${curveLightId})`}
         />
 
         {/* Ligne d'accent dynamique lumineuse */}
