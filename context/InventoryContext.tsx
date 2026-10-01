@@ -1853,15 +1853,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
-    if (isCarlHens(currentUser)) {
-      showToast({
-        title: "Action non autorisée",
-        message: "Votre compte permet uniquement l'ajout de personnel Caribe Motors.",
-        type: "error"
-      });
-      return { success: false, error: "Action non autorisée" };
-    }
-
     const targetEmp = employees.find(e => e.id === id || e.employeeId === id);
     const oldFullName = targetEmp?.fullName;
     const oldEmployeeId = targetEmp?.employeeId;

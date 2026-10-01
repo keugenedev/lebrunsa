@@ -24,20 +24,35 @@ export function isCarlHens(user: UserProfile | null | undefined): boolean {
 }
 
 /**
- * Seul l'administrateur principal peut téléverser des photos d'identité
+ * Autorisation de téléversement de photos d'identité (autorisé pour Carl Hens lors de l'ajout ou modification)
  */
 export function canUploadPhoto(user: UserProfile | null | undefined): boolean {
+  if (!user) return false;
+  return true;
+}
+
+/**
+ * Droit de modification de collaborateur (autorisé pour Carl Hens)
+ */
+export function canEditPersonnel(user: UserProfile | null | undefined): boolean {
+  if (!user) return false;
+  return true;
+}
+
+/**
+ * Droit de suppression de collaborateur (strictement interdit pour Carl Hens)
+ */
+export function canDeletePersonnel(user: UserProfile | null | undefined): boolean {
   if (!user) return false;
   if (isCarlHens(user)) return false;
   return true;
 }
 
 /**
- * Droit de modification ou suppression de collaborateur (interdit pour Carl Hens, qui ne peut qu'ajouter)
+ * Droit de gestion de collaborateur (modification autorisée pour Carl Hens)
  */
 export function canEditOrDeletePersonnel(user: UserProfile | null | undefined): boolean {
   if (!user) return false;
-  if (isCarlHens(user)) return false;
   return true;
 }
 

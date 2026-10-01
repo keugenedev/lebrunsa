@@ -49,8 +49,8 @@ export default function EmployeeModal() {
     setIsDraggingPhoto(false);
     if (editingEmployee) {
       setEmployeeId(editingEmployee.employeeId);
-      setCompany(isRestrictedCarl ? 'Caribe Motors' : (editingEmployee.company || 'Lebrun S.A.'));
-      setSite(isRestrictedCarl ? 'Pétion-Ville' : (editingEmployee.site || ''));
+      setCompany(editingEmployee.company || (isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.'));
+      setSite(editingEmployee.site || editingEmployee.location || (isRestrictedCarl ? 'Pétion-Ville' : ''));
       setFullName(editingEmployee.fullName);
       setEmail(editingEmployee.email || '');
       setPhone(editingEmployee.phone || '');
@@ -58,8 +58,8 @@ export default function EmployeeModal() {
       setJobTitle(editingEmployee.jobTitle || '');
       setBloodGroup(editingEmployee.bloodGroup || '');
       setNif(editingEmployee.nif ? formatNif(editingEmployee.nif) : '');
-      setPhotoUrl(allowPhotoUpload ? (editingEmployee.photoUrl || '') : '');
-      setLocation(isRestrictedCarl ? 'Pétion-Ville' : (editingEmployee.location || ''));
+      setPhotoUrl(editingEmployee.photoUrl || '');
+      setLocation(editingEmployee.location || editingEmployee.site || (isRestrictedCarl ? 'Pétion-Ville' : ''));
       setStatus(editingEmployee.status);
       setHireDate(editingEmployee.hireDate);
       setNotes(editingEmployee.notes || '');
@@ -143,9 +143,9 @@ export default function EmployeeModal() {
       const firstName = nameParts.length > 1 ? nameParts[0] : fullName;
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-      const finalCompany = isRestrictedCarl ? 'Caribe Motors' : company;
-      const finalSite = isRestrictedCarl ? (site || 'Pétion-Ville') : site;
-      const finalPhotoUrl = allowPhotoUpload ? photoUrl.trim() : '';
+      const finalCompany = editingEmployee ? (company || editingEmployee.company || (isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.')) : (isRestrictedCarl ? 'Caribe Motors' : company);
+      const finalSite = site || (isRestrictedCarl ? 'Pétion-Ville' : '');
+      const finalPhotoUrl = allowPhotoUpload ? photoUrl.trim() : (editingEmployee?.photoUrl || '');
 
       const payload = {
         employeeId,
@@ -196,7 +196,7 @@ export default function EmployeeModal() {
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                {editingEmployee ? 'Modifier la Fiche Collaborateur' : 'Nouveau Collaborateur Lebrun S.A.'}
+                {editingEmployee ? 'Modifier la Fiche Collaborateur' : (isRestrictedCarl ? 'Nouveau Collaborateur Caribe Motors' : 'Nouveau Collaborateur Lebrun S.A.')}
               </h3>
               <p className="text-[11px] text-slate-500">
                 Gestion des matricules, coordonnées et affectations professionnelles
@@ -423,7 +423,7 @@ export default function EmployeeModal() {
                 </label>
                 {isRestrictedCarl ? (
                   <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
-                    Caribe Motors
+                    {company || editingEmployee?.company || 'Caribe Motors'}
                   </div>
                 ) : (
                   <select

@@ -217,16 +217,14 @@ export default function PersonnelView() {
           >
             <i className="ri-file-pdf-2-line text-lg"></i>
           </button>
-          {!isRestrictedCarl && (
-            <button
-              type="button"
-              onClick={() => openEmployeeModal(emp)}
-              title="Modifier collaborateur"
-              className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-700 cursor-pointer"
-            >
-              <i className="ri-pencil-line text-lg"></i>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => openEmployeeModal(emp)}
+            title="Modifier collaborateur"
+            className="inline-flex items-center justify-center text-slate-400 transition hover:text-slate-700 cursor-pointer"
+          >
+            <i className="ri-pencil-line text-lg"></i>
+          </button>
           {!isRestrictedCarl && (
             <button
               type="button"
@@ -264,7 +262,7 @@ export default function PersonnelView() {
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
             {isRestrictedCarl 
-              ? 'Ajout et suivi des collaborateurs de Caribe Motors' 
+              ? 'Ajout, modification et suivi des collaborateurs de Caribe Motors' 
               : 'Suivi nominatif des équipements IT, flottes mobiles et affectations des salariés de Lebrun S.A.'}
           </p>
         </div>
@@ -684,18 +682,16 @@ export default function PersonnelView() {
                 <i className="ri-file-pdf-2-line text-sm text-slate-700"></i>
                 <span>Fiche d&apos;Affectation (PDF)</span>
               </button>
-              {!isRestrictedCarl && (
-                <button
-                  onClick={() => {
-                    const emp = selectedEmployee;
-                    setSelectedEmployee(null);
-                    openEmployeeModal(emp);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors cursor-pointer"
-                >
-                  Modifier la fiche
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  const emp = selectedEmployee;
+                  setSelectedEmployee(null);
+                  openEmployeeModal(emp);
+                }}
+                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors cursor-pointer"
+              >
+                Modifier la fiche
+              </button>
               <button
                 onClick={() => setSelectedEmployee(null)}
                 className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs shadow-xs"
