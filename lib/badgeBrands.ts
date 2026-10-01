@@ -85,22 +85,22 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
   leader: {
     id: 'leader',
     displayName: 'Leader Foods',
-    legalName: 'Leader Foods S.A.',
+    legalName: 'Leader Foods',
     logo: '/logos/leader.png',
     fallbackLogo: '/leader.png',
     website: 'www.leaderfoods.com',
     email: 'contact@leaderfoods.com',
-    phone: '29403003',
-    phoneFormatted: '(+509) 2940-3003',
-    address: 'Port-au-Prince, Haïti',
-    // Exact Leader Foods Colors: Dark Gray & Leader Lime Green
-    bgPrimary: '#26292B',
-    accentColor: '#78BE20', // Leader Lime Green
-    footerBg: '#78BE20',
-    footerText: '#000000',
+    phone: '31606001',
+    phoneFormatted: '(509) 3160-6001 / (509) 3160-6002',
+    address: '5, Rue Tertulien Guilbaud, Port-au-Prince, Haïti',
+    // Exact Leader Foods Colors: Fresh Lime Green, Deep Charcoal & Card White
+    bgPrimary: '#1E2328',
+    accentColor: '#70BD1B', // Leader Fresh Lime Green (Logo Leaf / FOODS)
+    footerBg: '#70BD1B',
+    footerText: '#0F172A',
     textColor: '#ffffff',
-    lineColor: '#78BE20',
-    terms: 'Ce badge est strictement personnel et demeure la propriété de Leader Foods S.A. En cas de perte, contacter la Direction.'
+    lineColor: '#70BD1B',
+    terms: 'Ce badge est strictement personnel et demeure la propriété exclusive de Leader Foods. En cas de perte, merci de le rapporter à la Direction ou de contacter le (509) 3160-6001 / (509) 3160-6002.'
   },
   tirezone: {
     id: 'tirezone',
@@ -147,6 +147,20 @@ export function buildVCardString(emp: Employee, brand: BrandConfig): string {
   const title = emp.jobTitle || 'Collaborateur';
   const org = brand.displayName;
   const tel = emp.phone || brand.phone;
+
+  if (brand.id === 'leader') {
+    return [
+      'BEGIN:VCARD',
+      'VERSION:2.1',
+      `FN:${fullName}`,
+      `ORG:${org}`,
+      `TITLE:${title}`,
+      `TEL:${tel}`,
+      `NOTE:ID:${emp.employeeId}`,
+      'END:VCARD'
+    ].join('\n');
+  }
+
   const email = emp.email || brand.email;
   const url = `https://${brand.website}`;
 

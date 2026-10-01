@@ -584,7 +584,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-09-25-v22-clean-blood-groups';
+  const CURRENT_DATA_VERSION = '2026-10-01-v24-clean-db-only-employees';
 
   // Tri prioritaire : Tous les comptes Caribe Motors en premier dans la table, puis logique antéchronologique (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
@@ -611,6 +611,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Exclusion stricte des mocks temporaires
+  const isTestEmployee = (e: any) => {
+    const name = (e.fullName || `${e.firstName || ''} ${e.lastName || ''}`).toLowerCase().trim();
+    const id = (e.employeeId || e.id || '').toLowerCase().trim();
+    return name.includes('madreige') || name.includes('laguerre') || name.startsWith('test') || id.startsWith('test-');
+  };
+
   if (typeof window !== 'undefined') {
     const version = localStorage.getItem('lebron_inv_data_version');
     if (version !== CURRENT_DATA_VERSION) {
@@ -629,7 +636,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             const seen = new Set<string>();
-            return parsed
+            const list = parsed
+              .filter((e: any) => !isTestEmployee(e))
               .map((e: any) => ({
                 ...e,
                 id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId),
@@ -642,6 +650,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 seen.add(e.id);
                 return true;
               });
+            return list;
           }
         } catch (e) { console.error(e); }
       }
@@ -1352,13 +1361,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            const localOnly = prev.filter(e => !mappedFromDb.some(dbE => dbE.employeeId === e.employeeId || dbE.id === e.id));
-            const merged = [...localOnly, ...mappedFromDb];
+            const cleanDb = mappedFromDb.filter(e => !isTestEmployee(e));
 
             if (typeof window !== 'undefined') {
-              localStorage.setItem('lebron_inv_employees', JSON.stringify(merged));
+              localStorage.setItem('lebron_inv_employees', JSON.stringify(cleanDb));
             }
-            return merged;
+            return cleanDb;
           });
         }
 

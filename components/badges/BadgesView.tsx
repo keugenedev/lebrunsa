@@ -42,9 +42,18 @@ export default function BadgesView() {
     return Array.from(sites).sort();
   }, [employees]);
 
-  // Filtrage des collaborateurs
+  // Filtrage des collaborateurs (exclusion stricte des faux badges temporaires)
+  const isTestBadge = (emp: Employee) => {
+    const name = (emp.fullName || '').toLowerCase().trim();
+    const id = (emp.employeeId || emp.id || '').toLowerCase().trim();
+    return name.includes('madreige') || name.includes('laguerre') || name.startsWith('test') || id.startsWith('test-');
+  };
+
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
+      // Exclusion des badges de test résiduels
+      if (isTestBadge(emp)) return false;
+
       // Filtre marque
       if (selectedBrandKey !== 'all') {
         const brand = getBrandConfig(emp.company);
@@ -115,8 +124,20 @@ export default function BadgesView() {
     window.print();
   };
 
-  const caribeCount = useMemo(() => {
-    return employees.filter(e => getBrandConfig(e.company).id === 'caribe').length;
+  const brandCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      caribe: 0,
+      lebrun: 0,
+      autobiz: 0,
+      leader: 0,
+      tirezone: 0
+    };
+    employees.forEach(e => {
+      if (isTestBadge(e)) return;
+      const b = getBrandConfig(e.company).id;
+      if (counts[b] !== undefined) counts[b]++;
+    });
+    return counts;
   }, [employees]);
 
   return (
@@ -217,7 +238,7 @@ export default function BadgesView() {
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
                 selectedBrandKey === 'caribe' ? 'bg-[#52BA23] text-black font-bold' : 'bg-slate-200 text-slate-600'
               }`}>
-                {caribeCount}
+                {brandCounts.caribe}
               </span>
             </button>
 
@@ -231,6 +252,11 @@ export default function BadgesView() {
               }`}
             >
               <span>Lebrun S.A.</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                selectedBrandKey === 'lebrun' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {brandCounts.lebrun}
+              </span>
             </button>
 
             {/* Autobiz */}
@@ -243,18 +269,29 @@ export default function BadgesView() {
               }`}
             >
               <span>Autobiz</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                selectedBrandKey === 'autobiz' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {brandCounts.autobiz}
+              </span>
             </button>
 
             {/* Leader Foods */}
             <button
               onClick={() => setSelectedBrandKey('leader')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 selectedBrandKey === 'leader'
-                  ? 'bg-[#26292B] text-white ring-2 ring-[#78BE20]'
+                  ? 'bg-[#1E2328] text-white shadow-xs ring-2 ring-[#70BD1B]'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
+              <span className="w-2 h-2 rounded-full bg-[#70BD1B]" />
               <span>Leader Foods</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                selectedBrandKey === 'leader' ? 'bg-[#70BD1B] text-slate-900 font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {brandCounts.leader}
+              </span>
             </button>
 
             {/* Tirezone */}
@@ -267,6 +304,11 @@ export default function BadgesView() {
               }`}
             >
               <span>Tirezone</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                selectedBrandKey === 'tirezone' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {brandCounts.tirezone}
+              </span>
             </button>
 
             {/* Toutes les marques */}

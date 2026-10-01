@@ -1,8 +1,11 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { Employee } from '@/types/inventory';
 import { BrandConfig, getBrandConfig, buildVCardString } from '@/lib/badgeBrands';
 import QRCode from 'qrcode';
 import JsBarcode from 'jsbarcode';
 import { formatNif } from '@/lib/formatNif';
+import { LeaderBadgeRecto, LeaderBadgeVerso } from '@/components/badges/LeaderBadge';
 
 // Dimensions officielles standard CR80 (ISO 7810 ID-1) : 54 mm × 85.6 mm
 export const BADGE_WIDTH_MM = 54.0;
@@ -26,6 +29,57 @@ async function createRenderableBadgeElement(
     clone.style.zIndex = '-1000';
     document.body.appendChild(clone);
     return clone;
+  }
+
+  // Rendu spécifique pour Leader Foods via les composants dédiés
+  if (brand.id === 'leader') {
+    const mountPoint = document.createElement('div');
+    mountPoint.style.position = 'fixed';
+    mountPoint.style.top = '-9999px';
+    mountPoint.style.left = '-9999px';
+    mountPoint.style.zIndex = '-1000';
+    document.body.appendChild(mountPoint);
+
+    const root = createRoot(mountPoint);
+    await new Promise<void>((resolve) => {
+      if (face === 'verso') {
+        const vCardData = buildVCardString(emp, brand);
+        QRCode.toDataURL(vCardData, { width: 320, margin: 1, errorCorrectionLevel: 'L', color: { dark: '#000000', light: '#ffffff' } })
+          .then(url => {
+            root.render(
+              React.createElement(LeaderBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
+            );
+            setTimeout(resolve, 80);
+          })
+          .catch(() => {
+            root.render(
+              React.createElement(LeaderBadgeVerso, { employee: emp, brand })
+            );
+            setTimeout(resolve, 80);
+          });
+      } else {
+        root.render(
+          React.createElement(LeaderBadgeRecto, { employee: emp, brand })
+        );
+        setTimeout(resolve, 80);
+      }
+    });
+
+    const badgeEl = (mountPoint.firstElementChild as HTMLDivElement) || mountPoint;
+
+    // Attendre le chargement des images
+    const images = Array.from(badgeEl.querySelectorAll('img'));
+    await Promise.all(
+      images.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise<void>((r) => {
+          img.onload = () => r();
+          img.onerror = () => r();
+        });
+      })
+    );
+
+    return badgeEl;
   }
 
   const container = document.createElement('div');

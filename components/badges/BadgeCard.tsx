@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { downloadSingleBadgeCR80PDF } from '@/lib/printBadgePDF';
 import { formatNif } from '@/lib/formatNif';
+import { LeaderBadgeRecto, LeaderBadgeVerso } from './LeaderBadge';
 
 interface BadgeCardProps {
   employee: Employee;
@@ -45,8 +46,9 @@ export default function BadgeCard({
     const vCardData = buildVCardString(employee, brand);
 
     QRCode.toDataURL(vCardData, {
-      width: 240,
+      width: 320,
       margin: 1,
+      errorCorrectionLevel: 'L',
       color: {
         dark: '#000000',
         light: '#ffffff'
@@ -86,148 +88,166 @@ export default function BadgeCard({
   // -------------------------------------------------------------
   // RECTO : Reproduction exacte et sobre du modèle
   // -------------------------------------------------------------
-  const renderRecto = (refId?: string) => (
-    <div
-      id={refId}
-      className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-lg"
-      style={{
-        backgroundColor: brand.bgPrimary,
-        color: '#ffffff'
-      }}
-    >
-      {/* MENTION VERTICALE DROITE : GROUPE SANGUIN (Avancé près du cadre, descendu, sans trace - Uniquement si renseigné) */}
-      {employee.bloodGroup ? (
-        <div 
-          className="absolute pointer-events-none select-none z-10 flex items-center gap-1.5 text-[8.5px] font-bold tracking-wider uppercase text-white/75 whitespace-nowrap"
-          style={{
-            left: '238px',
-            top: '248px',
-            transformOrigin: '0 0',
-            transform: 'rotate(-90deg)'
-          }}
-        >
-          <span>GROUPE SANGUIN :</span>
-          <span className="font-mono text-white font-bold tracking-normal">
-            {employee.bloodGroup}
-          </span>
-        </div>
-      ) : null}
+  const renderRecto = (refId?: string) => {
+    if (brand.id === 'leader') {
+      return <LeaderBadgeRecto employee={employee} brand={brand} refId={refId} />;
+    }
 
-      {/* 1. EN-TÊTE : Logo seul dans un rectangle blanc contrasté */}
-      <div className="pt-5 px-5 flex items-center justify-center shrink-0">
-        <div className="bg-white px-4 py-1.5 rounded-xl shadow-xs flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={brand.logo}
-            alt={brand.displayName}
-            className="h-8 max-w-[160px] w-auto object-contain"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (target.src !== brand.fallbackLogo) target.src = brand.fallbackLogo;
-            }}
-          />
-        </div>
-      </div>
-
-      {/* 2. CADRE PHOTO CENTRAL (Photo réelle si disponible, sinon silhouette sobre) */}
-      <div className="px-6 my-auto flex flex-col items-center justify-center">
-        <div
-          className="w-44 h-48 rounded-[28px] overflow-hidden flex items-center justify-center relative shadow-sm"
-          style={{ backgroundColor: brand.accentColor }}
-        >
-          {employee.photoUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={employee.photoUrl}
-              alt={employee.fullName}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          ) : (
-            /* Silhouette humaine épurée sobre */
-            <div 
-              className="w-24 h-24 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: brand.bgPrimary }}
-            >
-              <User className="w-14 h-14" style={{ color: brand.accentColor }} />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 3. NOM, NIF, FILET & TITRE DU POSTE */}
-      <div className="px-4 text-center mb-3">
-        {/* Nom en majuscules grasses blanches */}
-        <h2 className="text-lg font-extrabold uppercase tracking-wide text-white leading-tight truncate">
-          {employee.fullName}
-        </h2>
-
-        {/* NIF directement après le nom (uniquement si présent dans la table, formaté en 000-000-000-0) */}
-        {employee.nif && employee.nif.trim() ? (
-          <p className="text-[10px] font-mono tracking-wider text-white/85 mt-0.5 uppercase truncate">
-            NIF : <span className="font-semibold text-white">{formatNif(employee.nif)}</span>
-          </p>
-        ) : null}
-
-        {/* Ligne horizontale sous le nom (couleur du brand) */}
-        <div className="flex justify-center my-1.5">
-          <div 
-            className="w-16 h-[2.5px] rounded-full"
-            style={{ backgroundColor: brand.lineColor }}
-          />
-        </div>
-
-        {/* Poste / Rôle en majuscules épurées */}
-        <p className="text-xs font-semibold uppercase tracking-wider text-white/90 truncate">
-          {employee.jobTitle || 'COLLABORATEUR'}
-        </p>
-      </div>
-
-      {/* 4. BANDEAU INFÉRIEUR : Fond couleur brand, ID & Code-barres direct */}
-      <div 
-        className="pt-2 pb-2 px-4 w-full flex flex-col items-center justify-center shrink-0"
+    return (
+      <div
+        id={refId}
+        className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-lg"
         style={{
-          backgroundColor: brand.footerBg,
-          color: brand.footerText
+          backgroundColor: brand.bgPrimary,
+          color: '#ffffff'
         }}
       >
-        <span 
-          className="text-xs font-bold tracking-widest font-mono uppercase mb-1"
-          style={{ color: brand.footerText }}
-        >
-          ID {employee.employeeId}
-        </span>
+        {/* MENTION VERTICALE DROITE : GROUPE SANGUIN (Avancé près du cadre, descendu, sans trace - Uniquement si renseigné) */}
+        {employee.bloodGroup ? (
+          <div 
+            className="absolute pointer-events-none select-none z-10 flex items-center gap-1.5 text-[8.5px] font-bold tracking-wider uppercase text-white/75 whitespace-nowrap"
+            style={{
+              left: '238px',
+              top: '248px',
+              transformOrigin: '0 0',
+              transform: 'rotate(-90deg)'
+            }}
+          >
+            <span>GROUPE SANGUIN :</span>
+            <span className="font-mono text-white font-bold tracking-normal">
+              {employee.bloodGroup}
+            </span>
+          </div>
+        ) : null}
 
-        {/* Code-barres direct sur le fond de couleur (comme le modèle) */}
-        <div className="w-full flex items-center justify-center">
-          <Barcode
-            value={employee.employeeId}
-            width={1.4}
-            height={38}
-            fontSize={9}
-            displayValue={false}
-            background={brand.footerBg}
-            lineColor="#000000"
-          />
+        {/* 1. EN-TÊTE : Logo seul dans un rectangle blanc contrasté */}
+        <div className="pt-5 px-5 flex items-center justify-center shrink-0">
+          <div className="bg-white px-4 py-1.5 rounded-xl shadow-xs flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={brand.logo}
+              alt={brand.displayName}
+              className="h-8 max-w-[160px] w-auto object-contain"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== brand.fallbackLogo) target.src = brand.fallbackLogo;
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 2. CADRE PHOTO CENTRAL (Photo réelle si disponible, sinon silhouette sobre) */}
+        <div className="px-6 my-auto flex flex-col items-center justify-center">
+          <div
+            className="w-44 h-48 rounded-[28px] overflow-hidden flex items-center justify-center relative shadow-sm"
+            style={{ backgroundColor: brand.accentColor }}
+          >
+            {employee.photoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={employee.photoUrl}
+                alt={employee.fullName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              /* Silhouette humaine épurée sobre */
+              <div 
+                className="w-24 h-24 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: brand.bgPrimary }}
+              >
+                <User className="w-14 h-14" style={{ color: brand.accentColor }} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3. NOM, NIF, FILET & TITRE DU POSTE */}
+        <div className="px-4 text-center mb-3">
+          {/* Nom en majuscules grasses blanches */}
+          <h2 className="text-lg font-extrabold uppercase tracking-wide text-white leading-tight truncate">
+            {employee.fullName}
+          </h2>
+
+          {/* NIF directement après le nom (uniquement si présent dans la table, formaté en 000-000-000-0) */}
+          {employee.nif && employee.nif.trim() ? (
+            <p className="text-[10px] font-mono tracking-wider text-white/85 mt-0.5 uppercase truncate">
+              NIF : <span className="font-semibold text-white">{formatNif(employee.nif)}</span>
+            </p>
+          ) : null}
+
+          {/* Ligne horizontale sous le nom (couleur du brand) */}
+          <div className="flex justify-center my-1.5">
+            <div 
+              className="w-16 h-[2.5px] rounded-full"
+              style={{ backgroundColor: brand.lineColor }}
+            />
+          </div>
+
+          {/* Poste / Rôle en majuscules épurées */}
+          <p className="text-xs font-semibold uppercase tracking-wider text-white/90 truncate">
+            {employee.jobTitle || 'COLLABORATEUR'}
+          </p>
+        </div>
+
+        {/* 4. BANDEAU INFÉRIEUR : Fond couleur brand, ID & Code-barres direct */}
+        <div 
+          className="pt-2 pb-2 px-4 w-full flex flex-col items-center justify-center shrink-0"
+          style={{
+            backgroundColor: brand.footerBg,
+            color: brand.footerText
+          }}
+        >
+          <span 
+            className="text-xs font-bold tracking-widest font-mono uppercase mb-1"
+            style={{ color: brand.footerText }}
+          >
+            ID {employee.employeeId}
+          </span>
+
+          {/* Code-barres direct sur le fond de couleur (comme le modèle) */}
+          <div className="w-full flex items-center justify-center">
+            <Barcode
+              value={employee.employeeId}
+              width={1.4}
+              height={38}
+              fontSize={9}
+              displayValue={false}
+              background={brand.footerBg}
+              lineColor="#000000"
+            />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // -------------------------------------------------------------
   // VERSO : Simple, sobre, officiel (Caribe Motors & Coordonnées)
   // -------------------------------------------------------------
-  const renderVerso = (refId?: string) => (
-    <div
-      id={refId}
-      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-lg"
-      style={{
-        backgroundColor: brand.bgPrimary,
-        color: '#ffffff'
-      }}
-    >
+  const renderVerso = (refId?: string) => {
+    if (brand.id === 'leader') {
+      return (
+        <LeaderBadgeVerso
+          employee={employee}
+          brand={brand}
+          refId={refId}
+          qrCodeUrl={qrCodeUrl}
+        />
+      );
+    }
+
+    return (
+      <div
+        id={refId}
+        className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-lg"
+        style={{
+          backgroundColor: brand.bgPrimary,
+          color: '#ffffff'
+        }}
+      >
       {/* 1. EN-TÊTE VERSO : Logo seul dans un rectangle blanc */}
       <div className="pt-5 px-5 flex items-center justify-center shrink-0">
         <div className="bg-white px-3.5 py-1.5 rounded-lg shadow-xs flex items-center justify-center">
@@ -318,7 +338,8 @@ export default function BadgeCard({
         </span>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className={`badge-container flex flex-col items-center gap-3 ${className}`}>
