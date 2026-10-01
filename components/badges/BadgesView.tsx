@@ -31,6 +31,16 @@ export default function BadgesView() {
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'both' | 'single'>('both');
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [renderLimit, setRenderLimit] = useState(6);
+
+  // Rendu progressif pour une fluidité instantanée sans lag
+  React.useEffect(() => {
+    setRenderLimit(6);
+    const timer = setTimeout(() => {
+      setRenderLimit(100);
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [selectedBrandKey, selectedSite, searchQuery]);
 
   // Sites disponibles
   const availableSites = useMemo(() => {
@@ -403,7 +413,7 @@ export default function BadgesView() {
         </div>
       ) : (
         <div className="badge-print-area grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredEmployees.map((emp) => {
+          {filteredEmployees.slice(0, renderLimit).map((emp) => {
             const isSelected = selectedEmployeeIds.has(emp.id);
             const brand = getBrandConfig(emp.company);
 

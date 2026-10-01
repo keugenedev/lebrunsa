@@ -14,7 +14,9 @@ interface BarcodeProps {
   lineColor?: string;
 }
 
-export default function Barcode({
+const barcodeCache = new Map<string, string>();
+
+export default React.memo(function Barcode({
   value,
   width = 1.6,
   height = 48,
@@ -25,30 +27,39 @@ export default function Barcode({
   lineColor = '#0f172a'
 }: BarcodeProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const cacheKey = `${value}_${width}_${height}_${displayValue}_${fontSize}_${background}_${lineColor}`;
 
   useEffect(() => {
-    if (svgRef.current && value) {
-      try {
-        JsBarcode(svgRef.current, value, {
-          format: 'CODE128',
-          width,
-          height,
-          displayValue,
-          font: 'monospace',
-          fontSize,
-          textMargin: 4,
-          textAlign: 'center',
-          textPosition: 'bottom',
-          background,
-          lineColor,
-          margin: 6,
-          valid: () => true
-        });
-      } catch (err) {
-        console.error('Erreur de génération Code 128:', err);
-      }
+    if (!svgRef.current || !value) return;
+
+    if (barcodeCache.has(cacheKey)) {
+      svgRef.current.innerHTML = barcodeCache.get(cacheKey)!;
+      return;
     }
-  }, [value, width, height, displayValue, fontSize, background, lineColor]);
+
+    try {
+      JsBarcode(svgRef.current, value, {
+        format: 'CODE128',
+        width,
+        height,
+        displayValue,
+        font: 'monospace',
+        fontSize,
+        textMargin: 4,
+        textAlign: 'center',
+        textPosition: 'bottom',
+        background,
+        lineColor,
+        margin: 6,
+        valid: () => true
+      });
+      if (svgRef.current.innerHTML) {
+        barcodeCache.set(cacheKey, svgRef.current.innerHTML);
+      }
+    } catch (err) {
+      console.error('Erreur de génération Code 128:', err);
+    }
+  }, [value, width, height, displayValue, fontSize, background, lineColor, cacheKey]);
 
   if (!value) return null;
 
@@ -57,4 +68,4 @@ export default function Barcode({
       <svg ref={svgRef} className="max-w-full h-auto" />
     </div>
   );
-}
+});

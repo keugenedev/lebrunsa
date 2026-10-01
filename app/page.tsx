@@ -15,9 +15,23 @@ import PhonesView from '@/components/phones/PhonesView';
 import ApplicationsView from '@/components/applications/ApplicationsView';
 import AccountsView from '@/components/accounts/AccountsView';
 import DocumentsView from '@/components/documents/DocumentsView';
+import dynamic from 'next/dynamic';
 import TagsPrintView from '@/components/tags/TagsPrintView';
-import BadgesView from '@/components/badges/BadgesView';
 import SettingsView from '@/components/settings/SettingsView';
+
+const BadgesView = dynamic(() => import('@/components/badges/BadgesView'), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-5 animate-pulse">
+      <div className="h-28 bg-white rounded-2xl border border-slate-200"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-96 bg-white rounded-2xl border border-slate-200"></div>
+        ))}
+      </div>
+    </div>
+  )
+});
 import BarcodeModal from '@/components/common/BarcodeModal';
 import BarcodeScannerModal from '@/components/common/BarcodeScannerModal';
 import GlobalBarcodeListener from '@/components/common/GlobalBarcodeListener';

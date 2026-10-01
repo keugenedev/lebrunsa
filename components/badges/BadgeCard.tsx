@@ -20,6 +20,7 @@ import {
 import { downloadSingleBadgeCR80PDF } from '@/lib/printBadgePDF';
 import { formatNif } from '@/lib/formatNif';
 import { LeaderBadgeRecto, LeaderBadgeVerso } from './LeaderBadge';
+import { CaribeBadgeRecto, CaribeBadgeVerso } from './CaribeBadge';
 
 interface BadgeCardProps {
   employee: Employee;
@@ -28,7 +29,10 @@ interface BadgeCardProps {
   className?: string;
 }
 
-export default function BadgeCard({
+// Cache global en mémoire pour les QR Codes (évite tout recalcul ou freeze au changement d'onglet)
+const qrCodeCache = new Map<string, string>();
+
+export default React.memo(function BadgeCard({
   employee,
   brandOverride,
   showBothSides = false,
@@ -36,12 +40,18 @@ export default function BadgeCard({
 }: BadgeCardProps) {
   const brand = brandOverride || getBrandConfig(employee.company);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const cacheKey = `${employee.id}-${employee.employeeId}-${brand.id}-${employee.phone || ''}`;
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>(() => qrCodeCache.get(cacheKey) || '');
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // QR Code vCard au verso
+  // QR Code vCard au verso (instantané grâce au cache)
   useEffect(() => {
+    if (qrCodeCache.has(cacheKey)) {
+      setQrCodeUrl(qrCodeCache.get(cacheKey)!);
+      return;
+    }
+
     let isMounted = true;
     const vCardData = buildVCardString(employee, brand);
 
@@ -55,6 +65,7 @@ export default function BadgeCard({
       }
     })
       .then((url) => {
+        qrCodeCache.set(cacheKey, url);
         if (isMounted) setQrCodeUrl(url);
       })
       .catch((err) => {
@@ -64,7 +75,7 @@ export default function BadgeCard({
     return () => {
       isMounted = false;
     };
-  }, [employee, brand]);
+  }, [employee, brand, cacheKey]);
 
   const handleDownloadPDF = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -92,6 +103,9 @@ export default function BadgeCard({
     if (brand.id === 'leader') {
       return <LeaderBadgeRecto employee={employee} brand={brand} refId={refId} />;
     }
+    if (brand.id === 'caribe') {
+      return <CaribeBadgeRecto employee={employee} brand={brand} refId={refId} />;
+    }
 
     return (
       <div
@@ -102,24 +116,6 @@ export default function BadgeCard({
           color: '#ffffff'
         }}
       >
-        {/* MENTION VERTICALE DROITE : GROUPE SANGUIN (Avancé près du cadre, descendu, sans trace - Uniquement si renseigné) */}
-        {employee.bloodGroup ? (
-          <div 
-            className="absolute pointer-events-none select-none z-10 flex items-center gap-1.5 text-[8.5px] font-bold tracking-wider uppercase text-white/75 whitespace-nowrap"
-            style={{
-              left: '238px',
-              top: '248px',
-              transformOrigin: '0 0',
-              transform: 'rotate(-90deg)'
-            }}
-          >
-            <span>GROUPE SANGUIN :</span>
-            <span className="font-mono text-white font-bold tracking-normal">
-              {employee.bloodGroup}
-            </span>
-          </div>
-        ) : null}
-
         {/* 1. EN-TÊTE : Logo seul dans un rectangle blanc contrasté */}
         <div className="pt-5 px-5 flex items-center justify-center shrink-0">
           <div className="bg-white px-4 py-1.5 rounded-xl shadow-xs flex items-center justify-center">
@@ -164,19 +160,31 @@ export default function BadgeCard({
           </div>
         </div>
 
-        {/* 3. NOM, NIF, FILET & TITRE DU POSTE */}
+        {/* 3. NOM, NIF & GROUPE SANGUIN, FILET & TITRE DU POSTE */}
         <div className="px-4 text-center mb-3">
           {/* Nom en majuscules grasses blanches */}
           <h2 className="text-lg font-extrabold uppercase tracking-wide text-white leading-tight truncate">
             {employee.fullName}
           </h2>
 
-          {/* NIF directement après le nom (uniquement si présent dans la table, formaté en 000-000-000-0) */}
-          {employee.nif && employee.nif.trim() ? (
-            <p className="text-[10px] font-mono tracking-wider text-white/85 mt-0.5 uppercase truncate">
-              NIF : <span className="font-semibold text-white">{formatNif(employee.nif)}</span>
-            </p>
-          ) : null}
+          {/* NIF & GROUPE SANGUIN DIRECTEMENT APRÈS LE NOM */}
+          <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+            {employee.nif && employee.nif.trim() ? (
+              <span className="text-[10px] font-mono tracking-wider text-white/90 uppercase">
+                NIF : <span className="font-semibold text-white">{formatNif(employee.nif)}</span>
+              </span>
+            ) : null}
+
+            {employee.nif && employee.nif.trim() && employee.bloodGroup && employee.bloodGroup.trim() ? (
+              <span className="text-white/40">•</span>
+            ) : null}
+
+            {employee.bloodGroup && employee.bloodGroup.trim() ? (
+              <span className="text-[10px] font-mono tracking-wider text-white uppercase">
+                GS : <span className="font-bold text-red-400">{employee.bloodGroup.toUpperCase()}</span>
+              </span>
+            ) : null}
+          </div>
 
           {/* Ligne horizontale sous le nom (couleur du brand) */}
           <div className="flex justify-center my-1.5">
@@ -231,6 +239,16 @@ export default function BadgeCard({
     if (brand.id === 'leader') {
       return (
         <LeaderBadgeVerso
+          employee={employee}
+          brand={brand}
+          refId={refId}
+          qrCodeUrl={qrCodeUrl}
+        />
+      );
+    }
+    if (brand.id === 'caribe') {
+      return (
+        <CaribeBadgeVerso
           employee={employee}
           brand={brand}
           refId={refId}
@@ -398,4 +416,4 @@ export default function BadgeCard({
       </span>
     </div>
   );
-}
+});

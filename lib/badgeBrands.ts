@@ -11,6 +11,7 @@ export interface BrandConfig {
   phone: string;
   phoneFormatted: string;
   address: string;
+  address2?: string;
   // Exact brand colors derived directly from brand logos
   bgPrimary: string;
   accentColor: string; // Brand accent: Caribe Lime Green, Lebrun Red, etc.
@@ -31,8 +32,9 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
     website: 'www.caribe-motors.com',
     email: 'info@caribe-motors.com',
     phone: '29403001',
-    phoneFormatted: '(+509) 2940-3001',
-    address: 'Delmas 52 / Pétion-Ville, Haïti',
+    phoneFormatted: '(509) 2940-3001 à (509) 2940-3005',
+    address: '33, Blvd Toussaint Louverture, Port-au-Prince, Haïti',
+    address2: '27B, Rue Rigaud, Pétion-Ville, Haïti',
     // Exact Caribe Motors Colors: Deep Blue & Lime Green
     bgPrimary: '#0A2540', // Deep Caribe Royal Navy Blue
     accentColor: '#52BA23', // Caribe Signature Lime Green (from CM logo)
@@ -40,7 +42,7 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
     footerText: '#000000', // Crisp black text on lime green
     textColor: '#ffffff',
     lineColor: '#52BA23', // Lime green divider line
-    terms: 'Ce badge est strictement personnel et demeure la propriété exclusive de Caribe Motors. En cas de perte, prière de contacter le (+509) 2940-3001.'
+    terms: 'Ce badge est strictement personnel et demeure la propriété exclusive de Caribe Motors. En cas de perte, merci de le rapporter à la Direction ou d\'appeler le (509) 2940-3001 à 3005.'
   },
   lebrun: {
     id: 'lebrun',

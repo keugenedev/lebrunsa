@@ -31,7 +31,7 @@ interface LeaderBadgeProps {
  * - Bloc identité conforme Image 1 : Nom, NIF, filet vert horizontal, Poste
  * - Bas blanc épuré : ID matricule et Code-barres
  */
-export function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
+export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
   return (
     <div
       id={refId}
@@ -96,27 +96,6 @@ export function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
         />
       </svg>
 
-      {/* ── MENTION VERTICALE DROITE : GROUPE SANGUIN (Avancé près du cadre, à left: 238px, top: 248px) ── */}
-      {employee.bloodGroup && employee.bloodGroup.trim() ? (
-        <div
-          className="absolute pointer-events-none select-none flex items-center gap-1 text-[8.5px] font-bold tracking-wider uppercase whitespace-nowrap"
-          style={{
-            left: '238px',
-            top: '248px',
-            transformOrigin: '0 0',
-            transform: 'rotate(-90deg)',
-            zIndex: 30,
-          }}
-        >
-          <span className="text-slate-800 drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]">
-            GROUPE SANGUIN :
-          </span>
-          <span className="font-mono text-red-600 font-extrabold tracking-normal drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)]">
-            {employee.bloodGroup.toUpperCase()}
-          </span>
-        </div>
-      ) : null}
-
       {/* ── 1. EN-TÊTE : FOND BLANC PUR POUR LE LOGO LEADER FOODS ── */}
       <div
         className="relative flex items-center justify-center bg-white pt-5 pb-2 px-6 shrink-0"
@@ -161,7 +140,7 @@ export function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
         </div>
       </div>
 
-      {/* ── 3. IDENTITÉ : NOM, NIF, FILET VERT, TITRE DU POSTE ── */}
+      {/* ── 3. IDENTITÉ : NOM, NIF, GROUPE SANGUIN (APRÈS NIF), FILET VERT, TITRE DU POSTE ── */}
       <div
         className="relative px-4 text-center my-auto"
         style={{ zIndex: 10 }}
@@ -170,11 +149,24 @@ export function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
           {employee.fullName}
         </h2>
 
-        {employee.nif && employee.nif.trim() ? (
-          <p className="text-[10px] font-mono tracking-wider text-slate-600 mt-0.5 uppercase truncate">
-            NIF : <span className="font-semibold text-slate-800">{formatNif(employee.nif)}</span>
-          </p>
-        ) : null}
+        {/* NIF & GROUPE SANGUIN APRÈS NIF */}
+        <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+          {employee.nif && employee.nif.trim() ? (
+            <span className="text-[10px] font-mono tracking-wider text-slate-600 uppercase">
+              NIF : <span className="font-semibold text-slate-800">{formatNif(employee.nif)}</span>
+            </span>
+          ) : null}
+
+          {employee.nif && employee.nif.trim() && employee.bloodGroup && employee.bloodGroup.trim() ? (
+            <span className="text-slate-300">•</span>
+          ) : null}
+
+          {employee.bloodGroup && employee.bloodGroup.trim() ? (
+            <span className="text-[10px] font-mono tracking-wider text-slate-700 uppercase">
+              GS : <span className="font-extrabold text-red-600">{employee.bloodGroup.toUpperCase()}</span>
+            </span>
+          ) : null}
+        </div>
 
         <div className="flex justify-center my-1.5">
           <div className="w-16 h-[2.5px] rounded-full bg-[#70BD1B]" />
@@ -207,7 +199,7 @@ export function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * VERSO : Verso Leader Foods Épuré & Professionnel
@@ -216,17 +208,17 @@ export function LeaderBadgeRecto({ employee, brand, refId }: LeaderBadgeProps) {
  * - Coordonnées épurées : Téléphones et Adresse uniquement (sans website ni email)
  * - Clause légale de propriété et bandeau inférieur sobre
  */
-export function LeaderBadgeVerso({ employee, brand, refId, qrCodeUrl }: LeaderBadgeProps) {
+export const LeaderBadgeVerso = React.memo(function LeaderBadgeVerso({ employee, brand, refId, qrCodeUrl }: LeaderBadgeProps) {
   const siteAddress = brand.address || '5, Rue Tertulien Guilbaud, Port-au-Prince, Haïti';
   const phoneNumbers = brand.phoneFormatted || '(509) 3160-6001 / (509) 3160-6002';
 
   return (
     <div
       id={refId}
-      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-200/90 text-slate-800 bg-white"
+      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 text-black bg-white"
     >
       {/* 1. EN-TÊTE : GRAND LOGO LEADER FOODS EN HAUT */}
-      <div className="pt-8 pb-2 px-6 flex items-center justify-center shrink-0">
+      <div className="pt-7 pb-1 px-4 flex items-center justify-center shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={brand.logo}
@@ -240,8 +232,8 @@ export function LeaderBadgeVerso({ employee, brand, refId, qrCodeUrl }: LeaderBa
       </div>
 
       {/* 2. CENTRE : CODE QR CLAIR & LISIBLE AVEC GRANDES TRACES */}
-      <div className="px-6 flex flex-col items-center justify-center text-center my-auto">
-        <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-sm">
+      <div className="px-4 flex flex-col items-center justify-center text-center my-auto">
+        <div className="bg-white p-2.5 rounded-2xl border border-slate-300 shadow-xs">
           {qrCodeUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
@@ -251,45 +243,47 @@ export function LeaderBadgeVerso({ employee, brand, refId, qrCodeUrl }: LeaderBa
               style={{ imageRendering: 'pixelated' }}
             />
           ) : (
-            <div className="w-32 h-32 bg-emerald-50/50 rounded-lg flex items-center justify-center text-slate-400 text-xs font-mono">
+            <div className="w-32 h-32 bg-emerald-50/50 rounded-lg flex items-center justify-center text-black text-xs font-mono">
               QR CODE...
             </div>
           )}
         </div>
       </div>
 
-      {/* 3. COORDONNÉES OFFICIELLES (TÉLÉPHONES ET ADRESSE UNIQUEMENT) */}
-      <div className="px-6 space-y-2 text-[10.5px]">
-        <div className="flex items-center gap-2 text-slate-800">
-          <Phone className="w-4 h-4 shrink-0 text-[#70BD1B]" />
-          <span className="font-mono font-bold text-slate-900 text-[11px]">{phoneNumbers}</span>
+      {/* 3. COORDONNÉES OFFICIELLES (TÉLÉPHONES ET ADRESSE SUR LA MÊME LIGNE, ÉCRITURES EN NOIR, ICÔNES EN VERT) */}
+      <div className="px-4 space-y-1.5 text-black">
+        <div className="flex items-center gap-2 text-black">
+          <Phone className="w-3.5 h-3.5 shrink-0 text-[#70BD1B]" />
+          <span className="font-mono font-bold text-black text-[11px] whitespace-nowrap">{phoneNumbers}</span>
         </div>
 
-        <div className="flex items-center gap-2 text-slate-700 text-[10px]">
-          <MapPin className="w-4 h-4 shrink-0 text-slate-400" />
-          <span className="font-medium leading-snug">{siteAddress}</span>
+        <div className="flex items-center gap-1.5 text-black">
+          <MapPin className="w-3.5 h-3.5 shrink-0 text-[#70BD1B]" />
+          <span className="font-bold text-[9px] text-black tracking-tight whitespace-nowrap">
+            {siteAddress}
+          </span>
         </div>
       </div>
 
-      {/* 4. MENTION DE PROPRIÉTÉ SOBRE */}
-      <div className="px-6 py-2 border-t border-slate-100 mt-2">
-        <p className="text-[8px] text-slate-500 leading-normal text-justify">
+      {/* 4. MENTION DE PROPRIÉTÉ EN NOIR */}
+      <div className="px-4 py-2 border-t border-slate-200 mt-1">
+        <p className="text-[8.5px] text-black font-semibold leading-tight text-justify">
           Ce badge est strictement personnel et demeure la propriété exclusive de{' '}
-          <strong>Leader Foods</strong>. En cas de perte, merci de le rapporter à la Direction ou
+          <strong className="font-extrabold text-black">Leader Foods</strong>. En cas de perte, merci de le rapporter à la Direction ou
           d&apos;appeler le {phoneNumbers}.
         </p>
       </div>
 
-      {/* 5. BANDEAU INFÉRIEUR ÉPURÉ */}
-      <div className="py-2.5 px-6 w-full flex items-center justify-between shrink-0 bg-slate-50 border-t border-slate-100 text-slate-700">
+      {/* 5. BANDEAU INFÉRIEUR ÉPURÉ EN NOIR (ICÔNE EN VERT) */}
+      <div className="py-2.5 px-4 w-full flex items-center justify-between shrink-0 bg-slate-50 border-t border-slate-200 text-black">
         <div className="flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-[#70BD1B]" />
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-800">
+          <span className="text-[9.5px] font-bold uppercase tracking-wider text-black">
             Personnel Autorisé
           </span>
         </div>
-        <span className="text-[9.5px] font-mono font-bold text-slate-800">{employee.employeeId}</span>
+        <span className="text-[10px] font-mono font-extrabold text-black">{employee.employeeId}</span>
       </div>
     </div>
   );
-}
+});

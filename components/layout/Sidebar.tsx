@@ -72,11 +72,15 @@ export default function Sidebar() {
         { id: 'settings', label: 'Configuration', icon: Settings }
       ];
 
+  const [isPending, startTransition] = React.useTransition();
+
   const handleNavClick = (id: NavigationTab | 'scanner') => {
     if (id === 'scanner') {
       openBarcodeScanner();
     } else {
-      setActiveTab(id);
+      startTransition(() => {
+        setActiveTab(id);
+      });
     }
   };
 
