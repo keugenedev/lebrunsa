@@ -111,7 +111,7 @@ export default React.memo(function BadgeCard({
     return (
       <div
         id={refId}
-        className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-200/90 bg-white"
+        className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-200/90 print:border-none print:rounded-none print:shadow-none bg-white"
       >
         {/* 1. EN-TÊTE : Logo sur fond blanc */}
         <div className="relative flex items-center justify-center bg-white pt-5 pb-2 px-6 shrink-0" style={{ zIndex: 10 }}>
@@ -242,7 +242,7 @@ export default React.memo(function BadgeCard({
     return (
       <div
         id={refId}
-        className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 text-black bg-white"
+        className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 print:border-none print:rounded-none print:shadow-none text-black bg-white"
       >
         {/* 1. EN-TÊTE VERSO : Logo sur fond blanc */}
         <div className="pt-4 pb-1 px-4 flex items-center justify-center shrink-0">

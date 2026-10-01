@@ -40,15 +40,15 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
   return (
     <div
       id={refId}
-      className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none shadow-xl border border-slate-200/90 bg-white flex flex-col justify-between"
+      className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none shadow-xl bg-white flex flex-col justify-between print:border-none print:rounded-none print:shadow-none"
     >
       {/* ── COURBES ORGANIQUES EN ARRIÈRE-PLAN DERRIÈRE LA PHOTO (Plein cadre, fluides, sans ligne plate) ── */}
       <svg
         viewBox="0 0 288 456"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 1 }}
+        className="absolute pointer-events-none"
+        style={{ zIndex: 1, left: '-4px', width: 'calc(100% + 8px)', top: 0, height: '100%' }}
         preserveAspectRatio="none"
       >
         <defs>
@@ -74,25 +74,25 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
 
         {/* Vague 1 : Voile doux pastel en arrière-plan (affiné et élégant) */}
         <path
-          d="M -10,145 C 75,105 165,175 298,130 L 298,205 C 185,250 80,180 -10,225 Z"
+          d="M -20,145 C 75,105 165,175 308,130 L 308,205 C 185,250 80,180 -20,225 Z"
           fill={`url(#${curveSoftId})`}
         />
 
         {/* Vague 2 : Courbe principale verte affinée (ruban dynamique ~45px d'épaisseur) */}
         <path
-          d="M -10,160 C 65,120 160,190 298,145 L 298,195 C 190,240 85,165 -10,210 Z"
+          d="M -20,160 C 65,120 160,190 308,145 L 308,195 C 190,240 85,165 -20,210 Z"
           fill={`url(#${curvePrimaryId})`}
         />
 
         {/* Vague 3 : Onde lumineuse translucide croisée pour le relief */}
         <path
-          d="M -10,175 C 80,210 175,145 298,180 L 298,215 C 180,175 90,240 -10,205 Z"
+          d="M -20,175 C 80,210 175,145 308,180 L 308,215 C 180,175 90,240 -20,205 Z"
           fill={`url(#${curveLightId})`}
         />
 
         {/* Ligne d'accent dynamique lumineuse */}
         <path
-          d="M -10,158 C 65,118 160,188 298,143"
+          d="M -20,158 C 65,118 160,188 308,143"
           stroke="#BAF75E"
           strokeWidth="2"
           strokeLinecap="round"
@@ -220,7 +220,7 @@ export const LeaderBadgeVerso = React.memo(function LeaderBadgeVerso({ employee,
   return (
     <div
       id={refId}
-      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 text-black bg-white"
+      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 print:border-none print:rounded-none print:shadow-none text-black bg-white"
     >
       {/* 1. EN-TÊTE : GRAND LOGO LEADER FOODS EN HAUT */}
       <div className="pt-7 pb-1 px-4 flex items-center justify-center shrink-0">

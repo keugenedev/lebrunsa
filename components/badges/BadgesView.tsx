@@ -182,7 +182,10 @@ export default function BadgesView() {
           .badge-front, .badge-back {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
+            border: none !important;
+            border-radius: 0 !important;
             box-shadow: none !important;
+            outline: none !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }

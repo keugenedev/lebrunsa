@@ -39,15 +39,15 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
   return (
     <div
       id={refId}
-      className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none shadow-xl border border-slate-200/90 bg-white flex flex-col justify-between"
+      className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none shadow-xl bg-white flex flex-col justify-between print:border-none print:rounded-none print:shadow-none"
     >
       {/* ── COURBES ORGANIQUES CARIBE EN ARRIÈRE-PLAN (Bleu Royal & Vert Lime) ── */}
       <svg
         viewBox="0 0 288 456"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 1 }}
+        className="absolute pointer-events-none"
+        style={{ zIndex: 1, left: '-4px', width: 'calc(100% + 8px)', top: 0, height: '100%' }}
         preserveAspectRatio="none"
       >
         <defs>
@@ -74,26 +74,26 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
 
         {/* Vague 1 : Voile doux pastel */}
         <path
-          d="M -10,140 C 75,100 165,175 298,125 L 298,205 C 185,250 80,175 -10,225 Z"
+          d="M -20,140 C 75,100 165,175 308,125 L 308,205 C 185,250 80,175 -20,225 Z"
           fill={`url(#${softGlowId})`}
         />
 
         {/* Vague 2 : Ruban dynamique Bleu Royal Caribe */}
         <path
-          d="M -10,155 C 65,115 160,190 298,140 L 298,195 C 190,240 85,165 -10,215 Z"
+          d="M -20,155 C 65,115 160,190 308,140 L 308,195 C 190,240 85,165 -20,215 Z"
           fill={`url(#${gradientNavyId})`}
         />
 
         {/* Vague 3 : Vague d'accent Vert Lime */}
         <path
-          d="M -10,185 C 80,215 175,150 298,185 L 298,210 C 180,175 90,235 -10,205 Z"
+          d="M -20,185 C 80,215 175,150 308,185 L 308,210 C 180,175 90,235 -20,205 Z"
           fill={`url(#${gradientLimeId})`}
           opacity="0.9"
         />
 
         {/* Filet lumineux Vert Lime supérieur */}
         <path
-          d="M -10,153 C 65,113 160,188 298,138"
+          d="M -20,153 C 65,113 160,188 308,138"
           stroke="#7CE845"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -223,7 +223,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
   return (
     <div
       id={refId}
-      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 text-black bg-white"
+      className="badge-back font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none flex flex-col justify-between shadow-xl border border-slate-300 print:border-none print:rounded-none print:shadow-none text-black bg-white"
     >
       {/* 1. EN-TÊTE : GRAND LOGO CARIBE MOTORS EN HAUT */}
       <div className="pt-4 pb-1 px-4 flex items-center justify-center shrink-0">

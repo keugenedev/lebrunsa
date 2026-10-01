@@ -13,6 +13,37 @@ export const BADGE_WIDTH_MM = 54.0;
 export const BADGE_HEIGHT_MM = 85.6;
 
 /**
+ * Prépare un élément badge pour une impression / capture PDF parfaite sans traces blanches :
+ * - Supprime toute bordure (border: none)
+ * - Supprime les coins arrondis (border-radius: 0)
+ * - Supprime les ombres portées (box-shadow: none)
+ * - Dimensions strictes CR80 (288px × 456.5px)
+ */
+function prepareBadgeForPrint(rootEl: HTMLElement): void {
+  const elements: HTMLElement[] = [];
+  if (rootEl.classList?.contains('badge-front') || rootEl.classList?.contains('badge-back')) {
+    elements.push(rootEl);
+  }
+  rootEl.querySelectorAll<HTMLElement>('.badge-front, .badge-back').forEach((el) => {
+    elements.push(el);
+  });
+  if (elements.length === 0) {
+    elements.push(rootEl);
+  }
+
+  elements.forEach((el) => {
+    el.style.setProperty('border', 'none', 'important');
+    el.style.setProperty('border-radius', '0px', 'important');
+    el.style.setProperty('box-shadow', 'none', 'important');
+    el.style.setProperty('outline', 'none', 'important');
+    el.style.setProperty('margin', '0px', 'important');
+    el.style.setProperty('width', '288px', 'important');
+    el.style.setProperty('height', '456.5px', 'important');
+    el.style.setProperty('box-sizing', 'border-box', 'important');
+  });
+}
+
+/**
  * Construit un élément DOM sobre et propre pour le rendu PDF haute résolution
  */
 async function createRenderableBadgeElement(
@@ -28,7 +59,21 @@ async function createRenderableBadgeElement(
     clone.style.top = '-9999px';
     clone.style.left = '-9999px';
     clone.style.zIndex = '-1000';
+    prepareBadgeForPrint(clone);
     document.body.appendChild(clone);
+
+    // Attendre le chargement des images
+    const images = Array.from(clone.querySelectorAll('img'));
+    await Promise.all(
+      images.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise<void>((r) => {
+          img.onload = () => r();
+          img.onerror = () => r();
+        });
+      })
+    );
+
     return clone;
   }
 
@@ -85,6 +130,7 @@ async function createRenderableBadgeElement(
     });
 
     const badgeEl = (mountPoint.firstElementChild as HTMLDivElement) || mountPoint;
+    prepareBadgeForPrint(badgeEl);
 
     // Attendre le chargement des images
     const images = Array.from(badgeEl.querySelectorAll('img'));
@@ -110,7 +156,10 @@ async function createRenderableBadgeElement(
     width: '288px',
     height: '456.5px',
     zIndex: '-1000',
-    borderRadius: '16px',
+    borderRadius: '0px',
+    border: 'none',
+    boxShadow: 'none',
+    outline: 'none',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -492,8 +541,12 @@ async function captureElementToCanvas(el: HTMLElement): Promise<HTMLCanvasElemen
     scale: 3.5, // 300+ DPI qualité imprimerie
     useCORS: true,
     allowTaint: true,
-    backgroundColor: null,
-    logging: false
+    backgroundColor: '#ffffff',
+    logging: false,
+    scrollX: 0,
+    scrollY: 0,
+    width: 288,
+    height: 457
   });
 }
 
@@ -522,16 +575,16 @@ export async function downloadSingleBadgeCR80PDF(
   const rectoEl = await createRenderableBadgeElement(emp, brand, 'recto');
   const rectoCanvas = await captureElementToCanvas(rectoEl);
   if (rectoEl.parentNode) rectoEl.parentNode.removeChild(rectoEl);
-  const rectoImgData = rectoCanvas.toDataURL('image/jpeg', 0.95);
-  doc.addImage(rectoImgData, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  const rectoImgData = rectoCanvas.toDataURL('image/png');
+  doc.addImage(rectoImgData, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
 
   // 2. Rendu Verso (Page 2)
   doc.addPage([BADGE_WIDTH_MM, BADGE_HEIGHT_MM], 'portrait');
   const versoEl = await createRenderableBadgeElement(emp, brand, 'verso');
   const versoCanvas = await captureElementToCanvas(versoEl);
   if (versoEl.parentNode) versoEl.parentNode.removeChild(versoEl);
-  const versoImgData = versoCanvas.toDataURL('image/jpeg', 0.95);
-  doc.addImage(versoImgData, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  const versoImgData = versoCanvas.toDataURL('image/png');
+  doc.addImage(versoImgData, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
 
   const cleanName = emp.fullName.replace(/[^a-zA-Z0-9_-]/g, '_');
   const cleanId = emp.employeeId.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -560,12 +613,12 @@ export async function downloadBadgePlancheA4PDF(
   const rectoEl = await createRenderableBadgeElement(emp, brand, 'recto');
   const rectoCanvas = await captureElementToCanvas(rectoEl);
   if (rectoEl.parentNode) rectoEl.parentNode.removeChild(rectoEl);
-  const rectoImg = rectoCanvas.toDataURL('image/jpeg', 0.95);
+  const rectoImg = rectoCanvas.toDataURL('image/png');
 
   const versoEl = await createRenderableBadgeElement(emp, brand, 'verso');
   const versoCanvas = await captureElementToCanvas(versoEl);
   if (versoEl.parentNode) versoEl.parentNode.removeChild(versoEl);
-  const versoImg = versoCanvas.toDataURL('image/jpeg', 0.95);
+  const versoImg = versoCanvas.toDataURL('image/png');
 
   const spacing = 12;
   const totalW = BADGE_WIDTH_MM * 2 + spacing;
@@ -584,10 +637,10 @@ export async function downloadBadgePlancheA4PDF(
   doc.text(`Imprimer à échelle 100%`, 105, 31, { align: 'center' });
 
   const rectoX = startX;
-  doc.addImage(rectoImg, 'JPEG', rectoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  doc.addImage(rectoImg, 'PNG', rectoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
 
   const versoX = startX + BADGE_WIDTH_MM + spacing;
-  doc.addImage(versoImg, 'JPEG', versoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  doc.addImage(versoImg, 'PNG', versoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
 
   // Repères de coupe
   doc.setDrawColor(180, 180, 180);
@@ -647,8 +700,8 @@ export async function downloadBatchBadgesPDF(
     const rectoEl = await createRenderableBadgeElement(emp, brand, 'recto');
     const rectoCanvas = await captureElementToCanvas(rectoEl);
     if (rectoEl.parentNode) rectoEl.parentNode.removeChild(rectoEl);
-    const rectoImg = rectoCanvas.toDataURL('image/jpeg', 0.95);
-    doc.addImage(rectoImg, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+    const rectoImg = rectoCanvas.toDataURL('image/png');
+    doc.addImage(rectoImg, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
 
     doc.addPage([BADGE_WIDTH_MM, BADGE_HEIGHT_MM], 'portrait');
     onProgress?.(i * 2 + 2, employees.length * 2);
@@ -656,8 +709,8 @@ export async function downloadBatchBadgesPDF(
     const versoEl = await createRenderableBadgeElement(emp, brand, 'verso');
     const versoCanvas = await captureElementToCanvas(versoEl);
     if (versoEl.parentNode) versoEl.parentNode.removeChild(versoEl);
-    const versoImg = versoCanvas.toDataURL('image/jpeg', 0.95);
-    doc.addImage(versoImg, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+    const versoImg = versoCanvas.toDataURL('image/png');
+    doc.addImage(versoImg, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
   }
 
   doc.save(`Badges_Total_${employees.length}_Employes.pdf`);
