@@ -157,8 +157,8 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
         {/* NIF & GROUPE SANGUIN APRÈS NIF */}
         <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
           {employee.nif && employee.nif.trim() ? (
-            <span className="text-[10px] font-mono tracking-wider text-slate-600 uppercase">
-              NIF : <span className="font-semibold text-slate-800">{formatNif(employee.nif)}</span>
+            <span className="text-[10px] font-mono tracking-wider text-black uppercase font-medium">
+              NIF : <span className="font-semibold text-black">{formatNif(employee.nif)}</span>
             </span>
           ) : null}
 
@@ -167,8 +167,8 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
           ) : null}
 
           {employee.bloodGroup && employee.bloodGroup.trim() ? (
-            <span className="text-[10px] font-mono tracking-wider text-slate-700 uppercase">
-              GS : <span className="font-extrabold text-red-600">{employee.bloodGroup.toUpperCase()}</span>
+            <span className="text-[10px] font-mono tracking-wider text-red-600 uppercase font-semibold">
+              GS : <span className="font-black text-red-600">{employee.bloodGroup.toUpperCase()}</span>
             </span>
           ) : null}
         </div>

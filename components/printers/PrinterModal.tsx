@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { PrinterAsset } from '@/types/inventory';
 import { X, Printer, ShieldCheck, Tag, MapPin, Building, Plus } from 'lucide-react';
+import { getCompanyCode, generatePrinterId } from '@/lib/badgeBrands';
 
 export default function PrinterModal() {
   const {
@@ -84,15 +85,8 @@ export default function PrinterModal() {
       if (editingPrinter) {
         res = await updatePrinter(editingPrinter.id, formData);
       } else {
-        const code = formData.company.startsWith('Lebrun')
-          ? 'LEB'
-          : formData.company.startsWith('Auto')
-          ? 'AUT'
-          : formData.company.startsWith('Caribe')
-          ? 'CAR'
-          : 'LFD';
-        const count = printers.filter(p => p.company === formData.company).length + 1;
-        const tag = `PRN-${code}-${count.toString().padStart(3, '0')}`;
+        const existingTags = printers.map(p => p.assetTag);
+        const tag = generatePrinterId(formData.company, existingTags);
 
         res = await addPrinter({
           ...formData,
@@ -157,6 +151,7 @@ export default function PrinterModal() {
                   <option value="Caribe Motors">Caribe Motors</option>
                   <option value="Leader Foods">Leader Foods</option>
                   <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
                 </select>
               </div>
 
@@ -174,6 +169,7 @@ export default function PrinterModal() {
                   <option value="Delmas 52">Delmas 52</option>
                   <option value="Pétion-Ville">Pétion-Ville</option>
                   <option value="Delmas 60">Delmas 60</option>
+                  <option value="Delmas 83">Delmas 83</option>
                   <option value="Canapé-Vert">Canapé-Vert</option>
                   <option value="Aéroport Depot">Aéroport Depot</option>
                 </select>

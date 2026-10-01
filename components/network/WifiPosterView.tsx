@@ -110,6 +110,7 @@ export default function WifiPosterView() {
     { id: 'Delmas 52', label: 'Delmas 52 (Tirezone & Autobiz)' },
     { id: 'Pétion-Ville', label: 'Pétion-Ville' },
     { id: 'Delmas 60', label: 'Delmas 60' },
+    { id: 'Delmas 83', label: 'Delmas 83 (Obonprix)' },
     { id: 'Canapé-Vert', label: 'Canapé-Vert' },
     { id: 'Aéroport Depot', label: 'Aéroport Depot' }
   ];
@@ -511,6 +512,7 @@ export default function WifiPosterView() {
                       <option value="Delmas 52">Delmas 52</option>
                       <option value="Pétion-Ville">Pétion-Ville</option>
                       <option value="Delmas 60">Delmas 60</option>
+                      <option value="Delmas 83">Delmas 83</option>
                       <option value="Canapé-Vert">Canapé-Vert</option>
                       <option value="Aéroport Depot">Aéroport Depot</option>
                     </select>
@@ -530,6 +532,7 @@ export default function WifiPosterView() {
                       <option value="Caribe Motors">Caribe Motors</option>
                       <option value="Leader Foods">Leader Foods</option>
                       <option value="Tirezone">Tirezone</option>
+                      <option value="Obonprix">Obonprix</option>
                     </select>
                   </div>
                 </div>

@@ -22,6 +22,7 @@ import { downloadSingleBadgeCR80PDF } from '@/lib/printBadgePDF';
 import { formatNif } from '@/lib/formatNif';
 import { LeaderBadgeRecto, LeaderBadgeVerso } from './LeaderBadge';
 import { CaribeBadgeRecto, CaribeBadgeVerso } from './CaribeBadge';
+import { ObonprixBadgeRecto, ObonprixBadgeVerso } from './ObonprixBadge';
 
 interface BadgeCardProps {
   employee: Employee;
@@ -107,6 +108,9 @@ export default React.memo(function BadgeCard({
     if (brand.id === 'caribe') {
       return <CaribeBadgeRecto employee={employee} brand={brand} refId={refId} />;
     }
+    if (brand.id === 'obonprix') {
+      return <ObonprixBadgeRecto employee={employee} brand={brand} refId={refId} />;
+    }
 
     return (
       <div
@@ -162,8 +166,8 @@ export default React.memo(function BadgeCard({
 
           <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
             {employee.nif && employee.nif.trim() ? (
-              <span className="text-[10px] font-mono tracking-wider text-slate-600 uppercase">
-                NIF : <span className="font-semibold text-slate-900">{formatNif(employee.nif)}</span>
+              <span className="text-[10px] font-mono tracking-wider text-black uppercase font-medium">
+                NIF : <span className="font-semibold text-black">{formatNif(employee.nif)}</span>
               </span>
             ) : null}
 
@@ -172,8 +176,8 @@ export default React.memo(function BadgeCard({
             ) : null}
 
             {employee.bloodGroup && employee.bloodGroup.trim() ? (
-              <span className="text-[10px] font-mono tracking-wider text-slate-700 uppercase">
-                GS : <span className="font-extrabold text-red-600">{employee.bloodGroup.toUpperCase()}</span>
+              <span className="text-[10px] font-mono tracking-wider text-red-600 uppercase font-semibold">
+                GS : <span className="font-black text-red-600">{employee.bloodGroup.toUpperCase()}</span>
               </span>
             ) : null}
           </div>
@@ -231,6 +235,16 @@ export default React.memo(function BadgeCard({
     if (brand.id === 'caribe') {
       return (
         <CaribeBadgeVerso
+          employee={employee}
+          brand={brand}
+          refId={refId}
+          qrCodeUrl={qrCodeUrl}
+        />
+      );
+    }
+    if (brand.id === 'obonprix') {
+      return (
+        <ObonprixBadgeVerso
           employee={employee}
           brand={brand}
           refId={refId}

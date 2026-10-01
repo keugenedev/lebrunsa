@@ -119,11 +119,15 @@ export default function ITEquipmentView() {
       const isLebrun = ((a.company && a.company.toLowerCase().includes('lebrun')) || a.assetTag.includes('LEB')) && !isCaribe;
       const isAutobiz = (a.company && a.company.toLowerCase().includes('auto')) || a.assetTag.includes('AUT');
       const isLeader = (a.company && a.company.toLowerCase().includes('leader')) || a.assetTag.includes('LFD');
+      const isTirezone = (a.company && (a.company.toLowerCase().includes('tire') || a.company.toLowerCase().includes('zone'))) || a.assetTag.includes('TRZ');
+      const isObonprix = (a.company && (a.company.toLowerCase().includes('obonprix') || a.company.toLowerCase().includes('bonprix'))) || a.assetTag.includes('OBP');
       
       if (companyFilter === 'Lebrun' && !isLebrun) return false;
       if (companyFilter === 'Autobiz' && !isAutobiz) return false;
       if (companyFilter === 'Caribe Motors' && !isCaribe) return false;
       if (companyFilter === 'Leader Foods' && !isLeader) return false;
+      if (companyFilter === 'Tirezone' && !isTirezone) return false;
+      if (companyFilter === 'Obonprix' && !isObonprix) return false;
       
       if (siteFilter !== 'all' && a.location !== siteFilter) return false;
       if (statusFilter !== 'all' && a.status !== statusFilter) return false;
@@ -520,7 +524,9 @@ export default function ITEquipmentView() {
                 <option value="Lebrun">Lebrun S.A.</option>
                 <option value="Autobiz">Autobiz S.A.</option>
                 <option value="Caribe Motors">Caribe Motors</option>
-                <option value="Leader Foods">Leader Foods</option><option value="Tirezone">Tirezone</option>
+                <option value="Leader Foods">Leader Foods</option>
+                <option value="Tirezone">Tirezone</option>
+                <option value="Obonprix">Obonprix</option>
               </select>
 
               {/* Site */}
@@ -533,6 +539,7 @@ export default function ITEquipmentView() {
                 <option value="Delmas 52">Delmas 52</option>
                 <option value="Pétion-Ville">Pétion-Ville</option>
                 <option value="Delmas 60">Delmas 60</option>
+                <option value="Delmas 83">Delmas 83</option>
                 <option value="Canapé-Vert">Canapé-Vert</option>
                 <option value="Aéroport Depot">Aéroport Depot</option>
               </select>

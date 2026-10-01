@@ -54,6 +54,11 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
       alt: 'Logo Tirezone'
     },
     {
+      name: 'Obonprix',
+      src: '/logos/obonprix.png',
+      alt: 'Logo Obonprix'
+    },
+    {
       name: 'Groupe Partenaire',
       src: '/logos/partner.png',
       alt: 'Logo Partenaire Groupe'
@@ -114,7 +119,7 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
               Connexion Parc & Systèmes
             </h1>
             <p className="text-[11px] text-slate-500 mt-1 max-w-[280px]">
-              Portail centralisé Lebrun S.A., Autobiz, Caribe Motors & Leader Foods
+              Portail centralisé Lebrun S.A., Autobiz, Caribe Motors, Leader Foods, Tirezone & Obonprix
             </p>
           </div>
 

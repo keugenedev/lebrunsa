@@ -51,6 +51,7 @@ import { buildPhoneDocRef, downloadPhoneSheetPDF, PhoneSheetOptions } from '@/li
 import { generatePhoneCode } from '@/lib/phones';
 import { formatNif } from '@/lib/formatNif';
 import { isCarlHens } from '@/lib/permissions';
+import { normalizeEmployeeId, normalizePrinterId, generateEmployeeId } from '@/lib/badgeBrands';
 
 // Documents : colonnes ajoutées après coup (site, type, taille, date). Tant que le SQL correspondant
 // n'a pas été exécuté dans Supabase, on retente sans elles pour ne jamais bloquer l'enregistrement.
@@ -638,11 +639,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
             const seen = new Set<string>();
             const list = parsed
               .filter((e: any) => !isTestEmployee(e))
-              .map((e: any) => ({
-                ...e,
-                id: (e.employeeId && String(e.employeeId).startsWith('EMP-')) ? String(e.employeeId) : (e.id || e.employeeId),
-                nif: undefined // Effacement des anciens NIFs locaux en cache
-              }))
+              .map((e: any) => {
+                const normId = normalizeEmployeeId(e.employeeId || e.id, e.company);
+                return {
+                  ...e,
+                  id: normId,
+                  employeeId: normId,
+                  nif: undefined // Effacement des anciens NIFs locaux en cache
+                };
+              })
               .filter((e: any) => {
                 const k = e.employeeId || e.id;
                 if (!k || seen.has(k) || seen.has(e.id)) return false;
@@ -650,6 +655,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 seen.add(e.id);
                 return true;
               });
+            const hasObp = list.some((e: any) => (e.company || '').toLowerCase().includes('obonprix'));
+            if (!hasObp) {
+              const obpEmployees = INITIAL_EMPLOYEES.filter(e => (e.company || '').toLowerCase().includes('obonprix'));
+              list.push(...obpEmployees);
+            }
             return list;
           }
         } catch (e) { console.error(e); }
@@ -665,6 +675,11 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try { 
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            const hasObp = parsed.some((a: any) => (a.company || '').toLowerCase().includes('obonprix'));
+            if (!hasObp) {
+              const obpAssets = INITIAL_IT_ASSETS.filter(a => (a.company || '').toLowerCase().includes('obonprix'));
+              return [...parsed, ...obpAssets];
+            }
             return parsed;
           }
         } catch (e) { console.error(e); }
@@ -775,7 +790,20 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try { 
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+            const mapped = parsed.map((p: any) => {
+              const normTag = normalizePrinterId(p.assetTag || p.id, p.company);
+              return {
+                ...p,
+                id: normTag,
+                assetTag: normTag
+              };
+            });
+            const hasObp = mapped.some((p: any) => (p.company || '').toLowerCase().includes('obonprix'));
+            if (!hasObp) {
+              const obpPrinters = INITIAL_PRINTERS.filter(p => (p.company || '').toLowerCase().includes('obonprix'));
+              return [...mapped, ...obpPrinters];
+            }
+            return mapped;
           }
         } catch (e) { console.error(e); }
       }
@@ -1272,7 +1300,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         if (!prnErr && dbPrinters && dbPrinters.length > 0) {
           setPrinters(prev => {
             const mappedFromDb: PrinterAsset[] = dbPrinters.map((r: any, idx: number) => {
-              const tag = r.printer_id ? String(r.printer_id) : `PRN-HP-${(r.id || idx + 1).toString().padStart(3, '0')}`;
+              const rawTag = r.printer_id ? String(r.printer_id) : `PRN-HP-${(r.id || idx + 1).toString().padStart(3, '0')}`;
+              const tag = normalizePrinterId(rawTag, r.entreprise);
               const existingLocal = prev.find(p => p.assetTag === tag || p.id === tag);
 
               return {
@@ -1321,7 +1350,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               const firstName = r.prenom || '';
               const lastName = r.nom || '';
               const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
-              const empId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
+              const rawEmpId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
+              const empId = normalizeEmployeeId(rawEmpId, r.entreprise);
 
               const existingLocal = prev.find(e => e.id === empId || e.employeeId === empId || (e.fullName && e.fullName.toLowerCase() === fullName.toLowerCase()));
               const initLocal = INITIAL_EMPLOYEES.find(e => e.id === empId || e.employeeId === empId || (e.fullName && e.fullName.toLowerCase() === fullName.toLowerCase()));
@@ -1727,7 +1757,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const targetSite = isCarl ? (emp.site || 'Pétion-Ville') : (emp.site || 'Delmas 52');
     const targetPhotoUrl = isCarl ? undefined : (emp.photoUrl?.trim() || undefined);
 
-    const cleanUserId = emp.employeeId || `EMP-LEB-${Math.floor(Math.random() * 900 + 100)}`;
+    const cleanUserId = normalizeEmployeeId(emp.employeeId || '', targetCompany);
     const cleanUsername = emp.accounts?.appUsername || cleanUserId.toLowerCase().replace(/[^a-z0-9]/g, '');
     // L'email est facultatif : s'il est vide, il reste vide (aucune adresse inventée).
     const cleanEmail = (emp.email || '').trim();

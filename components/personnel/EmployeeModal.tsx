@@ -7,6 +7,7 @@ import { X, UserPlus, UserCheck, Building, Mail, Phone, MapPin, Briefcase, FileT
 import { formatNif } from '@/lib/formatNif';
 import { uploadEmployeePhoto } from '@/lib/uploadPhoto';
 import { isCarlHens, canUploadPhoto } from '@/lib/permissions';
+import { generateEmployeeId, normalizeEmployeeId } from '@/lib/badgeBrands';
 
 export default function EmployeeModal() {
   const { 
@@ -63,9 +64,9 @@ export default function EmployeeModal() {
       setHireDate(editingEmployee.hireDate);
       setNotes(editingEmployee.notes || '');
     } else {
-      const rand = Math.floor(Math.random() * 900 + 100);
-      setEmployeeId(`EMP-LEB-${rand}`);
-      setCompany(isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.');
+      const initComp = isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.';
+      setEmployeeId(generateEmployeeId(initComp));
+      setCompany(initComp);
       setSite(isRestrictedCarl ? 'Pétion-Ville' : '');
       setFullName('');
       setEmail('');
@@ -229,7 +230,7 @@ export default function EmployeeModal() {
                   required
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
-                  placeholder="EMP-LEB-001"
+                  placeholder="EMP-CRB-001"
                   className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono font-bold text-xs focus:outline-none focus:border-slate-400"
                 />
               </div>
@@ -427,7 +428,13 @@ export default function EmployeeModal() {
                 ) : (
                   <select
                     value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    onChange={(e) => {
+                      const newComp = e.target.value;
+                      setCompany(newComp);
+                      if (!editingEmployee) {
+                        setEmployeeId((prev) => normalizeEmployeeId(prev, newComp));
+                      }
+                    }}
                     className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
                   >
                     <option value="Lebrun S.A.">Lebrun S.A.</option>
@@ -435,6 +442,7 @@ export default function EmployeeModal() {
                     <option value="Caribe Motors">Caribe Motors</option>
                     <option value="Leader Foods">Leader Foods</option>
                     <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
                   </select>
                 )}
               </div>
@@ -453,6 +461,7 @@ export default function EmployeeModal() {
                   <option value="Delmas 52">Delmas 52</option>
                   <option value="Pétion-Ville">Pétion-Ville</option>
                   <option value="Delmas 60">Delmas 60</option>
+                  <option value="Delmas 83">Delmas 83</option>
                   <option value="Canapé-Vert">Canapé-Vert</option>
                   <option value="Aéroport Depot">Aéroport Depot</option>
                 </select>

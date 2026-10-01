@@ -7,6 +7,7 @@ import JsBarcode from 'jsbarcode';
 import { formatNif } from '@/lib/formatNif';
 import { LeaderBadgeRecto, LeaderBadgeVerso } from '@/components/badges/LeaderBadge';
 import { CaribeBadgeRecto, CaribeBadgeVerso } from '@/components/badges/CaribeBadge';
+import { ObonprixBadgeRecto, ObonprixBadgeVerso } from '@/components/badges/ObonprixBadge';
 
 // Dimensions officielles standard CR80 (ISO 7810 ID-1) : 54 mm × 85.6 mm
 export const BADGE_WIDTH_MM = 54.0;
@@ -77,8 +78,8 @@ async function createRenderableBadgeElement(
     return clone;
   }
 
-  // Rendu spécifique pour Leader Foods & Caribe Motors via les composants dédiés
-  if (brand.id === 'leader' || brand.id === 'caribe') {
+  // Rendu spécifique pour Leader Foods, Caribe Motors & Obonprix via les composants dédiés
+  if (brand.id === 'leader' || brand.id === 'caribe' || brand.id === 'obonprix') {
     const mountPoint = document.createElement('div');
     mountPoint.style.position = 'fixed';
     mountPoint.style.top = '-9999px';
@@ -96,9 +97,13 @@ async function createRenderableBadgeElement(
               root.render(
                 React.createElement(CaribeBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
               );
-            } else {
+            } else if (brand.id === 'leader') {
               root.render(
                 React.createElement(LeaderBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
+              );
+            } else {
+              root.render(
+                React.createElement(ObonprixBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
               );
             }
             setTimeout(resolve, 80);
@@ -108,9 +113,13 @@ async function createRenderableBadgeElement(
               root.render(
                 React.createElement(CaribeBadgeVerso, { employee: emp, brand })
               );
-            } else {
+            } else if (brand.id === 'leader') {
               root.render(
                 React.createElement(LeaderBadgeVerso, { employee: emp, brand })
+              );
+            } else {
+              root.render(
+                React.createElement(ObonprixBadgeVerso, { employee: emp, brand })
               );
             }
             setTimeout(resolve, 80);
@@ -120,9 +129,13 @@ async function createRenderableBadgeElement(
           root.render(
             React.createElement(CaribeBadgeRecto, { employee: emp, brand })
           );
-        } else {
+        } else if (brand.id === 'leader') {
           root.render(
             React.createElement(LeaderBadgeRecto, { employee: emp, brand })
+          );
+        } else {
+          root.render(
+            React.createElement(ObonprixBadgeRecto, { employee: emp, brand })
           );
         }
         setTimeout(resolve, 80);

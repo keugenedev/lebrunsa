@@ -32,6 +32,10 @@ export default function CompanyLogo({ company = '', className = 'h-5 max-w-[85px
     logoSrc = '/logos/tirezone.png';
     altText = 'Tirezone';
     badgeColor = 'bg-amber-600 text-white';
+  } else if (norm.includes('obonprix') || norm.includes('bonprix') || norm.includes('obp')) {
+    logoSrc = '/logos/obonprix.png';
+    altText = 'Obonprix';
+    badgeColor = 'bg-[#DA2027] text-white';
   } else if (norm.includes('lebrun')) {
     logoSrc = '/logos/lebrun.png';
     altText = 'Lebrun S.A.';

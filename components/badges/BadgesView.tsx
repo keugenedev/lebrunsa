@@ -144,7 +144,8 @@ export default function BadgesView() {
       lebrun: 0,
       autobiz: 0,
       leader: 0,
-      tirezone: 0
+      tirezone: 0,
+      obonprix: 0
     };
     employees.forEach(e => {
       if (isTestBadge(e)) return;
@@ -325,6 +326,24 @@ export default function BadgesView() {
                 selectedBrandKey === 'tirezone' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
               }`}>
                 {brandCounts.tirezone}
+              </span>
+            </button>
+
+            {/* Obonprix (Rouge #DA2027 & Jaune #FFCB06) */}
+            <button
+              onClick={() => setSelectedBrandKey('obonprix')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                selectedBrandKey === 'obonprix'
+                  ? 'bg-[#DA2027] text-white shadow-xs ring-2 ring-[#FFCB06]'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-[#FFCB06]" />
+              <span>Obonprix</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                selectedBrandKey === 'obonprix' ? 'bg-[#FFCB06] text-slate-900 font-bold' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {brandCounts.obonprix || 0}
               </span>
             </button>
 

@@ -6,7 +6,7 @@ import { PhoneAsset } from '@/types/inventory';
 import { buildPhoneCode, generatePhoneSuffix } from '@/lib/phones';
 import { X, Smartphone, User, Lock } from 'lucide-react';
 
-const COMPANIES = ['Lebrun S.A.', 'Autobiz', 'Caribe Motors', 'Leader Foods', 'Tirezone'];
+const COMPANIES = ['Lebrun S.A.', 'Autobiz', 'Caribe Motors', 'Leader Foods', 'Tirezone', 'Obonprix'];
 const BRANDS = ['Samsung', 'Apple iPhone', 'Xiaomi', 'Tecno', 'Infinix', 'Huawei', 'Oppo', 'Motorola', 'Nokia', 'Google Pixel'];
 
 /** Retire espaces et tirets d'un IMEI saisi à la main. */

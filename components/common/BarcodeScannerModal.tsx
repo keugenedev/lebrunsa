@@ -235,7 +235,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
               value={scanInput}
               onChange={(e) => setScanInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Visez avec le scanner ou tapez un S/N (ex: GMMSWR1, EMP-LEB-005) puis Entrée..."
+              placeholder="Visez avec le scanner ou tapez un S/N (ex: GMMSWR1, EMP-LBN-005) puis Entrée..."
               className="w-full pl-9 pr-24 py-2.5 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 font-mono transition-colors"
             />
             <button

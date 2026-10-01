@@ -43,7 +43,8 @@ export default function OverviewView() {
     { name: 'Autobiz', site: 'Delmas 52', tag: 'AUT', logo: '/logos/Autobiz.png' },
     { name: 'Caribe Motors', site: 'Pétion-Ville / Delmas 52', tag: 'CAR', logo: '/logos/Caribe.png' },
     { name: 'Leader Foods', site: 'Aéroport Depot', tag: 'LFD', logo: '/logos/leader.png' },
-    { name: 'Tirezone', site: 'Delmas 60 / Pétion-Ville / Canapé-Vert', tag: 'TRZ', logo: '/logos/tirezone.png' }
+    { name: 'Tirezone', site: 'Delmas 60 / Pétion-Ville / Canapé-Vert', tag: 'TRZ', logo: '/logos/tirezone.png' },
+    { name: 'Obonprix', site: 'Delmas 83', tag: 'OBP', logo: '/logos/obonprix.png' }
   ];
 
   const matchCompany = (comp: string | undefined, target: string, tag?: string, email?: string) => {
@@ -56,9 +57,10 @@ export default function OverviewView() {
     if (t.includes('leader') && c.includes('leader')) return true;
     if (t.includes('tirezone') && c.includes('tire')) return true;
     if (t.includes('autobiz') && c.includes('auto')) return true;
-    if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe')) return true;
+    if (t.includes('obonprix') && (c.includes('obonprix') || c.includes('bonprix') || c.includes('obp'))) return true;
+    if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe') && !c.includes('obonprix')) return true;
 
-    if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('lebrun')) {
+    if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('obonprix') || c.includes('lebrun')) {
       return false;
     }
 
@@ -66,6 +68,7 @@ export default function OverviewView() {
     if (t.includes('leader')) return tg.includes('LFD') || em.includes('leader');
     if (t.includes('tirezone')) return tg.includes('TRZ') || em.includes('tirezone');
     if (t.includes('autobiz')) return tg.includes('AUT') || em.includes('autobiz');
+    if (t.includes('obonprix')) return tg.includes('OBP') || em.includes('obonprix');
     if (t.includes('lebrun')) return tg.includes('LEB') || em.includes('lebrun');
 
     return c.includes(t);
@@ -282,11 +285,11 @@ export default function OverviewView() {
             <span>Répartition par Entreprise</span>
           </h2>
           <span className="text-xs text-slate-500">
-            Delmas 52 • Pétion-Ville • Delmas 60 • Canapé-Vert • Aéroport Depot
+            Delmas 52 • Pétion-Ville • Delmas 60 • Delmas 83 • Canapé-Vert • Aéroport Depot
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
           {companyStats.map((c, idx) => (
             <div key={`${c.name}-${idx}`} className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between">
               <div>
@@ -440,6 +443,30 @@ export default function OverviewView() {
               Gérer les {totalEmployees} collaborateurs et identifiants &rarr;
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Row 5 / Bas de Page Accueil : Logos du Groupe Lebrun S.A. & Filiales */}
+      <div className="pt-6 pb-2 border-t border-slate-200/90 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+          <span className="font-semibold text-slate-800">Groupe Lebrun S.A. & Filiales</span>
+          <span className="hidden sm:inline text-slate-300">•</span>
+          <span className="text-slate-500">Delmas 52 • Pétion-Ville • Delmas 60 • Delmas 83 • Aéroport Depot</span>
+        </div>
+        <div className="flex items-center gap-5 sm:gap-6 flex-wrap justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logos/lebrun.png" alt="Lebrun S.A." className="h-6 max-w-[85px] w-auto object-contain opacity-80 hover:opacity-100 transition-all hover:scale-105" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logos/Autobiz.png" alt="Autobiz" className="h-6 max-w-[85px] w-auto object-contain opacity-80 hover:opacity-100 transition-all hover:scale-105" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logos/Caribe.png" alt="Caribe Motors" className="h-6 max-w-[85px] w-auto object-contain opacity-80 hover:opacity-100 transition-all hover:scale-105" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logos/leader.png" alt="Leader Foods" className="h-6 max-w-[85px] w-auto object-contain opacity-80 hover:opacity-100 transition-all hover:scale-105" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logos/tirezone.png" alt="Tirezone" className="h-6 max-w-[85px] w-auto object-contain opacity-80 hover:opacity-100 transition-all hover:scale-105" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logos/obonprix.png" alt="Obonprix" className="h-6.5 max-w-[105px] w-auto object-contain opacity-95 hover:opacity-100 transition-all hover:scale-105" />
         </div>
       </div>
     </div>

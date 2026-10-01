@@ -229,6 +229,7 @@ export default function PhonesView() {
                 <option value="Caribe">Caribe Motors</option>
                 <option value="Leader">Leader Foods</option>
                 <option value="Tirezone">Tirezone</option>
+                <option value="Obonprix">Obonprix</option>
               </select>
             </div>
           </div>

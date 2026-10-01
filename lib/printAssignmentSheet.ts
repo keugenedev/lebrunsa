@@ -28,6 +28,7 @@ export function getCompanyLogo(company?: string): string {
   if (c.includes('autobiz')) return '/Autobiz.png';
   if (c.includes('leader')) return '/leader.png';
   if (c.includes('tirezone')) return '/Tirezone.png';
+  if (c.includes('obonprix') || c.includes('bonprix')) return '/obonprix.png';
   return '/Lebrunog.png';
 }
 

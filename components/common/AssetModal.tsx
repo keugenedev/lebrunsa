@@ -309,6 +309,7 @@ export default function AssetModal() {
                   <option value="Caribe Motors">Caribe Motors</option>
                   <option value="Leader Foods">Leader Foods</option>
                   <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
                 </select>
               </div>
 
@@ -329,6 +330,7 @@ export default function AssetModal() {
                   <option value="Delmas 52" />
                   <option value="Pétion-Ville" />
                   <option value="Delmas 60" />
+                  <option value="Delmas 83" />
                   <option value="Canapé-Vert" />
                   <option value="Aéroport Depot" />
                 </datalist>
@@ -746,6 +748,7 @@ export default function AssetModal() {
                 <option value="Delmas 52">Delmas 52</option>
                 <option value="Pétion-Ville">Pétion-Ville</option>
                 <option value="Delmas 60">Delmas 60</option>
+                <option value="Delmas 83">Delmas 83</option>
                 <option value="Canapé-Vert">Canapé-Vert</option>
                 <option value="Aéroport Depot">Aéroport Depot</option>
               </select>

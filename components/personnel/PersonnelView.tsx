@@ -85,7 +85,7 @@ export default function PersonnelView() {
               {emp.bloodGroup && (
                 <>
                   <span className="text-slate-300">•</span>
-                  <span className="font-mono font-bold text-[10px] text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
+                  <span className="font-mono font-bold text-[10px] text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">
                     GS: {emp.bloodGroup}
                   </span>
                 </>

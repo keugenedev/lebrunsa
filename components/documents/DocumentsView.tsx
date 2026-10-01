@@ -661,7 +661,9 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                   <option value="Lebrun S.A.">Lebrun S.A.</option>
                   <option value="Caribe Motors">Caribe Motors</option>
                   <option value="Autobiz">Autobiz</option>
-                  <option value="Leader Foods">Leader Foods</option><option value="Tirezone">Tirezone</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
                 </select>
               </div>
             </div>
@@ -955,7 +957,9 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                   <option value="Lebrun S.A.">Lebrun S.A.</option>
                   <option value="Caribe Motors">Caribe Motors</option>
                   <option value="Autobiz">Autobiz</option>
-                  <option value="Leader Foods">Leader Foods</option><option value="Tirezone">Tirezone</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
                 </select>
               </div>
 

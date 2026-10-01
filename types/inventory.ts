@@ -233,7 +233,7 @@ export interface UserAccountDetails {
 
 export interface Employee {
   id: string;
-  employeeId: string; // Matricule / Tag (ex: EMP-LEB-001)
+  employeeId: string; // Matricule / Tag (ex: EMP-LBN-001, EMP-CRB-445)
   company: 'Lebrun S.A.' | 'Autobiz' | 'Caribe Motors' | 'Leader Foods' | string;
   site: string; // Delmas 52
   lastName: string;
@@ -266,7 +266,7 @@ export type ITRole =
 
 export interface ITAccount {
   id: string;
-  userId?: string; // ID unique du collaborateur dans la table users (ex: EMP-LEB-014)
+  userId?: string; // ID unique du collaborateur dans la table users (ex: EMP-LBN-014)
   username: string; // e.g. keugene
   fullName: string; // Kensly Eugene
   firstName: string;

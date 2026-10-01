@@ -218,7 +218,8 @@ export default function OverviewCharts() {
     { name: 'Autobiz', tag: 'AUT' },
     { name: 'Caribe Motors', tag: 'CAR' },
     { name: 'Leader Foods', tag: 'LFD' },
-    { name: 'Tirezone', tag: 'TRZ' }
+    { name: 'Tirezone', tag: 'TRZ' },
+    { name: 'Obonprix', tag: 'OBP' }
   ], []);
 
   const companyData = useMemo(() => {
@@ -232,9 +233,10 @@ export default function OverviewCharts() {
       if (t.includes('leader') && c.includes('leader')) return true;
       if (t.includes('tirezone') && c.includes('tire')) return true;
       if (t.includes('autobiz') && c.includes('auto')) return true;
-      if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe')) return true;
+      if (t.includes('obonprix') && (c.includes('obonprix') || c.includes('bonprix') || c.includes('obp'))) return true;
+      if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe') && !c.includes('obonprix')) return true;
 
-      if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('lebrun')) {
+      if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('obonprix') || c.includes('lebrun')) {
         return false;
       }
 
@@ -242,6 +244,7 @@ export default function OverviewCharts() {
       if (t.includes('leader')) return tg.includes('LFD') || em.includes('leader');
       if (t.includes('tirezone')) return tg.includes('TRZ') || em.includes('tirezone');
       if (t.includes('autobiz')) return tg.includes('AUT') || em.includes('autobiz');
+      if (t.includes('obonprix')) return tg.includes('OBP') || em.includes('obonprix');
       if (t.includes('lebrun')) return tg.includes('LEB') || em.includes('lebrun');
 
       return c.includes(t);

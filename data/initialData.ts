@@ -18,7 +18,7 @@ import {
 export const INITIAL_PRINTERS: PrinterAsset[] = [
   {
     "id": "prn-1",
-    "assetTag": "PRN-CAR-012",
+    "assetTag": "PRN-CRB-012",
     "name": "Hp Color Laser Jet Pro",
     "company": "Caribe Motors",
     "site": "Delmas 52",
@@ -34,7 +34,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-2",
-    "assetTag": "PRN-CAR-014",
+    "assetTag": "PRN-CRB-014",
     "name": "Hp Laser Jet Pro",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -50,7 +50,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-3",
-    "assetTag": "PRN-CAR-013",
+    "assetTag": "PRN-CRB-013",
     "name": "Hp Laser Jet Pro",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -66,7 +66,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-4",
-    "assetTag": "PRN-CAR-001",
+    "assetTag": "PRN-CRB-001",
     "name": "Hp Laser Jet Pro MFP",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -82,7 +82,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-5",
-    "assetTag": "PRN-CAR-011",
+    "assetTag": "PRN-CRB-011",
     "name": "Hp LaserJet MFP",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -98,7 +98,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-6",
-    "assetTag": "PRN-CAR-010",
+    "assetTag": "PRN-CRB-010",
     "name": "Hp Laser Jet Professional",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -114,7 +114,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-7",
-    "assetTag": "PRN-CAR-009",
+    "assetTag": "PRN-CRB-009",
     "name": "Hp Laser Jet Pro",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -130,7 +130,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-8",
-    "assetTag": "PRN-CAR-008",
+    "assetTag": "PRN-CRB-008",
     "name": "Hp Color Laser Jet Pro",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -146,7 +146,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-9",
-    "assetTag": "PRN-CAR-007",
+    "assetTag": "PRN-CRB-007",
     "name": "Hp Deskjet",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -162,7 +162,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-10",
-    "assetTag": "PRN-CAR-006",
+    "assetTag": "PRN-CRB-006",
     "name": "Hp Laser Jet Pro MFP",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -178,7 +178,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-11",
-    "assetTag": "PRN-CAR-005",
+    "assetTag": "PRN-CRB-005",
     "name": "Hp Laser Jet Pro MFP",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -194,7 +194,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-12",
-    "assetTag": "PRN-CAR-004",
+    "assetTag": "PRN-CRB-004",
     "name": "GoDEX RT200i",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -210,7 +210,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-13",
-    "assetTag": "PRN-CAR-003",
+    "assetTag": "PRN-CRB-003",
     "name": "Hp Laser Jet Pro MFP",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -226,7 +226,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-14",
-    "assetTag": "PRN-CAR-002",
+    "assetTag": "PRN-CRB-002",
     "name": "Laser Jet Pro MFP",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
@@ -242,7 +242,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-15",
-    "assetTag": "PRN-LEB-001",
+    "assetTag": "PRN-LBN-001",
     "name": "Hp Laser jet pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -258,7 +258,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-16",
-    "assetTag": "PRN-AUT-002",
+    "assetTag": "PRN-ATB-002",
     "name": "Hp Laser jet pro",
     "company": "Autobiz",
     "site": "Delmas 52",
@@ -274,7 +274,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-17",
-    "assetTag": "PRN-AUT-003",
+    "assetTag": "PRN-ATB-003",
     "name": "Hp Laser jet MFP M140W (Hp Autobiz)",
     "company": "Autobiz",
     "site": "Delmas 52",
@@ -290,7 +290,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-18",
-    "assetTag": "PRN-LEB-004",
+    "assetTag": "PRN-ATB-004",
     "name": "Hp Cheque Imspression",
     "company": "Autobiz",
     "site": "Delmas 52",
@@ -306,7 +306,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-19",
-    "assetTag": "PRN-LEB-005",
+    "assetTag": "PRN-LBN-005",
     "name": "Hp Ernst",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -322,7 +322,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-20",
-    "assetTag": "PRN-LEB-006",
+    "assetTag": "PRN-LBN-006",
     "name": "Hp M1132",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -338,7 +338,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-21",
-    "assetTag": "PRN-LEB-007",
+    "assetTag": "PRN-LBN-007",
     "name": "Hp Laser Jet Pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -354,7 +354,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-22",
-    "assetTag": "PRN-LEB-008",
+    "assetTag": "PRN-LBN-008",
     "name": "Hp Laser Jet Pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -370,7 +370,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-23",
-    "assetTag": "PRN-LEB-009",
+    "assetTag": "PRN-LBN-009",
     "name": "Hp Laser Jet Pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -386,7 +386,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-24",
-    "assetTag": "PRN-AUT-010",
+    "assetTag": "PRN-ATB-010",
     "name": "Hp Color Laser Jet Pro",
     "company": "Autobiz",
     "site": "Delmas 52",
@@ -402,7 +402,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-25",
-    "assetTag": "PRN-LEB-011",
+    "assetTag": "PRN-LBN-011",
     "name": "Hp Color Laser Jet Pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -418,7 +418,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-26",
-    "assetTag": "PRN-LEB-013",
+    "assetTag": "PRN-LBN-013",
     "name": "Hp Color Laser Jet Pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -434,7 +434,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-27",
-    "assetTag": "PRN-LFD-014",
+    "assetTag": "PRN-LDF-014",
     "name": "Color Laser Jet Pro",
     "company": "Leader Foods",
     "site": "Aéroport Depot",
@@ -450,7 +450,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-28",
-    "assetTag": "PRN-LFD-015",
+    "assetTag": "PRN-LDF-015",
     "name": "Hp Laser Jet Pro",
     "company": "Leader Foods",
     "site": "Aéroport Depot",
@@ -466,7 +466,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-29",
-    "assetTag": "PRN-LFD-016",
+    "assetTag": "PRN-LDF-016",
     "name": "Hp Laser Jet Pro",
     "company": "Leader Foods",
     "site": "Aéroport Depot",
@@ -482,7 +482,7 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
   },
   {
     "id": "prn-30",
-    "assetTag": "PRN-LEB-017",
+    "assetTag": "PRN-LBN-017",
     "name": "Hp Laser Jet Pro",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
@@ -495,6 +495,22 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
     "observations": "Good",
     "createdAt": "2024-01-15",
     "updatedAt": "2026-09-18"
+  },
+  {
+    "id": "prn-obp-1",
+    "assetTag": "PRN-OBP-001",
+    "name": "HP LaserJet Pro MFP",
+    "company": "Obonprix",
+    "site": "Delmas 83",
+    "brand": "HP",
+    "model": "LaserJet Pro MFP 4103fdw",
+    "serialNumber": "VND3K98201",
+    "ipAddress": "192.168.83.25",
+    "type": "Multifonction",
+    "status": "Fonctionnel",
+    "observations": "Imprimante réseau multifonction magasin Delmas 83",
+    "createdAt": "2026-01-15",
+    "updatedAt": "2026-10-01"
   }
 ];
 
@@ -2030,13 +2046,38 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "purchaseCost": 950,
     "createdAt": "2023-01-15",
     "updatedAt": "2026-09-19"
+  },
+  {
+    "id": "it-obp-1",
+    "category": "it",
+    "subCategory": "desktop",
+    "assetTag": "IT-OBP-001",
+    "name": "Dell OptiPlex 7090 Micro",
+    "company": "Obonprix",
+    "location": "Delmas 83",
+    "brand": "Dell",
+    "model": "OptiPlex 7090 Micro",
+    "serialNumber": "8GHY242",
+    "cpu": "Intel Core i7 @ 2.90 GHz",
+    "ram": "16 GB",
+    "storage": "512 GB SSD",
+    "os": "Windows 11 Pro",
+    "status": "in_use",
+    "purchaseDate": "2024-01-15",
+    "warrantyExpiry": "2027-01-15",
+    "purchaseCost": 950,
+    "assignedTo": "Jean-Marc Chery",
+    "assignedEmail": "jmchery@obonprix.ht",
+    "notes": "Poste principal Direction Obonprix Delmas 83",
+    "createdAt": "2026-01-15",
+    "updatedAt": "2026-10-01"
   }
 ];
 
 export const INITIAL_EMPLOYEES: Employee[] = [
   {
     "id": "emp-1",
-    "employeeId": "EMP-LEB-445",
+    "employeeId": "EMP-CRB-445",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Paul-Henry",
@@ -2078,7 +2119,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-2",
-    "employeeId": "EMP-LEB-941",
+    "employeeId": "EMP-CRB-941",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Marie Richenaderline",
@@ -2120,7 +2161,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-3",
-    "employeeId": "EMP-LEB-224",
+    "employeeId": "EMP-CRB-224",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Lamarre",
@@ -2162,7 +2203,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-4",
-    "employeeId": "EMP-LEB-751",
+    "employeeId": "EMP-CRB-751",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Joseph",
@@ -2204,7 +2245,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-5",
-    "employeeId": "EMP-LEB-758",
+    "employeeId": "EMP-CRB-758",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Boisson",
@@ -2246,7 +2287,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-6",
-    "employeeId": "EMP-LEB-729",
+    "employeeId": "EMP-CRB-729",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Vamir Nycole",
@@ -2288,7 +2329,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-7",
-    "employeeId": "EMP-LEB-699",
+    "employeeId": "EMP-CRB-699",
     "company": "Caribe Motors",
     "site": "Pétion-Ville",
     "lastName": "Cadet",
@@ -2330,7 +2371,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-8",
-    "employeeId": "EMP-LEB-001",
+    "employeeId": "EMP-LBN-001",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Max Dominique Guerrier",
@@ -2372,7 +2413,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-9",
-    "employeeId": "EMP-AUT-002",
+    "employeeId": "EMP-ATB-002",
     "company": "Autobiz",
     "site": "Delmas 52",
     "lastName": "Dorcius",
@@ -2414,7 +2455,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-10",
-    "employeeId": "EMP-AUT-003",
+    "employeeId": "EMP-ATB-003",
     "company": "Autobiz",
     "site": "Delmas 52",
     "lastName": "Herdritch",
@@ -2456,7 +2497,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-11",
-    "employeeId": "EMP-LEB-004",
+    "employeeId": "EMP-LBN-004",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Masha-Lyodine",
@@ -2498,7 +2539,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-12",
-    "employeeId": "EMP-LEB-005",
+    "employeeId": "EMP-LBN-005",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Toussaint",
@@ -2540,7 +2581,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-13",
-    "employeeId": "EMP-LEB-006",
+    "employeeId": "EMP-LBN-006",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Renica",
@@ -2582,7 +2623,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-14",
-    "employeeId": "EMP-LEB-007",
+    "employeeId": "EMP-LBN-007",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "A.D. Florestant",
@@ -2624,7 +2665,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-15",
-    "employeeId": "EMP-LEB-008",
+    "employeeId": "EMP-LBN-008",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Jean Baptiste",
@@ -2666,7 +2707,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-16",
-    "employeeId": "EMP-LEB-009",
+    "employeeId": "EMP-LBN-009",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Louis Jean",
@@ -2708,7 +2749,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-17",
-    "employeeId": "EMP-AUT-010",
+    "employeeId": "EMP-ATB-010",
     "company": "Autobiz",
     "site": "Delmas 52",
     "lastName": "Jeune",
@@ -2750,7 +2791,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-18",
-    "employeeId": "EMP-AUT-011",
+    "employeeId": "EMP-ATB-011",
     "company": "Autobiz",
     "site": "Delmas 52",
     "lastName": "Bellevu",
@@ -2792,7 +2833,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-19",
-    "employeeId": "EMP-LEB-012",
+    "employeeId": "EMP-LBN-012",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Jean Baptiste",
@@ -2834,7 +2875,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-20",
-    "employeeId": "EMP-LEB-013",
+    "employeeId": "EMP-LBN-013",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Sebastien Theodore",
@@ -2876,7 +2917,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-21",
-    "employeeId": "EMP-LEB-014",
+    "employeeId": "EMP-LBN-014",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "Eugene",
@@ -2918,7 +2959,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-22",
-    "employeeId": "EMP-LEB-015",
+    "employeeId": "EMP-LBN-015",
     "company": "Lebrun S.A.",
     "site": "Delmas 52",
     "lastName": "André Merger",
@@ -2960,7 +3001,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
   },
   {
     "id": "emp-23",
-    "employeeId": "EMP-AUT-016",
+    "employeeId": "EMP-ATB-016",
     "company": "Autobiz",
     "site": "Delmas 52",
     "lastName": "St Victor",
@@ -2998,6 +3039,94 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "appPassword": "7070",
       "applications": "Microsoft GP",
       "organization": "Autobiz S.A"
+    }
+  },
+  {
+    "id": "emp-obp-1",
+    "employeeId": "EMP-OBP-001",
+    "company": "Obonprix",
+    "site": "Delmas 83",
+    "lastName": "Chery",
+    "firstName": "Jean-Marc",
+    "fullName": "Jean-Marc Chery",
+    "email": "jmchery@obonprix.ht",
+    "phone": "50934128899",
+    "department": "Direction Magasin",
+    "jobTitle": "Directeur de Magasin",
+    "location": "Delmas 83",
+    "status": "active",
+    "hireDate": "2024-02-15",
+    "notes": "Dell OptiPlex 7090 Micro • Windows 11 Pro 16 GB RAM",
+    "bloodGroup": "O+",
+    "nif": "004-982-110-3",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "OBP-PC-001",
+      "pcSerial": "8GHY242",
+      "pcSpecs": "Windows 11 Pro Intel Core i7 512 GB SSD 16 GB RAM",
+      "monitorModel": "Dell 24\"",
+      "monitorSerial": "CN-0OBP01-2026",
+      "monitorObs": "Good",
+      "keyboard": "Dell USB",
+      "keyboardDetails": "Dell USB",
+      "keyboardObs": "Good",
+      "mouse": "Dell USB",
+      "mouseDetails": "Dell USB",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Station de gestion magasin Delmas 83"
+    },
+    "accounts": {
+      "windowsUsername": "Jean-Marc Chery",
+      "windowsPassword": "1234",
+      "appUsername": "jmchery",
+      "appPassword": "CP@2026",
+      "applications": "Obonprix POS & ERP",
+      "organization": "Obonprix"
+    }
+  },
+  {
+    "id": "emp-obp-2",
+    "employeeId": "EMP-OBP-002",
+    "company": "Obonprix",
+    "site": "Delmas 83",
+    "lastName": "Saint-Louis",
+    "firstName": "Nathalie",
+    "fullName": "Nathalie Saint-Louis",
+    "email": "nsaintlouis@obonprix.ht",
+    "phone": "50942115577",
+    "department": "Caisse & Finance",
+    "jobTitle": "Superviseur Caisse",
+    "location": "Delmas 83",
+    "status": "active",
+    "hireDate": "2024-03-01",
+    "notes": "Dell OptiPlex 7080 • Windows 11 Pro",
+    "bloodGroup": "A+",
+    "nif": "008-331-409-7",
+    "workstation": {
+      "type": "Desktop",
+      "pcName": "OBP-PC-002",
+      "pcSerial": "7KJX991",
+      "pcSpecs": "Windows 11 Pro Intel Core i5 256 GB SSD 8 GB RAM",
+      "monitorModel": "Dell 22\"",
+      "monitorSerial": "CN-0OBP02-2026",
+      "monitorObs": "Good",
+      "keyboard": "Dell USB",
+      "keyboardDetails": "Dell USB",
+      "keyboardObs": "Good",
+      "mouse": "Dell USB",
+      "mouseDetails": "Dell USB",
+      "mouseObs": "Good",
+      "generalState": "Good",
+      "observations": "Poste supervision caisses magasin Delmas 83"
+    },
+    "accounts": {
+      "windowsUsername": "Nathalie Saint-Louis",
+      "windowsPassword": "1234",
+      "appUsername": "nsaintlouis",
+      "appPassword": "CP@2026",
+      "applications": "Obonprix POS & ERP",
+      "organization": "Obonprix"
     }
   }
 ];
