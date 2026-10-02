@@ -8,6 +8,7 @@ export function phoneCompanyCode(company?: string): string {
   if (c.includes('caribe')) return 'CAR';
   if (c.includes('leader')) return 'LFD';
   if (c.includes('tire')) return 'TRZ';
+  if (c.includes('obonprix') || c.includes('bonprix') || c.includes('obp')) return 'OBP';
   return 'LEB';
 }
 

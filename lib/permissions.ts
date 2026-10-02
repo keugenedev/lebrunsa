@@ -57,11 +57,42 @@ export function canEditOrDeletePersonnel(user: UserProfile | null | undefined): 
 }
 
 /**
+ * Vérifie si l'utilisateur connecté correspond au responsable Obonprix (Mia Guerrier / Delmas 83)
+ */
+export function isGraciama(user: UserProfile | null | undefined): boolean {
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  const name = (user.name || '').toLowerCase().trim();
+  const company = (user.company || '').toLowerCase().trim();
+
+  // Dominique (Roody Max Dominique Guerrier) est strictement à Delmas 52 chez Lebrun S.A.
+  if (name.includes('dominique') || name.includes('roody') || email.includes('rmdguerrier')) {
+    return false;
+  }
+
+  return (
+    email === 'miaguerrier@obonprix83' ||
+    email.startsWith('miaguerrier') ||
+    email.includes('miaguerrier') ||
+    email.includes('graciama') ||
+    email.includes('obonprix') ||
+    name.includes('miaguerrier') ||
+    name.includes('mia guerrier') ||
+    name.includes('graciama') ||
+    name.includes('gracia') ||
+    company === 'obonprix'
+  );
+}
+
+/**
  * Entreprise autorisée pour l'utilisateur
  */
 export function getRestrictedCompany(user: UserProfile | null | undefined): string | null {
   if (isCarlHens(user)) {
     return 'Caribe Motors';
+  }
+  if (isGraciama(user)) {
+    return 'Obonprix';
   }
   return null;
 }

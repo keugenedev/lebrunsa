@@ -10,6 +10,7 @@ import {
   downloadBadgePlancheA4PDF, 
   downloadBatchBadgesPDF 
 } from '@/lib/printBadgePDF';
+import { isGraciama } from '@/lib/permissions';
 import { 
   IdCard, 
   Search, 
@@ -22,10 +23,11 @@ import {
 } from 'lucide-react';
 
 export default function BadgesView() {
-  const { employees = [] } = useInventory();
+  const { employees = [], currentUser } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   // Filtres
-  const [selectedBrandKey, setSelectedBrandKey] = useState<string>('caribe');
+  const [selectedBrandKey, setSelectedBrandKey] = useState<string>(isGraciamaUser ? 'obonprix' : 'caribe');
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<Set<string>>(new Set());
@@ -68,6 +70,12 @@ export default function BadgesView() {
       // Exclusion des badges de test résiduels
       if (isTestBadge(emp)) return false;
 
+      // Restriction Graciama: Obonprix Delmas 83 uniquement
+      if (isGraciamaUser) {
+        const brand = getBrandConfig(emp.company);
+        if (brand.id !== 'obonprix') return false;
+      }
+
       // Filtre marque (s'applique lors du parcours par onglet ; la recherche textuelle permet de trouver le collaborateur immédiatement)
       if (selectedBrandKey !== 'all' && !searchQuery.trim()) {
         const brand = getBrandConfig(emp.company);
@@ -96,7 +104,7 @@ export default function BadgesView() {
 
       return true;
     });
-  }, [employees, selectedBrandKey, selectedSite, searchQuery]);
+  }, [employees, selectedBrandKey, selectedSite, searchQuery, isGraciamaUser]);
 
   // Gestion sélection multiple
   const toggleSelectAll = () => {
@@ -242,122 +250,138 @@ export default function BadgesView() {
         {/* ONGLETS MARQUES : Respect des vraies couleurs */}
         <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">
-            {/* Caribe Motors (Bleu et Vert Lime) */}
-            <button
-              onClick={() => setSelectedBrandKey('caribe')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedBrandKey === 'caribe'
-                  ? 'bg-[#0A2540] text-white shadow-xs ring-2 ring-[#52BA23]'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#52BA23]" />
-              <span>Caribe Motors</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                selectedBrandKey === 'caribe' ? 'bg-[#52BA23] text-black font-bold' : 'bg-slate-200 text-slate-600'
-              }`}>
-                {brandCounts.caribe}
-              </span>
-            </button>
+            {isGraciamaUser ? (
+              /* Obonprix (Rouge #DA2027 & Jaune #FFCB06) */
+              <button
+                onClick={() => setSelectedBrandKey('obonprix')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer bg-[#DA2027] text-white shadow-xs ring-2 ring-[#FFCB06]"
+              >
+                <span className="w-2 h-2 rounded-full bg-[#FFCB06]" />
+                <span>Obonprix (Delmas 83)</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-[#FFCB06] text-slate-900 font-bold">
+                  {brandCounts.obonprix || 0}
+                </span>
+              </button>
+            ) : (
+              <>
+                {/* Caribe Motors (Bleu et Vert Lime) */}
+                <button
+                  onClick={() => setSelectedBrandKey('caribe')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    selectedBrandKey === 'caribe'
+                      ? 'bg-[#0A2540] text-white shadow-xs ring-2 ring-[#52BA23]'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#52BA23]" />
+                  <span>Caribe Motors</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    selectedBrandKey === 'caribe' ? 'bg-[#52BA23] text-black font-bold' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {brandCounts.caribe}
+                  </span>
+                </button>
 
-            {/* Lebrun S.A. (Rouge) */}
-            <button
-              onClick={() => setSelectedBrandKey('lebrun')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                selectedBrandKey === 'lebrun'
-                  ? 'bg-[#E11D24] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Lebrun S.A.</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                selectedBrandKey === 'lebrun' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
-              }`}>
-                {brandCounts.lebrun}
-              </span>
-            </button>
+                {/* Lebrun S.A. (Rouge) */}
+                <button
+                  onClick={() => setSelectedBrandKey('lebrun')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedBrandKey === 'lebrun'
+                      ? 'bg-[#E11D24] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>Lebrun S.A.</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    selectedBrandKey === 'lebrun' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {brandCounts.lebrun}
+                  </span>
+                </button>
 
-            {/* Autobiz */}
-            <button
-              onClick={() => setSelectedBrandKey('autobiz')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                selectedBrandKey === 'autobiz'
-                  ? 'bg-[#14171A] text-white ring-2 ring-[#E11D24]'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Autobiz</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                selectedBrandKey === 'autobiz' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
-              }`}>
-                {brandCounts.autobiz}
-              </span>
-            </button>
+                {/* Autobiz */}
+                <button
+                  onClick={() => setSelectedBrandKey('autobiz')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedBrandKey === 'autobiz'
+                      ? 'bg-[#14171A] text-white ring-2 ring-[#E11D24]'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>Autobiz</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    selectedBrandKey === 'autobiz' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {brandCounts.autobiz}
+                  </span>
+                </button>
 
-            {/* Leader Foods */}
-            <button
-              onClick={() => setSelectedBrandKey('leader')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedBrandKey === 'leader'
-                  ? 'bg-[#1E2328] text-white shadow-xs ring-2 ring-[#70BD1B]'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#70BD1B]" />
-              <span>Leader Foods</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                selectedBrandKey === 'leader' ? 'bg-[#70BD1B] text-slate-900 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}>
-                {brandCounts.leader}
-              </span>
-            </button>
+                {/* Leader Foods */}
+                <button
+                  onClick={() => setSelectedBrandKey('leader')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    selectedBrandKey === 'leader'
+                      ? 'bg-[#1E2328] text-white shadow-xs ring-2 ring-[#70BD1B]'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#70BD1B]" />
+                  <span>Leader Foods</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    selectedBrandKey === 'leader' ? 'bg-[#70BD1B] text-slate-900 font-bold' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {brandCounts.leader}
+                  </span>
+                </button>
 
-            {/* Tirezone */}
-            <button
-              onClick={() => setSelectedBrandKey('tirezone')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                selectedBrandKey === 'tirezone'
-                  ? 'bg-[#1A1D20] text-white ring-2 ring-[#E11D24]'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Tirezone</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                selectedBrandKey === 'tirezone' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
-              }`}>
-                {brandCounts.tirezone}
-              </span>
-            </button>
+                {/* Tirezone */}
+                <button
+                  onClick={() => setSelectedBrandKey('tirezone')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedBrandKey === 'tirezone'
+                      ? 'bg-[#1A1D20] text-white ring-2 ring-[#E11D24]'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>Tirezone</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    selectedBrandKey === 'tirezone' ? 'bg-[#E11D24] text-white font-bold' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {brandCounts.tirezone}
+                  </span>
+                </button>
 
-            {/* Obonprix (Rouge #DA2027 & Jaune #FFCB06) */}
-            <button
-              onClick={() => setSelectedBrandKey('obonprix')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedBrandKey === 'obonprix'
-                  ? 'bg-[#DA2027] text-white shadow-xs ring-2 ring-[#FFCB06]'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-[#FFCB06]" />
-              <span>Obonprix</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                selectedBrandKey === 'obonprix' ? 'bg-[#FFCB06] text-slate-900 font-bold' : 'bg-slate-200 text-slate-600'
-              }`}>
-                {brandCounts.obonprix || 0}
-              </span>
-            </button>
+                {/* Obonprix (Rouge #DA2027 & Jaune #FFCB06) */}
+                <button
+                  onClick={() => setSelectedBrandKey('obonprix')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    selectedBrandKey === 'obonprix'
+                      ? 'bg-[#DA2027] text-white shadow-xs ring-2 ring-[#FFCB06]'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#FFCB06]" />
+                  <span>Obonprix</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    selectedBrandKey === 'obonprix' ? 'bg-[#FFCB06] text-slate-900 font-bold' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {brandCounts.obonprix || 0}
+                  </span>
+                </button>
 
-            {/* Toutes les marques */}
-            <button
-              onClick={() => setSelectedBrandKey('all')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                selectedBrandKey === 'all'
-                  ? 'bg-slate-800 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Toutes ({employees.length})</span>
-            </button>
+                {/* Toutes les marques */}
+                <button
+                  onClick={() => setSelectedBrandKey('all')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedBrandKey === 'all'
+                      ? 'bg-slate-800 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>Toutes ({employees.length})</span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Bascule Mode d'Affichage */}

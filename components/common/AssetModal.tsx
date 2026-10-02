@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { AssetStatus, ITAsset, WorkstationDetails } from '@/types/inventory';
+import { isGraciama } from '@/lib/permissions';
+import { generateITAssetTag } from '@/lib/badgeBrands';
 import { 
   X, 
   Plus, 
@@ -25,8 +27,23 @@ export default function AssetModal() {
     editingAsset,
     employees,
     addITAsset,
-    updateITAsset
+    updateITAsset,
+    itAssets,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
+
+  const selectableEmployees = useMemo(() => {
+    if (isGraciamaUser) {
+      return employees.filter(e => 
+        (e.company || '').toLowerCase().includes('obonprix') || 
+        (e.site || '').toLowerCase().includes('83') || 
+        (e.employeeId || '').toUpperCase().startsWith('EMP-OBP')
+      );
+    }
+    return employees;
+  }, [employees, isGraciamaUser]);
 
   // IT Specific fields
   const [name, setName] = useState('');
@@ -118,25 +135,28 @@ export default function AssetModal() {
         setGeneralObs(it.notes || '');
       }
     } else {
-      const rand = Math.floor(Math.random() * 900 + 100);
-      setAssetTag(`AST-PC-LEB${rand}`);
+      const initComp = isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.';
+      const initSite = isGraciamaUser ? 'Delmas 83' : 'Delmas 52';
+      const initTag = generateITAssetTag(initComp, itAssets.map(a => a.assetTag));
+
+      setAssetTag(initTag);
       setName('');
-      setLocation('');
-      setCompany('Lebrun S.A.');
+      setLocation(initSite);
+      setCompany(initComp);
       setStatus('in_use');
       setNotes('');
       setAssignedPersonnelId('');
-      setBrand('');
-      setModel('');
+      setBrand('Dell');
+      setModel('OptiPlex Workstation');
       setSerialNumber('');
       setSubCategory('desktop');
-      setCpu('');
-      setRam('');
-      setStorage('');
-      setPurchaseCost('');
-      setWarrantyExpiry('');
-      setOs('');
-      setMonitorModel('');
+      setCpu('Intel Core i5');
+      setRam('8 GB RAM');
+      setStorage('256 GB SSD');
+      setPurchaseCost('850');
+      setWarrantyExpiry('2027-01-15');
+      setOs('Windows 11 Pro');
+      setMonitorModel('Dell 24" P2419H');
       setMonitorSerial('');
       setMonitorObs('Good');
       setMouseBrand('Dell');
@@ -145,9 +165,46 @@ export default function AssetModal() {
       setKeyboardModel('Clavier Dell cable');
       setKeyboardDetails('Clavier Alpha numerique');
       setKeyboardObs('Good');
-      setGeneralObs('');
+      setGeneralObs('Good');
     }
-  }, [editingAsset, isAddModalOpen]);
+  }, [editingAsset, isAddModalOpen, isGraciamaUser, itAssets]);
+
+  const handleCompanyChange = (newComp: string) => {
+    setCompany(newComp);
+    const nextTag = generateITAssetTag(newComp, itAssets.map(a => a.assetTag));
+    setAssetTag(nextTag);
+  };
+
+  const handleAssignedPersonnelChange = (empId: string) => {
+    setAssignedPersonnelId(empId);
+    const emp = employees.find(e => e.id === empId || e.employeeId === empId);
+    if (emp) {
+      const isDom = (emp.fullName || '').toLowerCase().includes('dominique') ||
+                    (emp.fullName || '').toLowerCase().includes('roody') ||
+                    (emp.email || '').toLowerCase().includes('rmdguerrier') ||
+                    emp.employeeId === 'EMP-LBN-001';
+
+      const isEmpObp = !isDom && (
+        isGraciamaUser || 
+        (emp.company || '').toLowerCase().includes('obonprix') ||
+        (emp.site || '').toLowerCase().includes('83') ||
+        (emp.fullName || '').toLowerCase().includes('gracia') ||
+        (emp.fullName || '').toLowerCase().includes('mia')
+      );
+
+      const targetComp = isDom ? 'Lebrun S.A.' : (isEmpObp ? 'Obonprix' : (emp.company || company));
+      const targetSite = isDom ? 'Delmas 52' : (isEmpObp ? 'Delmas 83' : (emp.site || emp.location || 'Delmas 52'));
+
+      setCompany(targetComp);
+      setLocation(targetSite);
+      const nextTag = generateITAssetTag(targetComp, itAssets.map(a => a.assetTag));
+      setAssetTag(nextTag);
+
+      if (!name || name.startsWith('Poste ')) {
+        setName(`Poste ${emp.fullName}`);
+      }
+    }
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -160,15 +217,31 @@ export default function AssetModal() {
 
     try {
       const assignedEmp = employees.find(emp => emp.id === assignedPersonnelId || emp.employeeId === assignedPersonnelId);
-      const resolvedCompany = company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.');
+      const isDom = (assignedEmp?.fullName || '').toLowerCase().includes('dominique') ||
+                    (assignedEmp?.fullName || '').toLowerCase().includes('roody') ||
+                    (assignedEmp?.email || '').toLowerCase().includes('rmdguerrier') ||
+                    assignedEmp?.employeeId === 'EMP-LBN-001';
+
+      const isObp = !isDom && (
+        isGraciamaUser || 
+        (company || '').toLowerCase().includes('obonprix') ||
+        (assignedEmp?.company || '').toLowerCase().includes('obonprix') ||
+        (assignedEmp?.site || '').toLowerCase().includes('83') ||
+        (assignedEmp?.fullName || '').toLowerCase().includes('gracia') ||
+        (assignedEmp?.fullName || '').toLowerCase().includes('mia')
+      );
+
+      const resolvedCompany = isDom ? 'Lebrun S.A.' : (isObp ? 'Obonprix' : (company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.')));
+      const resolvedLocation = isDom ? 'Delmas 52' : (isObp ? 'Delmas 83' : (location || assignedEmp?.site || assignedEmp?.location || 'Delmas 52'));
+      const resolvedTag = assetTag.trim() || generateITAssetTag(resolvedCompany, itAssets.map(a => a.assetTag));
 
       const hasDefectivePeripheral = keyboardObs === 'Défectueux' || mouseObs === 'Défectueux' || monitorObs === 'Défectueux';
 
       // Workstation details object
       const workstationObj: WorkstationDetails = {
         type: subCategory === 'laptop' ? 'Laptop' : 'Desktop',
-        pcName: name,
-        pcSerial: serialNumber,
+        pcName: name || `Poste ${resolvedTag}`,
+        pcSerial: serialNumber || 'N/A',
         pcSpecs: `${os} ${cpu} ${storage} ${ram}`.trim(),
         monitorModel: monitorModel || 'Dell standard',
         monitorSerial: monitorSerial || 'N/A',
@@ -186,12 +259,12 @@ export default function AssetModal() {
       const notesSummary = generalObs || '';
 
       const payload: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'> = {
-        name,
+        name: name || `Poste ${resolvedTag}`,
         category: 'it' as const,
         company: resolvedCompany,
-        assetTag,
+        assetTag: resolvedTag,
         status: (hasDefectivePeripheral && status === 'maintenance') ? 'maintenance' : (assignedEmp ? 'in_use' : status),
-        location,
+        location: resolvedLocation,
         notes: notesSummary,
         os,
         brand: brand || 'Dell',
@@ -299,18 +372,24 @@ export default function AssetModal() {
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Société Titulaire <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer"
-                >
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                  <option value="Obonprix">Obonprix</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-xs flex items-center">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={company}
+                    onChange={(e) => handleCompanyChange(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
 
               <div>
@@ -725,11 +804,11 @@ export default function AssetModal() {
               <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">Collaborateur Assigné</label>
               <select
                 value={assignedPersonnelId}
-                onChange={(e) => setAssignedPersonnelId(e.target.value)}
+                onChange={(e) => handleAssignedPersonnelChange(e.target.value)}
                 className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
               >
                 <option value="">Non assigné (En réserve)</option>
-                {employees.map(emp => (
+                {selectableEmployees.map(emp => (
                   <option key={emp.id} value={emp.id}>
                     {emp.fullName} ({emp.company || 'Lebrun S.A.'})
                   </option>

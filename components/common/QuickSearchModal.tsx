@@ -13,7 +13,7 @@ import {
   FileText,
   Smartphone
 } from 'lucide-react';
-import { isCarlHens } from '@/lib/permissions';
+import { isCarlHens, isGraciama } from '@/lib/permissions';
 
 export default function QuickSearchModal() {
   const { 
@@ -33,6 +33,7 @@ export default function QuickSearchModal() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
   const inputRef = useRef<HTMLInputElement>(null);
   const isRestrictedCarl = isCarlHens(currentUser);
+  const isGraciamaUser = isGraciama(currentUser);
 
   useEffect(() => {
     if (isSpotlightOpen) {
@@ -45,7 +46,50 @@ export default function QuickSearchModal() {
   if (!isSpotlightOpen) return null;
 
   // Unifier les imprimantes HP réelles, postes Dell et collaborateurs
-  const allResults = isRestrictedCarl ? [
+  const allResults = isGraciamaUser ? [
+    // Collaborateurs Obonprix
+    ...employees
+      .filter(e => (e.company || '').toLowerCase().includes('obonprix') || (e.company || '').toLowerCase().includes('bonprix') || (e.employeeId || '').includes('OBP'))
+      .map(e => ({
+        id: e.id,
+        name: `${e.fullName} (${e.jobTitle || 'Obonprix 83'})`,
+        subtitle: `${e.company || 'Obonprix'} • ${e.department || 'Delmas 83'} • Matricule: ${e.employeeId}`,
+        tag: e.employeeId,
+        category: 'personnel',
+        typeLabel: 'Collaborateur Obonprix 83',
+        icon: Users,
+        tab: 'personnel' as const,
+        data: e
+      })),
+    // Imprimantes Obonprix
+    ...printers
+      .filter(p => (p.company || '').toLowerCase().includes('obonprix') || (p.company || '').toLowerCase().includes('bonprix') || (p.site || '').includes('83') || (p.assetTag || '').includes('OBP'))
+      .map(p => ({
+        id: p.id,
+        name: `${p.name} (${p.model})`,
+        subtitle: `${p.company} • ${p.site} • IP: ${p.ipAddress}`,
+        tag: p.serialNumber,
+        category: 'printers',
+        typeLabel: 'Imprimante Magasin',
+        icon: Printer,
+        tab: 'printers' as const,
+        data: p
+      })),
+    // Postes IT & Caisses Obonprix
+    ...itAssets
+      .filter(a => (a.company || '').toLowerCase().includes('obonprix') || (a.company || '').toLowerCase().includes('bonprix') || (a.location || '').includes('83') || (a.assetTag || '').includes('OBP'))
+      .map(a => ({
+        id: a.id,
+        name: a.name,
+        subtitle: `${(a as any).company || 'Obonprix'} • ${a.location} • S/N: ${a.serialNumber || a.assetTag}`,
+        tag: a.assetTag,
+        category: 'it',
+        typeLabel: 'Poste / Caisse POS',
+        icon: Laptop,
+        tab: 'it' as const,
+        data: a
+      }))
+  ] : isRestrictedCarl ? [
     // Uniquement collaborateurs Caribe Motors
     ...employees
       .filter(e => (e.company || '').toLowerCase().includes('caribe'))

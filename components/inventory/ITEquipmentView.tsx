@@ -31,20 +31,24 @@ import {
 } from 'lucide-react';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 export default function ITEquipmentView() {
   const { 
     itAssets, 
     employees,
+    currentUser,
     openQRModal, 
     openAddModal, 
     deleteITAsset, 
     exportCSV 
   } = useInventory();
 
+  const isGraciamaUser = isGraciama(currentUser);
+
   const [selectedAssetForView, setSelectedAssetForView] = useState<ITAsset | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<ITAsset | null>(null);
-  const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [companyFilter, setCompanyFilter] = useState<string>(isGraciamaUser ? 'Obonprix' : 'all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [osFilter, setOsFilter] = useState<string>('all');
@@ -94,23 +98,26 @@ export default function ITEquipmentView() {
 
   // KPIs
   const stats = useMemo(() => {
-    const total = itAssets.length;
-    const inUse = itAssets.filter(a => a.status === 'in_use').length;
-    const assigned = itAssets.filter(a => a.assignedTo || a.assignedPersonnelId).length;
-    const lebrun = itAssets.filter(a => 
+    const list = isGraciamaUser ? itAssets.filter(a => (a.company && (a.company.toLowerCase().includes('obonprix') || a.company.toLowerCase().includes('bonprix'))) || a.assetTag?.includes('OBP') || a.location?.includes('83')) : itAssets;
+    const total = list.length;
+    const inUse = list.filter(a => a.status === 'in_use').length;
+    const assigned = list.filter(a => a.assignedTo || a.assignedPersonnelId).length;
+    const lebrun = list.filter(a => 
       ((a.company && a.company.toLowerCase().includes('lebrun')) || (a.assetTag && a.assetTag.includes('LEB'))) &&
       !(a.company && a.company.toLowerCase().includes('caribe'))
     ).length;
-    const autobiz = itAssets.filter(a => 
+    const autobiz = list.filter(a => 
       (a.company && a.company.toLowerCase().includes('auto')) ||
       (a.assetTag && a.assetTag.includes('AUT'))
     ).length;
-    const caribe = itAssets.filter(a => 
+    const caribe = list.filter(a => 
       (a.company && a.company.toLowerCase().includes('caribe')) ||
       (a.location && a.location.toLowerCase().includes('pétion'))
     ).length;
-    return { total, inUse, assigned, lebrun, autobiz, caribe };
-  }, [itAssets]);
+    const available = list.filter(a => a.status === 'available').length;
+    const maintenance = list.filter(a => a.status === 'maintenance').length;
+    return { total, inUse, assigned, lebrun, autobiz, caribe, available, maintenance };
+  }, [itAssets, isGraciamaUser]);
 
   // Filtered Assets
   const filteredAssets = useMemo(() => {
@@ -120,8 +127,10 @@ export default function ITEquipmentView() {
       const isAutobiz = (a.company && a.company.toLowerCase().includes('auto')) || a.assetTag.includes('AUT');
       const isLeader = (a.company && a.company.toLowerCase().includes('leader')) || a.assetTag.includes('LFD');
       const isTirezone = (a.company && (a.company.toLowerCase().includes('tire') || a.company.toLowerCase().includes('zone'))) || a.assetTag.includes('TRZ');
-      const isObonprix = (a.company && (a.company.toLowerCase().includes('obonprix') || a.company.toLowerCase().includes('bonprix'))) || a.assetTag.includes('OBP');
+      const isObonprix = (a.company && (a.company.toLowerCase().includes('obonprix') || a.company.toLowerCase().includes('bonprix'))) || a.assetTag.includes('OBP') || a.location?.includes('83');
       
+      if (isGraciamaUser && !isObonprix) return false;
+
       if (companyFilter === 'Lebrun' && !isLebrun) return false;
       if (companyFilter === 'Autobiz' && !isAutobiz) return false;
       if (companyFilter === 'Caribe Motors' && !isCaribe) return false;
@@ -444,55 +453,98 @@ export default function ITEquipmentView() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 2xl:gap-4">
-        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-600">Total Postes IT</span>
-            <Laptop className="w-4 h-4 text-slate-400 shrink-0" />
+      {isGraciamaUser ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 2xl:gap-4">
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Total Postes Obonprix</span>
+              <Laptop className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.total}</div>
+            <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Magasin Delmas 83</span>
+            </div>
           </div>
-          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.total}</div>
-          <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{stats.inUse} en service</span>
-          </div>
-        </div>
 
-        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-600">Postes Affectés</span>
-            <UserCheck className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">En Service</span>
+              <CheckCircle2 className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.inUse}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Postes opérationnels</div>
           </div>
-          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.assigned}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Salariés identifiés</div>
-        </div>
 
-        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-600">Parc Lebrun S.A.</span>
-            <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">En Réserve</span>
+              <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.available}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Stock de réserve</div>
           </div>
-          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.lebrun}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Siège Delmas 52</div>
-        </div>
 
-        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-600">Parc Autobiz</span>
-            <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">En Maintenance</span>
+              <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.maintenance}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Réparation atelier</div>
           </div>
-          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.autobiz}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Filiale Autobiz S.A.</div>
         </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 2xl:gap-4">
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Total Postes IT</span>
+              <Laptop className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.total}</div>
+            <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{stats.inUse} en service</span>
+            </div>
+          </div>
 
-        <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-600">Caribe Motors</span>
-            <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Postes Affectés</span>
+              <UserCheck className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.assigned}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Salariés identifiés</div>
           </div>
-          <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.caribe}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Site Pétion-Ville</div>
+
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Parc Lebrun S.A.</span>
+              <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.lebrun}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Siège Delmas 52</div>
+          </div>
+
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Parc Autobiz</span>
+              <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.autobiz}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Filiale Autobiz S.A.</div>
+          </div>
+
+          <div className="p-4 2xl:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-600">Caribe Motors</span>
+              <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+            </div>
+            <div className="text-2xl font-semibold text-slate-900 mt-2 font-sans">{stats.caribe}</div>
+            <div className="text-[11px] text-slate-500 mt-1">Site Pétion-Ville</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main DataTable with Filters inside */}
       <DataTable
@@ -515,34 +567,46 @@ export default function ITEquipmentView() {
 
             <div className="flex flex-wrap items-center gap-2">
               {/* Entreprise */}
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer font-medium"
-              >
-                <option value="all">Toutes les entreprises</option>
-                <option value="Lebrun">Lebrun S.A.</option>
-                <option value="Autobiz">Autobiz S.A.</option>
-                <option value="Caribe Motors">Caribe Motors</option>
-                <option value="Leader Foods">Leader Foods</option>
-                <option value="Tirezone">Tirezone</option>
-                <option value="Obonprix">Obonprix</option>
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-700 font-semibold">
+                  Obonprix
+                </div>
+              ) : (
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer font-medium"
+                >
+                  <option value="all">Toutes les entreprises</option>
+                  <option value="Lebrun">Lebrun S.A.</option>
+                  <option value="Autobiz">Autobiz S.A.</option>
+                  <option value="Caribe Motors">Caribe Motors</option>
+                  <option value="Leader Foods">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
+                </select>
+              )}
 
               {/* Site */}
-              <select
-                value={siteFilter}
-                onChange={(e) => setSiteFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-              >
-                <option value="all">Tous les sites</option>
-                <option value="Delmas 52">Delmas 52</option>
-                <option value="Pétion-Ville">Pétion-Ville</option>
-                <option value="Delmas 60">Delmas 60</option>
-                <option value="Delmas 83">Delmas 83</option>
-                <option value="Canapé-Vert">Canapé-Vert</option>
-                <option value="Aéroport Depot">Aéroport Depot</option>
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-700 font-medium">
+                  Delmas 83
+                </div>
+              ) : (
+                <select
+                  value={siteFilter}
+                  onChange={(e) => setSiteFilter(e.target.value)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+                >
+                  <option value="all">Tous les sites</option>
+                  <option value="Delmas 52">Delmas 52</option>
+                  <option value="Pétion-Ville">Pétion-Ville</option>
+                  <option value="Delmas 60">Delmas 60</option>
+                  <option value="Delmas 83">Delmas 83</option>
+                  <option value="Canapé-Vert">Canapé-Vert</option>
+                  <option value="Aéroport Depot">Aéroport Depot</option>
+                </select>
+              )}
 
               {/* Statut */}
               <select

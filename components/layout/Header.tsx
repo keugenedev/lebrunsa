@@ -9,7 +9,7 @@ import {
   Building2, 
   Barcode 
 } from 'lucide-react';
-import { isCarlHens } from '@/lib/permissions';
+import { isCarlHens, isGraciama } from '@/lib/permissions';
 
 export default function Header() {
   const { 
@@ -22,6 +22,7 @@ export default function Header() {
   } = useInventory();
 
   const isRestrictedCarl = isCarlHens(currentUser);
+  const isGraciamaUser = isGraciama(currentUser);
 
   const getTabLabel = (tab: NavigationTab) => {
     switch (tab) {
@@ -68,7 +69,7 @@ export default function Header() {
           onClick={() => setActiveTab(isRestrictedCarl ? 'personnel' : 'overview')}
         >
           <Building2 className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-          <span className="whitespace-nowrap">{isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.'}</span>
+          <span className="whitespace-nowrap">{isRestrictedCarl ? 'Caribe Motors' : isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.'}</span>
         </div>
         <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
         <span className="text-slate-900 font-bold tracking-tight whitespace-nowrap truncate max-w-[180px] sm:max-w-[260px] md:max-w-none">

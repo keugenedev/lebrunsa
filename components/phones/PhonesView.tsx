@@ -7,18 +7,26 @@ import DataTable, { Column } from '@/components/common/DataTable';
 import CompanyLogo from '@/components/common/CompanyLogo';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { Download, FileText, MapPin, Pencil, Plus, Search, Smartphone, Trash2, User } from 'lucide-react';
+import { isGraciama } from '@/lib/permissions';
 
 export default function PhonesView() {
-  const { phones, employees, openPhoneModal, deletePhone, exportCSV, downloadPhoneSheet } = useInventory();
+  const { phones, employees, openPhoneModal, deletePhone, exportCSV, downloadPhoneSheet, currentUser } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [companyFilter, setCompanyFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState(isGraciamaUser ? 'Obonprix' : 'all');
   const [assignFilter, setAssignFilter] = useState<'all' | 'assigned' | 'free'>('all');
   const [deleting, setDeleting] = useState<PhoneAsset | null>(null);
 
+  const scopedPhones = useMemo(() => {
+    return isGraciamaUser
+      ? phones.filter(p => (p.company || '').toLowerCase().includes('obonprix'))
+      : phones;
+  }, [phones, isGraciamaUser]);
+
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return phones
+    return scopedPhones
       .filter(p => {
         if (companyFilter !== 'all' && !p.company?.toLowerCase().includes(companyFilter.toLowerCase())) return false;
         if (assignFilter === 'assigned' && !p.assignedTo) return false;
@@ -28,12 +36,12 @@ export default function PhonesView() {
           .some(v => (v || '').toLowerCase().includes(q));
       })
       .sort((a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0));
-  }, [phones, companyFilter, assignFilter, searchQuery]);
+  }, [scopedPhones, companyFilter, assignFilter, searchQuery]);
 
   const stats = useMemo(() => {
-    const assigned = phones.filter(p => p.assignedTo).length;
-    return { total: phones.length, assigned, free: phones.length - assigned };
-  }, [phones]);
+    const assigned = scopedPhones.filter(p => p.assignedTo).length;
+    return { total: scopedPhones.length, assigned, free: scopedPhones.length - assigned };
+  }, [scopedPhones]);
 
   const columns: Column<PhoneAsset>[] = [
     {
@@ -218,19 +226,25 @@ export default function PhonesView() {
                 <option value="assigned">Attribués</option>
                 <option value="free">En réserve</option>
               </select>
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
-              >
-                <option value="all">Toutes les entreprises</option>
-                <option value="Lebrun">Lebrun S.A.</option>
-                <option value="Autobiz">Autobiz</option>
-                <option value="Caribe">Caribe Motors</option>
-                <option value="Leader">Leader Foods</option>
-                <option value="Tirezone">Tirezone</option>
-                <option value="Obonprix">Obonprix</option>
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 font-semibold">
+                  Obonprix
+                </div>
+              ) : (
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                >
+                  <option value="all">Toutes les entreprises</option>
+                  <option value="Lebrun">Lebrun S.A.</option>
+                  <option value="Autobiz">Autobiz</option>
+                  <option value="Caribe">Caribe Motors</option>
+                  <option value="Leader">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
+                </select>
+              )}
             </div>
           </div>
         }

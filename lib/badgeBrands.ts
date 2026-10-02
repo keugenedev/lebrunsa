@@ -301,3 +301,73 @@ export function generatePrinterId(company?: string, existingTags?: string[]): st
 
   return `${prefix}001`;
 }
+
+/**
+ * Génère un tag de poste informatique conforme au parc : AST-PC-[CODE][NUMERO]
+ * Ex : AST-PC-LEB01, AST-PC-AUT02, AST-PC-OBP01, AST-PC-CRB01
+ */
+export function generateITAssetTag(company?: string, existingTags?: string[]): string {
+  const code = getCompanyCode(company);
+  const prefix = `AST-PC-${code}`;
+
+  if (existingTags && existingTags.length > 0) {
+    const matchingNumbers = existingTags
+      .filter(tag => tag && tag.toUpperCase().startsWith(prefix))
+      .map(tag => {
+        const match = tag.match(/\d+$/);
+        return match ? parseInt(match[0], 10) : 0;
+      });
+    const maxNum = matchingNumbers.length > 0 ? Math.max(...matchingNumbers) : 0;
+    const nextNum = maxNum + 1;
+    return `${prefix}${String(nextNum).padStart(2, '0')}`;
+  }
+
+  return `${prefix}01`;
+}
+
+/**
+ * Génère un identifiant équipement réseau conforme : NET-[CODE]-[3_CHIFFRES]
+ * Ex : NET-LEB-001, NET-ATB-001, NET-OBP-001
+ */
+export function generateNetworkId(company?: string, existingTags?: string[]): string {
+  const code = getCompanyCode(company);
+  const prefix = `NET-${code}-`;
+
+  if (existingTags && existingTags.length > 0) {
+    const matchingNumbers = existingTags
+      .filter(tag => tag && tag.toUpperCase().startsWith(prefix))
+      .map(tag => {
+        const match = tag.match(/\d+$/);
+        return match ? parseInt(match[0], 10) : 0;
+      });
+    const maxNum = matchingNumbers.length > 0 ? Math.max(...matchingNumbers) : 0;
+    const nextNum = maxNum + 1;
+    return `${prefix}${String(nextNum).padStart(3, '0')}`;
+  }
+
+  return `${prefix}001`;
+}
+
+/**
+ * Génère un identifiant onduleur UPS conforme : UPS-[CODE]-[3_CHIFFRES]
+ * Ex : UPS-LEB-001, UPS-ATB-001, UPS-OBP-001
+ */
+export function generateUPSId(company?: string, existingTags?: string[]): string {
+  const code = getCompanyCode(company);
+  const prefix = `UPS-${code}-`;
+
+  if (existingTags && existingTags.length > 0) {
+    const matchingNumbers = existingTags
+      .filter(tag => tag && tag.toUpperCase().startsWith(prefix))
+      .map(tag => {
+        const match = tag.match(/\d+$/);
+        return match ? parseInt(match[0], 10) : 0;
+      });
+    const maxNum = matchingNumbers.length > 0 ? Math.max(...matchingNumbers) : 0;
+    const nextNum = maxNum + 1;
+    return `${prefix}${String(nextNum).padStart(3, '0')}`;
+  }
+
+  return `${prefix}001`;
+}
+

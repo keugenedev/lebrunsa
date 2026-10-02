@@ -4,6 +4,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { PhoneAsset } from '@/types/inventory';
 import { buildPhoneCode, generatePhoneSuffix } from '@/lib/phones';
+import { isGraciama } from '@/lib/permissions';
 import { X, Smartphone, User, Lock } from 'lucide-react';
 
 const COMPANIES = ['Lebrun S.A.', 'Autobiz', 'Caribe Motors', 'Leader Foods', 'Tirezone', 'Obonprix'];
@@ -24,7 +25,9 @@ export default function PhoneModal() {
 }
 
 function PhoneForm() {
-  const { closePhoneModal, editingPhone, addPhone, updatePhone, phones, employees } = useInventory();
+  const { closePhoneModal, editingPhone, addPhone, updatePhone, phones, employees, currentUser } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const initialOwner = editingPhone
     ? employees.find(e => e.employeeId === editingPhone.assignedPersonnelId || e.id === editingPhone.assignedPersonnelId)
@@ -35,8 +38,8 @@ function PhoneForm() {
   const [imei1, setImei1] = useState(editingPhone?.imei1 ?? '');
   const [imei2, setImei2] = useState(editingPhone?.imei2 ?? '');
   const [personId, setPersonId] = useState(initialOwner?.id ?? '');
-  const [company, setCompany] = useState(editingPhone?.company || 'Lebrun S.A.');
-  const [site, setSite] = useState(editingPhone?.site ?? '');
+  const [company, setCompany] = useState(editingPhone?.company || (isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.'));
+  const [site, setSite] = useState(editingPhone?.site ?? (isGraciamaUser ? 'Delmas 83' : ''));
   const [observations, setObservations] = useState(editingPhone?.observations ?? '');
   // Code <ENTREPRISE>-TEL-<aléatoire> : la partie aléatoire est tirée une seule fois à l'ouverture,
   // le préfixe suit l'entreprise (LEB, CAR, AUT...). Jamais saisi à la main ; figé une fois enregistré.
@@ -50,10 +53,17 @@ function PhoneForm() {
   const imei1Ref = useRef<HTMLInputElement>(null);
   const imei2Ref = useRef<HTMLInputElement>(null);
 
-  const sortedEmployees = useMemo(
-    () => [...employees].sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'fr')),
-    [employees]
-  );
+  const sortedEmployees = useMemo(() => {
+    let list = employees;
+    if (isGraciamaUser) {
+      list = employees.filter(e => 
+        (e.company || '').toLowerCase().includes('obonprix') || 
+        (e.site || '').toLowerCase().includes('83') || 
+        (e.employeeId || '').toUpperCase().startsWith('EMP-OBP')
+      );
+    }
+    return [...list].sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', 'fr'));
+  }, [employees, isGraciamaUser]);
 
   const owner = employees.find(e => e.id === personId);
 
@@ -77,8 +87,21 @@ function PhoneForm() {
     setPersonId(id);
     const emp = employees.find(e => e.id === id);
     if (emp) {
-      setCompany(emp.company || company);
-      setSite(emp.site || emp.location || '');
+      const isDom = (emp.fullName || '').toLowerCase().includes('dominique') ||
+                    (emp.fullName || '').toLowerCase().includes('roody') ||
+                    (emp.email || '').toLowerCase().includes('rmdguerrier') ||
+                    emp.employeeId === 'EMP-LBN-001';
+
+      const isEmpObp = !isDom && (
+        isGraciamaUser ||
+        (emp.company || '').toLowerCase().includes('obonprix') ||
+        (emp.site || '').toLowerCase().includes('83') ||
+        (emp.fullName || '').toLowerCase().includes('gracia') ||
+        (emp.fullName || '').toLowerCase().includes('mia')
+      );
+
+      setCompany(isDom ? 'Lebrun S.A.' : (isEmpObp ? 'Obonprix' : (emp.company || company)));
+      setSite(isDom ? 'Delmas 52' : (isEmpObp ? 'Delmas 83' : (emp.site || emp.location || '')));
     }
   };
 
@@ -105,10 +128,26 @@ function PhoneForm() {
     setIsSubmitting(true);
 
     try {
+      const isDom = (owner?.fullName || '').toLowerCase().includes('dominique') ||
+                    (owner?.fullName || '').toLowerCase().includes('roody') ||
+                    (owner?.email || '').toLowerCase().includes('rmdguerrier') ||
+                    owner?.employeeId === 'EMP-LBN-001';
+
+      const isOwnerObp = !isDom && (
+        isGraciamaUser ||
+        (company || '').toLowerCase().includes('obonprix') ||
+        (owner?.company || '').toLowerCase().includes('obonprix') ||
+        (owner?.fullName || '').toLowerCase().includes('gracia') ||
+        (owner?.fullName || '').toLowerCase().includes('mia')
+      );
+
+      const finalComp = isDom ? 'Lebrun S.A.' : (isOwnerObp ? 'Obonprix' : company);
+      const finalSite = isDom ? 'Delmas 52' : (isOwnerObp ? 'Delmas 83' : site.trim());
+
       const payload: Omit<PhoneAsset, 'id' | 'createdAt' | 'updatedAt'> = {
         assetTag,
-        company,
-        site: site.trim(),
+        company: finalComp,
+        site: finalSite,
         brand: brand.trim(),
         model: model.trim(),
         imei1: cleanImei(imei1) || undefined,
@@ -250,13 +289,25 @@ function PhoneForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Entreprise</label>
-                <select value={company} onChange={(e) => setCompany(e.target.value)} className={inputCls}>
-                  {COMPANIES.map(c => <option key={c}>{c}</option>)}
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-xs flex items-center">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select value={company} onChange={(e) => setCompany(e.target.value)} className={inputCls}>
+                    {COMPANIES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Site</label>
-                <input value={site} onChange={(e) => setSite(e.target.value)} placeholder="Delmas 52" className={inputCls} />
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold text-xs flex items-center">
+                    Delmas 83
+                  </div>
+                ) : (
+                  <input value={site} onChange={(e) => setSite(e.target.value)} placeholder="Delmas 52" className={inputCls} />
+                )}
               </div>
             </div>
           </div>

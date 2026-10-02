@@ -22,18 +22,29 @@ import NetworkDetailsModal from './NetworkDetailsModal';
 import WifiPosterView from './WifiPosterView';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 export default function NetworkView() {
-  const { networkAssets, openNetworkModal, deleteNetworkAsset, wifiNetworks, exportCSV } = useInventory();
+  const { networkAssets, currentUser, openNetworkModal, deleteNetworkAsset, wifiNetworks, exportCSV } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [activeSubTab, setActiveSubTab] = useState<'infrastructure' | 'wifi'>('infrastructure');
   const [searchQuery, setSearchQuery] = useState('');
-  const [companyFilter, setCompanyFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState(isGraciamaUser ? 'Obonprix' : 'all');
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<NetworkAsset | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<NetworkAsset | null>(null);
 
   const filteredNetwork = useMemo(() => {
     return networkAssets.filter(item => {
+      if (isGraciamaUser) {
+        const comp = (item.company || '').toLowerCase();
+        const site = (item.site || '').toLowerCase();
+        const tag = (item.assetTag || '').toUpperCase();
+        const name = (item.hostname || item.model || '').toLowerCase();
+        if (!comp.includes('obonprix') && !comp.includes('bonprix') && !site.includes('83') && !tag.includes('OBP') && !name.includes('obonprix')) {
+          return false;
+        }
+      }
       if (companyFilter !== 'all' && !item.company?.toLowerCase().includes(companyFilter.toLowerCase())) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -52,14 +63,26 @@ export default function NetworkView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [networkAssets, companyFilter, searchQuery]);
+  }, [networkAssets, companyFilter, searchQuery, isGraciamaUser]);
 
   const stats = useMemo(() => {
-    const total = networkAssets.length;
-    const switches = networkAssets.filter(n => n.deviceType.toLowerCase().includes('switch')).length;
-    const wifi = networkAssets.filter(n => n.deviceType.toLowerCase().includes('wi‑fi') || n.deviceType.toLowerCase().includes('point')).length;
+    const list = isGraciamaUser ? filteredNetwork : networkAssets;
+    const total = list.length;
+    const switches = list.filter(n => n.deviceType.toLowerCase().includes('switch')).length;
+    const wifi = list.filter(n => n.deviceType.toLowerCase().includes('wi‑fi') || n.deviceType.toLowerCase().includes('point')).length;
     return { total, switches, wifi };
-  }, [networkAssets]);
+  }, [networkAssets, filteredNetwork, isGraciamaUser]);
+
+  const scopedWifiNetworks = useMemo(() => {
+    if (isGraciamaUser) {
+      return wifiNetworks.filter(net => 
+        (net.company || '').toLowerCase().includes('obonprix') || 
+        (net.establishment || '').toLowerCase().includes('83') ||
+        (net.establishment || '').toLowerCase().includes('obonprix')
+      );
+    }
+    return wifiNetworks;
+  }, [wifiNetworks, isGraciamaUser]);
 
   const handleExportCSV = () => {
     exportCSV('network');
@@ -230,7 +253,7 @@ export default function NetworkView() {
           }`}
         >
           <Wifi className="w-3.5 h-3.5" />
-          <span>Affiches & Fiches Wi-Fi par Établissement ({wifiNetworks.length})</span>
+          <span>{isGraciamaUser ? 'Affiches & Fiches Wi-Fi Obonprix (Delmas 83)' : 'Affiches & Fiches Wi-Fi par Établissement'} ({scopedWifiNetworks.length})</span>
         </button>
       </div>
 
@@ -283,19 +306,25 @@ export default function NetworkView() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
-              >
-                <option value="all">Toutes les entreprises</option>
-                <option value="Lebrun">Lebrun S.A.</option>
-                <option value="Autobiz">Autobiz S.A.</option>
-                <option value="Caribe">Caribe Motors</option>
-                <option value="Leader">Leader Foods</option>
-                <option value="Tirezone">Tirezone</option>
-                <option value="Obonprix">Obonprix</option>
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 font-semibold">
+                  Obonprix
+                </div>
+              ) : (
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                >
+                  <option value="all">Toutes les entreprises</option>
+                  <option value="Lebrun">Lebrun S.A.</option>
+                  <option value="Autobiz">Autobiz S.A.</option>
+                  <option value="Caribe">Caribe Motors</option>
+                  <option value="Leader">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
+                </select>
+              )}
             </div>
           </div>
         }

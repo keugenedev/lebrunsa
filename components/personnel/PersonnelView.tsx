@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { Employee, ITAsset, TelecomPlan, StarlinkKit } from '@/types/inventory';
 import DataTable, { Column } from '@/components/common/DataTable';
-import { isCarlHens } from '@/lib/permissions';
+import { isCarlHens, isGraciama } from '@/lib/permissions';
 import { 
   Users, 
   UserPlus, 
@@ -46,6 +46,7 @@ export default function PersonnelView() {
   } = useInventory();
 
   const isRestrictedCarl = isCarlHens(currentUser);
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
@@ -241,16 +242,23 @@ export default function PersonnelView() {
   ];
 
   const displayedEmployees = useMemo(() => {
-    const list = isRestrictedCarl
-      ? employees.filter(e => (e.company || '').toLowerCase().includes('caribe'))
-      : employees;
+    let list = employees;
+    if (isRestrictedCarl) {
+      list = employees.filter(e => (e.company || '').toLowerCase().includes('caribe'));
+    } else if (isGraciamaUser) {
+      list = employees.filter(e => {
+        const c = (e.company || '').toLowerCase();
+        const id = (e.employeeId || '').toUpperCase();
+        return c.includes('obonprix') || c.includes('bonprix') || id.includes('OBP');
+      });
+    }
 
     return [...list].sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [employees, isRestrictedCarl]);
+  }, [employees, isRestrictedCarl, isGraciamaUser]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -258,7 +266,9 @@ export default function PersonnelView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 font-sans">
         <div>
           <h1 className="text-sm font-medium text-slate-800 tracking-tight">
-            {isRestrictedCarl ? 'Personnel & Collaborateurs — Caribe Motors' : 'Personnel & Collaborateurs'}
+            {isRestrictedCarl 
+              ? 'Personnel & Collaborateurs — Caribe Motors' 
+              : 'Personnel & Collaborateurs'}
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
             {isRestrictedCarl 
@@ -307,7 +317,17 @@ export default function PersonnelView() {
               { label: 'Direction Générale', value: 'Direction Générale & RH' }
             ]
           },
-          ...(isRestrictedCarl
+          ...(isGraciamaUser
+            ? [
+                {
+                  key: 'company',
+                  label: 'Entreprise',
+                  options: [
+                    { label: 'Obonprix', value: 'Obonprix' }
+                  ]
+                }
+              ]
+            : isRestrictedCarl
             ? [
                 {
                   key: 'company',
@@ -325,7 +345,9 @@ export default function PersonnelView() {
                     { label: 'Lebrun S.A.', value: 'Lebrun S.A.' },
                     { label: 'Autobiz', value: 'Autobiz' },
                     { label: 'Caribe Motors', value: 'Caribe Motors' },
-                    { label: 'Leader Foods', value: 'Leader Foods' }
+                    { label: 'Leader Foods', value: 'Leader Foods' },
+                    { label: 'Tirezone', value: 'Tirezone' },
+                    { label: 'Obonprix', value: 'Obonprix' }
                   ]
                 }
               ]),
@@ -485,17 +507,23 @@ export default function PersonnelView() {
             {(() => {
               const appAcc = selectedEmployee ? applicationAccounts.find(a => 
                 (a.employeeId && (a.employeeId === selectedEmployee.id || a.employeeId === selectedEmployee.employeeId)) ||
-                (a.username && selectedEmployee.accounts?.appUsername && a.username.toLowerCase() === selectedEmployee.accounts.appUsername.toLowerCase()) ||
-                (a.lastName.toLowerCase() === selectedEmployee.lastName.toLowerCase())
+                (a.username && selectedEmployee.accounts?.appUsername && a.username.toLowerCase() === selectedEmployee.accounts.appUsername.toLowerCase())
               ) : undefined;
-              const winUser = selectedEmployee.accounts?.windowsUsername || appAcc?.windowsUsername || selectedEmployee.fullName;
-              const winPass = selectedEmployee.accounts?.windowsPassword && selectedEmployee.accounts.windowsPassword !== 'N/A' 
-                ? selectedEmployee.accounts.windowsPassword 
-                : (appAcc?.windowsPassword || '1234');
-              const appUser = selectedEmployee.accounts?.appUsername || appAcc?.username || 'N/A';
-              const appPass = selectedEmployee.accounts?.appPassword && selectedEmployee.accounts.appPassword !== 'N/A'
-                ? selectedEmployee.accounts.appPassword
-                : (appAcc?.password || 'CP@2026');
+
+              const hasAccounts = Boolean(
+                appAcc ||
+                selectedEmployee.accounts?.appUsername ||
+                selectedEmployee.accounts?.windowsUsername
+              );
+
+              if (!hasAccounts) {
+                return null;
+              }
+
+              const winUser = selectedEmployee.accounts?.windowsUsername || appAcc?.windowsUsername;
+              const winPass = selectedEmployee.accounts?.windowsPassword || appAcc?.windowsPassword;
+              const appUser = selectedEmployee.accounts?.appUsername || appAcc?.username;
+              const appPass = selectedEmployee.accounts?.appPassword || appAcc?.password;
               const appName = selectedEmployee.accounts?.applications || appAcc?.applications || (selectedEmployee.company === 'Caribe Motors' ? 'DealerPro DMS' : 'Microsoft GP');
               const isDealer = appName.toLowerCase().includes('dealer');
 
@@ -513,38 +541,46 @@ export default function PersonnelView() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     {/* Session Windows */}
-                    <div className="p-2.5 rounded-lg bg-white border border-slate-200">
-                      <div className="text-[10px] text-slate-400 font-medium uppercase flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/logos/Windows.png" alt="Windows" className="w-3 h-3 object-contain" />
-                        <span>Session Windows (Poste PC)</span>
+                    {winUser && (
+                      <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                        <div className="text-[10px] text-slate-400 font-medium uppercase flex items-center gap-1.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/logos/Windows.png" alt="Windows" className="w-3 h-3 object-contain" />
+                          <span>Session Windows (Poste PC)</span>
+                        </div>
+                        <div className="font-semibold text-slate-900 mt-1 font-mono">
+                          User : <span className="select-all">{winUser}</span>
+                        </div>
+                        {winPass && winPass !== 'N/A' && (
+                          <div className="text-[11px] text-slate-700 font-mono mt-0.5">
+                            MDP : <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 select-all">{winPass}</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="font-semibold text-slate-900 mt-1 font-mono">
-                        User : <span className="select-all">{winUser}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-700 font-mono mt-0.5">
-                        MDP : <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 select-all">{winPass}</span>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Accès Applicatif */}
-                    <div className="p-2.5 rounded-lg bg-white border border-slate-200">
-                      <div className="text-[10px] text-slate-400 font-medium uppercase flex items-center gap-1.5">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        {isDealer ? (
-                          <img src="/logos/dealerpro.png" alt="DealerPro" className="h-3.5 w-auto object-contain max-w-[65px]" />
-                        ) : (
-                          <img src="/logos/gp.png" alt="Microsoft GP" className="h-3.5 w-auto object-contain max-w-[60px]" />
+                    {appUser && (
+                      <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                        <div className="text-[10px] text-slate-400 font-medium uppercase flex items-center gap-1.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          {isDealer ? (
+                            <img src="/logos/dealerpro.png" alt="DealerPro" className="h-3.5 w-auto object-contain max-w-[65px]" />
+                          ) : (
+                            <img src="/logos/gp.png" alt="Microsoft GP" className="h-3.5 w-auto object-contain max-w-[60px]" />
+                          )}
+                          <span>Accès Logiciel ({appName})</span>
+                        </div>
+                        <div className="font-semibold text-slate-900 mt-1 font-mono">
+                          ID : <span className="select-all">@{appUser}</span>
+                        </div>
+                        {appPass && (
+                          <div className="text-[11px] text-slate-700 font-mono mt-0.5">
+                            MDP : <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 select-all">{appPass}</span>
+                          </div>
                         )}
-                        <span>Accès Logiciel ({appName})</span>
                       </div>
-                      <div className="font-semibold text-slate-900 mt-1 font-mono">
-                        ID : <span className="select-all">@{appUser}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-700 font-mono mt-0.5">
-                        MDP : <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 select-all">{appPass}</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               );

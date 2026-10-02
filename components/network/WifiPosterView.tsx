@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { useInventory, WifiNetwork } from '@/context/InventoryContext';
+import { isGraciama } from '@/lib/permissions';
 import CompanyLogo from '@/components/common/CompanyLogo';
 import { 
   Wifi, 
@@ -82,8 +83,11 @@ export default function WifiPosterView() {
     updateWifiNetwork, 
     deleteWifiNetwork, 
     selectedWifiEstablishment, 
-    setSelectedWifiEstablishment 
+    setSelectedWifiEstablishment,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
@@ -105,20 +109,48 @@ export default function WifiPosterView() {
   const [formIsGuest, setFormIsGuest] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const establishments = [
-    { id: 'all', label: 'Tous les Réseaux Wi-Fi' },
-    { id: 'Delmas 52', label: 'Delmas 52 (Tirezone & Autobiz)' },
-    { id: 'Pétion-Ville', label: 'Pétion-Ville' },
-    { id: 'Delmas 60', label: 'Delmas 60' },
-    { id: 'Delmas 83', label: 'Delmas 83 (Obonprix)' },
-    { id: 'Canapé-Vert', label: 'Canapé-Vert' },
-    { id: 'Aéroport Depot', label: 'Aéroport Depot' }
-  ];
+  // Scoped Wi-Fi networks (strict isolation for Obonprix)
+  const scopedNetworks = useMemo(() => {
+    if (isGraciamaUser) {
+      return wifiNetworks.filter(net => 
+        (net.company || '').toLowerCase().includes('obonprix') || 
+        (net.establishment || '').toLowerCase().includes('83') ||
+        (net.establishment || '').toLowerCase().includes('obonprix')
+      );
+    }
+    return wifiNetworks;
+  }, [wifiNetworks, isGraciamaUser]);
 
-  const filteredNetworks = wifiNetworks.filter(net => {
-    if (selectedWifiEstablishment === 'all') return true;
-    return net.establishment.toLowerCase().includes(selectedWifiEstablishment.toLowerCase());
-  });
+  const establishments = useMemo(() => {
+    if (isGraciamaUser) {
+      return [
+        { id: 'Delmas 83', label: 'Delmas 83 (Obonprix)' }
+      ];
+    }
+    return [
+      { id: 'all', label: 'Tous les Réseaux Wi-Fi' },
+      { id: 'Delmas 52', label: 'Delmas 52 (Tirezone & Autobiz)' },
+      { id: 'Pétion-Ville', label: 'Pétion-Ville' },
+      { id: 'Delmas 60', label: 'Delmas 60' },
+      { id: 'Delmas 83', label: 'Delmas 83 (Obonprix)' },
+      { id: 'Canapé-Vert', label: 'Canapé-Vert' },
+      { id: 'Aéroport Depot', label: 'Aéroport Depot' }
+    ];
+  }, [isGraciamaUser]);
+
+  useEffect(() => {
+    if (isGraciamaUser && selectedWifiEstablishment !== 'Delmas 83') {
+      setSelectedWifiEstablishment('Delmas 83');
+    }
+  }, [isGraciamaUser, selectedWifiEstablishment, setSelectedWifiEstablishment]);
+
+  const filteredNetworks = useMemo(() => {
+    return scopedNetworks.filter(net => {
+      if (isGraciamaUser) return true;
+      if (selectedWifiEstablishment === 'all') return true;
+      return net.establishment.toLowerCase().includes(selectedWifiEstablishment.toLowerCase());
+    });
+  }, [scopedNetworks, isGraciamaUser, selectedWifiEstablishment]);
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -132,15 +164,15 @@ export default function WifiPosterView() {
 
   const openAddNetModal = () => {
     setEditingNet(null);
-    setFormEst('');
-    setFormComp('Lebrun S.A.');
-    setFormSsid('');
+    setFormEst(isGraciamaUser ? 'Delmas 83' : '');
+    setFormComp(isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.');
+    setFormSsid(isGraciamaUser ? 'Obonprix Wi-Fi' : '');
     setFormPass('');
-    setFormType('Starlink');
+    setFormType(isGraciamaUser ? 'Fibre Dédiée' : 'Starlink');
     setFormDish('');
     setFormSpeed('');
     setFormBand('Dual-Band (2.4 / 5 GHz)');
-    setFormLocation('');
+    setFormLocation(isGraciamaUser ? 'Delmas 83 - Magasin & Bureaux Obonprix' : '');
     setFormIsGuest(false);
     setIsModalOpen(true);
   };
@@ -215,9 +247,9 @@ export default function WifiPosterView() {
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <span>Affiches & Fiches Wi-Fi par Établissement</span>
+              <span>{isGraciamaUser ? 'Affiches & Fiches Wi-Fi Obonprix (Delmas 83)' : 'Affiches & Fiches Wi-Fi par Établissement'}</span>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                {wifiNetworks.length} réseaux certifiés
+                {scopedNetworks.length} réseau{scopedNetworks.length > 1 ? 'x' : ''} certifié{scopedNetworks.length > 1 ? 's' : ''}
               </span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -253,8 +285,8 @@ export default function WifiPosterView() {
         {establishments.map((est) => {
           const isActive = selectedWifiEstablishment === est.id;
           const count = est.id === 'all' 
-            ? wifiNetworks.length 
-            : wifiNetworks.filter(n => n.establishment.toLowerCase().includes(est.id.toLowerCase())).length;
+            ? scopedNetworks.length 
+            : scopedNetworks.filter(n => n.establishment.toLowerCase().includes(est.id.toLowerCase())).length;
 
           return (
             <button
@@ -502,38 +534,50 @@ export default function WifiPosterView() {
                     <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
                       Établissement / Site <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      required
-                      value={formEst}
-                      onChange={(e) => setFormEst(e.target.value)}
-                      className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-                    >
-                      <option value="">Sélectionner un site...</option>
-                      <option value="Delmas 52">Delmas 52</option>
-                      <option value="Pétion-Ville">Pétion-Ville</option>
-                      <option value="Delmas 60">Delmas 60</option>
-                      <option value="Delmas 83">Delmas 83</option>
-                      <option value="Canapé-Vert">Canapé-Vert</option>
-                      <option value="Aéroport Depot">Aéroport Depot</option>
-                    </select>
+                    {isGraciamaUser ? (
+                      <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
+                        Delmas 83
+                      </div>
+                    ) : (
+                      <select
+                        required
+                        value={formEst}
+                        onChange={(e) => setFormEst(e.target.value)}
+                        className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                      >
+                        <option value="">Sélectionner un site...</option>
+                        <option value="Delmas 52">Delmas 52</option>
+                        <option value="Pétion-Ville">Pétion-Ville</option>
+                        <option value="Delmas 60">Delmas 60</option>
+                        <option value="Delmas 83">Delmas 83</option>
+                        <option value="Canapé-Vert">Canapé-Vert</option>
+                        <option value="Aéroport Depot">Aéroport Depot</option>
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
                       Entreprise Titulaire <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      required
-                      value={formComp}
-                      onChange={(e) => setFormComp(e.target.value)}
-                      className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-                    >
-                      <option value="Lebrun S.A.">Lebrun S.A.</option>
-                      <option value="Autobiz">Autobiz</option>
-                      <option value="Caribe Motors">Caribe Motors</option>
-                      <option value="Leader Foods">Leader Foods</option>
-                      <option value="Tirezone">Tirezone</option>
-                      <option value="Obonprix">Obonprix</option>
-                    </select>
+                    {isGraciamaUser ? (
+                      <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
+                        Obonprix
+                      </div>
+                    ) : (
+                      <select
+                        required
+                        value={formComp}
+                        onChange={(e) => setFormComp(e.target.value)}
+                        className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                      >
+                        <option value="Lebrun S.A.">Lebrun S.A.</option>
+                        <option value="Autobiz">Autobiz</option>
+                        <option value="Caribe Motors">Caribe Motors</option>
+                        <option value="Leader Foods">Leader Foods</option>
+                        <option value="Tirezone">Tirezone</option>
+                        <option value="Obonprix">Obonprix</option>
+                      </select>
+                    )}
                   </div>
                 </div>
               </div>

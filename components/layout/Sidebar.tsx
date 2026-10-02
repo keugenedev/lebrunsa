@@ -21,7 +21,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { isCarlHens } from '@/lib/permissions';
+import { isCarlHens, isGraciama } from '@/lib/permissions';
 
 export default function Sidebar() {
   const {
@@ -43,8 +43,14 @@ export default function Sidebar() {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const isRestrictedCarl = isCarlHens(currentUser);
+  const isGraciamaUser = isGraciama(currentUser);
 
   const caribeCount = employees.filter(e => (e.company || '').toLowerCase().includes('caribe')).length;
+  const obpPrintersCount = printers.filter(p => (p.company || '').toLowerCase().includes('obonprix')).length;
+  const obpITCount = itAssets.filter(i => (i.company || '').toLowerCase().includes('obonprix')).length;
+  const obpEmpCount = employees.filter(e => (e.company || '').toLowerCase().includes('obonprix')).length;
+  const obpNetCount = (networkAssets || []).filter(n => (n.company || '').toLowerCase().includes('obonprix')).length;
+  const obpUpsCount = (upsAssets || []).filter(u => (u.company || '').toLowerCase().includes('obonprix')).length;
 
   const navItems: {
     id: NavigationTab | 'scanner';
@@ -57,17 +63,17 @@ export default function Sidebar() {
       ]
     : [
         { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'printers', label: 'Imprimantes', count: printers.length, icon: Printer },
-        { id: 'it', label: 'Postes IT & Matériel', count: itAssets.length, icon: Laptop },
-        { id: 'network', label: 'Réseau', count: networkAssets?.length || 5, icon: Network },
-        { id: 'ups', label: 'Onduleurs UPS', count: upsAssets?.length || 7, icon: Zap },
-        { id: 'applications', label: 'Applications', count: applicationAccounts?.length || 13, icon: KeyRound },
-        { id: 'personnel', label: 'Personnel', count: employees.length, icon: Users },
-        { id: 'accounts', label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck },
-        { id: 'documents', label: 'Documents', count: documents?.length || 0, icon: FileText },
-        { id: 'phones', label: 'Téléphones', count: phones.length, icon: Smartphone },
+        { id: 'printers', label: 'Imprimantes', count: isGraciamaUser ? obpPrintersCount : printers.length, icon: Printer },
+        { id: 'it', label: 'Postes IT & Matériel', count: isGraciamaUser ? obpITCount : itAssets.length, icon: Laptop },
+        { id: 'network', label: 'Réseau', count: isGraciamaUser ? obpNetCount : (networkAssets?.length || 5), icon: Network },
+        { id: 'ups', label: 'Onduleurs UPS', count: isGraciamaUser ? obpUpsCount : (upsAssets?.length || 7), icon: Zap },
+        { id: 'applications', label: 'Applications', count: isGraciamaUser ? 0 : (applicationAccounts?.length || 13), icon: KeyRound },
+        { id: 'personnel', label: 'Personnel', count: isGraciamaUser ? obpEmpCount : employees.length, icon: Users },
+        ...(!isGraciamaUser ? [{ id: 'accounts' as const, label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck }] : []),
+        { id: 'documents', label: 'Documents', count: isGraciamaUser ? 0 : (documents?.length || 0), icon: FileText },
+        { id: 'phones', label: 'Téléphones', count: isGraciamaUser ? 0 : phones.length, icon: Smartphone },
         { id: 'tags', label: 'Tag', icon: Tag },
-        { id: 'badges', label: 'Badges', count: employees.length, icon: IdCard },
+        { id: 'badges', label: 'Badges', count: isGraciamaUser ? obpEmpCount : employees.length, icon: IdCard },
         { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
         { id: 'settings', label: 'Configuration', icon: Settings }
       ];
@@ -93,19 +99,29 @@ export default function Sidebar() {
       {/* Top: Logo + Toggle Button */}
       <div
         className={`border-b border-slate-100 flex items-center bg-white transition-all duration-300 ${
-          isCollapsed ? 'flex-col gap-2 py-3 px-2' : 'justify-between py-3.5 px-4'
+          isCollapsed ? 'flex-col gap-2 py-3 px-2' : 'justify-between py-3.5 px-3'
         }`}
       >
+        {!isCollapsed && <div className="w-6 shrink-0" aria-hidden="true" />}
+
         <div
           onClick={() => setActiveTab(isRestrictedCarl ? 'personnel' : 'overview')}
-          className="cursor-pointer flex items-center justify-center"
+          className={`cursor-pointer flex items-center justify-center ${!isCollapsed ? 'flex-1 min-w-0' : ''}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/Lebrunog.png"
-            alt="Logo Lebrun S.A."
-            className={`object-contain transition-all duration-300 ${
-              isCollapsed ? 'h-7 max-w-[40px]' : 'h-12 max-w-[150px]'
+            src={
+              isGraciamaUser
+                ? (isCollapsed ? "/logos/Obonprixicon.png" : "/logos/obonprixlogo.png")
+                : (isCollapsed ? "/logos/lebrun.png" : "/Lebrunog.png")
+            }
+            alt={isGraciamaUser ? "Logo Obonprix" : "Logo Lebrun S.A."}
+            className={`object-contain transition-all duration-300 mx-auto ${
+              isCollapsed
+                ? 'h-8 w-8'
+                : isGraciamaUser
+                  ? 'h-9 max-w-[155px]'
+                  : 'h-11 max-w-[145px]'
             }`}
           />
         </div>

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { ApplicationAccount, Employee } from '@/types/inventory';
+import { isGraciama } from '@/lib/permissions';
 import { 
   X, 
   KeyRound, 
@@ -27,8 +28,23 @@ export default function ApplicationModal() {
     addApplicationAccount,
     updateApplicationAccount,
     employees,
-    applicationAccounts
+    applicationAccounts,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
+
+  // Scoped employees: strictly Obonprix when isGraciamaUser
+  const selectableEmployees = useMemo(() => {
+    if (isGraciamaUser) {
+      return employees.filter(e => 
+        (e.company || '').toLowerCase().includes('obonprix') || 
+        (e.site || '').toLowerCase().includes('83') || 
+        (e.employeeId || '').toUpperCase().startsWith('EMP-OBP')
+      );
+    }
+    return employees;
+  }, [employees, isGraciamaUser]);
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [softwareType, setSoftwareType] = useState<'Microsoft GP' | 'DealerPro' | 'custom'>('Microsoft GP');
@@ -45,7 +61,7 @@ export default function ApplicationModal() {
   useEffect(() => {
     if (editingApplicationAccount) {
       // Find matching employee by employeeId or appUsername or name
-      const matchedEmp = employees.find(e => 
+      const matchedEmp = selectableEmployees.find(e => 
         (editingApplicationAccount.employeeId && e.id === editingApplicationAccount.employeeId) ||
         (editingApplicationAccount.employeeId && e.employeeId === editingApplicationAccount.employeeId) ||
         (e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === editingApplicationAccount.username.toLowerCase()) ||
@@ -71,7 +87,7 @@ export default function ApplicationModal() {
         setApplications(appName);
       }
 
-      setOrganization(editingApplicationAccount.organization || matchedEmp?.company || 'Lebrun S.A.');
+      setOrganization(editingApplicationAccount.organization || (isGraciamaUser ? 'Obonprix' : (matchedEmp?.company || 'Lebrun S.A.')));
     } else {
       setSelectedEmployeeId('');
       setSoftwareType('Microsoft GP');
@@ -81,11 +97,11 @@ export default function ApplicationModal() {
       setUsername('');
       setPassword('');
       setApplications('Microsoft GP');
-      setOrganization('Lebrun S.A.');
+      setOrganization(isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.');
       setShowPassword(false);
       setShowWindowsPassword(false);
     }
-  }, [editingApplicationAccount, isApplicationModalOpen, employees]);
+  }, [editingApplicationAccount, isApplicationModalOpen, selectableEmployees, isGraciamaUser]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -136,20 +152,27 @@ export default function ApplicationModal() {
         setCustomSoftware(appName);
         setApplications(appName);
       }
+      const isObp = emp.company?.toLowerCase().includes('obonprix') || (emp.site || '').toLowerCase().includes('83') || isGraciamaUser;
       setUsername(existingAcc.username);
       setPassword(existingAcc.password || '1234');
-      setOrganization(existingAcc.organization || emp.company || 'Lebrun S.A.');
+      setOrganization(existingAcc.organization || (isObp ? 'Obonprix' : (emp.company || 'Lebrun S.A.')));
       setWindowsUsername(existingAcc.windowsUsername || emp.accounts?.windowsUsername || emp.firstName);
       setWindowsPassword(existingAcc.windowsPassword || emp.accounts?.windowsPassword || '');
     } else {
       // Auto-determine software based on employee company:
       // Caribe Motors -> DealerPro
+      // Obonprix -> Système Obonprix / Logiciel
       // Lebrun S.A. / Autobiz S.A. -> Microsoft GP
       const isCaribe = emp.company?.toLowerCase().includes('caribe');
+      const isObp = emp.company?.toLowerCase().includes('obonprix') || (emp.site || '').toLowerCase().includes('83') || isGraciamaUser;
       if (isCaribe) {
         setSoftwareType('DealerPro');
         setApplications('DealerPro');
         setOrganization('Caribe Motors');
+      } else if (isObp) {
+        setSoftwareType('Microsoft GP');
+        setApplications('Microsoft GP');
+        setOrganization('Obonprix');
       } else {
         setSoftwareType('Microsoft GP');
         setApplications('Microsoft GP');
@@ -280,8 +303,8 @@ export default function ApplicationModal() {
                 required
                 className="w-full h-10 px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-slate-400 font-medium text-slate-900 cursor-pointer text-xs"
               >
-                <option value="">-- Choisir un collaborateur dans le Personnel --</option>
-                {employees.map((emp) => {
+                <option value="">-- Choisir un collaborateur {isGraciamaUser ? 'Obonprix' : 'dans le Personnel'} --</option>
+                {selectableEmployees.map((emp) => {
                   const hasApp = applicationAccounts.find(a => 
                     a.employeeId === emp.id || 
                     a.employeeId === emp.employeeId || 
@@ -584,18 +607,25 @@ export default function ApplicationModal() {
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Organisation / Entité <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
-                  className="w-full h-10 px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-slate-400 text-slate-900 cursor-pointer text-xs font-medium"
-                >
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Autobiz S.A.">Autobiz S.A.</option>
-                  <option value="Lebrun S.A. | Autobiz S.A.">Lebrun S.A. | Autobiz S.A.</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 text-xs flex items-center">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={organization}
+                    onChange={(e) => setOrganization(e.target.value)}
+                    className="w-full h-10 px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-slate-400 text-slate-900 cursor-pointer text-xs font-medium"
+                  >
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Autobiz S.A.">Autobiz S.A.</option>
+                    <option value="Lebrun S.A. | Autobiz S.A.">Lebrun S.A. | Autobiz S.A.</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
             </div>
           </div>

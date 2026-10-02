@@ -25,12 +25,14 @@ import {
 } from 'lucide-react';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 export default function ApplicationsView() {
-  const { applicationAccounts, openApplicationModal, deleteApplicationAccount, employees, exportCSV } = useInventory();
+  const { applicationAccounts, openApplicationModal, deleteApplicationAccount, employees, exportCSV, currentUser } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [orgFilter, setOrgFilter] = useState('all');
+  const [orgFilter, setOrgFilter] = useState(isGraciamaUser ? 'Obonprix' : 'all');
   const [appFilter, setAppFilter] = useState('all');
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -75,6 +77,14 @@ export default function ApplicationsView() {
 
   const filteredAccounts = useMemo(() => {
     return applicationAccounts.filter(acc => {
+      if (isGraciamaUser) {
+        const org = (acc.organization || '').toLowerCase();
+        const app = (acc.applications || '').toLowerCase();
+        const emp = getLinkedEmployee(acc);
+        const empComp = (emp?.company || '').toLowerCase();
+        const isObp = org.includes('obonprix') || org.includes('bonprix') || app.includes('obonprix') || empComp.includes('obonprix');
+        if (!isObp) return false;
+      }
       if (orgFilter !== 'all' && !acc.organization.toLowerCase().includes(orgFilter.toLowerCase())) return false;
       if (appFilter !== 'all') {
         const qApp = appFilter.toLowerCase();
@@ -117,7 +127,7 @@ export default function ApplicationsView() {
       const idB = String(b.id || '');
       return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [applicationAccounts, orgFilter, appFilter, searchQuery, employees]);
+  }, [applicationAccounts, orgFilter, appFilter, searchQuery, employees, isGraciamaUser]);
 
   const handleExportCSV = () => {
     exportCSV('applications');
@@ -453,7 +463,12 @@ export default function ApplicationsView() {
                 <option value="dealerpro">DealerPro DMS</option>
               </select>
 
-              <select
+              {isGraciamaUser ? (
+                <div className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 font-semibold">
+                  Obonprix
+                </div>
+              ) : (
+                <select
                 value={orgFilter}
                 onChange={(e) => setOrgFilter(e.target.value)}
                 className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
@@ -465,6 +480,7 @@ export default function ApplicationsView() {
                 <option value="Leader">Leader Foods</option>
                 <option value="Tirezone">Tirezone</option>
               </select>
+              )}
             </div>
           </div>
         }

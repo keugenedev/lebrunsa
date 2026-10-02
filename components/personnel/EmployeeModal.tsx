@@ -6,7 +6,7 @@ import { Employee } from '@/types/inventory';
 import { X, UserPlus, UserCheck, Building, Mail, Phone, MapPin, Briefcase, FileText, UploadCloud, Camera, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatNif } from '@/lib/formatNif';
 import { uploadEmployeePhoto } from '@/lib/uploadPhoto';
-import { isCarlHens, canUploadPhoto } from '@/lib/permissions';
+import { isCarlHens, isGraciama, canUploadPhoto } from '@/lib/permissions';
 import { generateEmployeeId, normalizeEmployeeId } from '@/lib/badgeBrands';
 
 export default function EmployeeModal() {
@@ -20,6 +20,7 @@ export default function EmployeeModal() {
   } = useInventory();
 
   const isRestrictedCarl = isCarlHens(currentUser);
+  const isGraciamaUser = isGraciama(currentUser);
   const allowPhotoUpload = canUploadPhoto(currentUser);
 
   const [employeeId, setEmployeeId] = useState('');
@@ -43,45 +44,85 @@ export default function EmployeeModal() {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isDominique =
+    (fullName || '').toLowerCase().includes('dominique') ||
+    (fullName || '').toLowerCase().includes('roody') ||
+    (email || '').toLowerCase().includes('rmdguerrier') ||
+    (editingEmployee?.fullName || '').toLowerCase().includes('dominique') ||
+    (editingEmployee?.fullName || '').toLowerCase().includes('roody') ||
+    (editingEmployee?.email || '').toLowerCase().includes('rmdguerrier');
+
+  const isObpRelated = !isDominique && (
+    isGraciamaUser ||
+    (company || '').toLowerCase().includes('obonprix') ||
+    (fullName || '').toLowerCase().includes('gracia') ||
+    (fullName || '').toLowerCase().includes('mia') ||
+    (email || '').toLowerCase().includes('miaguerrier') ||
+    (email || '').toLowerCase().includes('obonprix') ||
+    (editingEmployee?.company || '').toLowerCase().includes('obonprix') ||
+    (editingEmployee?.fullName || '').toLowerCase().includes('gracia') ||
+    (editingEmployee?.fullName || '').toLowerCase().includes('mia')
+  );
+
   useEffect(() => {
     setPhotoError(null);
     setIsUploadingPhoto(false);
     setIsDraggingPhoto(false);
     if (editingEmployee) {
+      const isEmpDom =
+        (editingEmployee.fullName || '').toLowerCase().includes('dominique') ||
+        (editingEmployee.fullName || '').toLowerCase().includes('roody') ||
+        (editingEmployee.email || '').toLowerCase().includes('rmdguerrier') ||
+        editingEmployee.employeeId === 'EMP-LBN-001';
+
+      const isEmpObp = !isEmpDom && (
+        isGraciamaUser ||
+        (editingEmployee.company || '').toLowerCase().includes('obonprix') ||
+        (editingEmployee.site || '').toLowerCase().includes('83') ||
+        (editingEmployee.fullName || '').toLowerCase().includes('gracia') ||
+        (editingEmployee.fullName || '').toLowerCase().includes('mia') ||
+        (editingEmployee.lastName || '').toLowerCase().includes('gracia') ||
+        (editingEmployee.email || '').toLowerCase().includes('miaguerrier')
+      );
+
+      const empComp = isEmpDom ? 'Lebrun S.A.' : (isEmpObp ? 'Obonprix' : (editingEmployee.company || (isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.')));
+      const empSite = isEmpDom ? 'Delmas 52' : (isEmpObp ? 'Delmas 83' : (editingEmployee.site || editingEmployee.location || (isRestrictedCarl ? 'Pétion-Ville' : 'Delmas 52')));
+
       setEmployeeId(editingEmployee.employeeId);
-      setCompany(editingEmployee.company || (isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.'));
-      setSite(editingEmployee.site || editingEmployee.location || (isRestrictedCarl ? 'Pétion-Ville' : ''));
+      setCompany(empComp);
+      setSite(empSite);
       setFullName(editingEmployee.fullName);
       setEmail(editingEmployee.email || '');
       setPhone(editingEmployee.phone || '');
-      setDepartment(editingEmployee.department || '');
+      setDepartment(editingEmployee.department || (isEmpObp ? 'Vente & Caisses' : ''));
       setJobTitle(editingEmployee.jobTitle || '');
       setBloodGroup(editingEmployee.bloodGroup || '');
       setNif(editingEmployee.nif ? formatNif(editingEmployee.nif) : '');
       setPhotoUrl(editingEmployee.photoUrl || '');
-      setLocation(editingEmployee.location || editingEmployee.site || (isRestrictedCarl ? 'Pétion-Ville' : ''));
+      setLocation(empSite);
       setStatus(editingEmployee.status);
       setHireDate(editingEmployee.hireDate);
       setNotes(editingEmployee.notes || '');
     } else {
-      const initComp = isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.';
+      const initComp = isGraciamaUser ? 'Obonprix' : isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.';
+      const initSite = isGraciamaUser ? 'Delmas 83' : isRestrictedCarl ? 'Pétion-Ville' : '';
       setEmployeeId(generateEmployeeId(initComp));
       setCompany(initComp);
-      setSite(isRestrictedCarl ? 'Pétion-Ville' : '');
+      setSite(initSite);
       setFullName('');
       setEmail('');
       setPhone('');
-      setDepartment('');
+      setDepartment(isGraciamaUser ? 'Vente & Caisses' : '');
       setJobTitle('');
       setBloodGroup('');
       setNif('');
       setPhotoUrl('');
-      setLocation(isRestrictedCarl ? 'Pétion-Ville' : '');
+      setLocation(initSite);
       setStatus('active');
       setHireDate(new Date().toISOString().slice(0, 10));
       setNotes('');
     }
-  }, [editingEmployee, isEmployeeModalOpen, isRestrictedCarl, allowPhotoUpload]);
+  }, [editingEmployee, isEmployeeModalOpen, isRestrictedCarl, isGraciamaUser, allowPhotoUpload]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -142,13 +183,47 @@ export default function EmployeeModal() {
       const nameParts = fullName.trim().split(' ');
       const firstName = nameParts.length > 1 ? nameParts[0] : fullName;
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      const isDom =
+        fullName.toLowerCase().includes('dominique') ||
+        fullName.toLowerCase().includes('roody') ||
+        firstName.toLowerCase().includes('dominique') ||
+        firstName.toLowerCase().includes('roody') ||
+        lastName.toLowerCase().includes('dominique') ||
+        email.toLowerCase().includes('rmdguerrier') ||
+        (editingEmployee?.fullName || '').toLowerCase().includes('dominique');
 
-      const finalCompany = editingEmployee ? (company || editingEmployee.company || (isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.')) : (isRestrictedCarl ? 'Caribe Motors' : company);
-      const finalSite = site || (isRestrictedCarl ? 'Pétion-Ville' : '');
+      const isSubmittingObp = !isDom && (
+        isGraciamaUser ||
+        (company || '').toLowerCase().includes('obonprix') ||
+        fullName.toLowerCase().includes('gracia') ||
+        fullName.toLowerCase().includes('mia') ||
+        lastName.toLowerCase().includes('gracia') ||
+        firstName.toLowerCase().includes('gracia') ||
+        email.toLowerCase().includes('miaguerrier') ||
+        email.toLowerCase().includes('obonprix') ||
+        (editingEmployee?.company || '').toLowerCase().includes('obonprix') ||
+        (editingEmployee?.fullName || '').toLowerCase().includes('gracia') ||
+        (editingEmployee?.fullName || '').toLowerCase().includes('mia')
+      );
+
+      const finalCompany = isDom
+        ? 'Lebrun S.A.'
+        : (isSubmittingObp
+            ? 'Obonprix'
+            : (editingEmployee
+                ? (company || editingEmployee.company || (isRestrictedCarl ? 'Caribe Motors' : 'Lebrun S.A.'))
+                : (isRestrictedCarl ? 'Caribe Motors' : company)));
+
+      const finalSite = isDom
+        ? 'Delmas 52'
+        : (isSubmittingObp ? 'Delmas 83' : (site || (isRestrictedCarl ? 'Pétion-Ville' : 'Delmas 52')));
       const finalPhotoUrl = allowPhotoUpload ? photoUrl.trim() : (editingEmployee?.photoUrl || '');
+      const finalEmployeeId = isDom
+        ? 'EMP-LBN-001'
+        : (isSubmittingObp ? normalizeEmployeeId(employeeId, 'Obonprix') : employeeId);
 
       const payload = {
-        employeeId,
+        employeeId: finalEmployeeId,
         company: finalCompany,
         site: finalSite,
         lastName,
@@ -157,7 +232,7 @@ export default function EmployeeModal() {
         // L'email est facultatif : s'il est vide, il reste vide (aucune adresse inventée).
         email: email.trim(),
         phone,
-        department,
+        department: isSubmittingObp ? (department || 'Vente & Caisses') : department,
         jobTitle,
         bloodGroup: bloodGroup.trim(),
         nif: nif.trim() ? formatNif(nif) : '',
@@ -425,6 +500,10 @@ export default function EmployeeModal() {
                   <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
                     {company || editingEmployee?.company || 'Caribe Motors'}
                   </div>
+                ) : (isGraciamaUser || isObpRelated) ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
+                    Obonprix
+                  </div>
                 ) : (
                   <select
                     value={company}
@@ -451,20 +530,26 @@ export default function EmployeeModal() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1 whitespace-nowrap">
                   Site d&apos;affectation <span className="text-red-500">*</span>
                 </label>
-                <select
-                  required
-                  value={site}
-                  onChange={(e) => setSite(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-                >
-                  <option value="">Sélectionner un site...</option>
-                  <option value="Delmas 52">Delmas 52</option>
-                  <option value="Pétion-Ville">Pétion-Ville</option>
-                  <option value="Delmas 60">Delmas 60</option>
-                  <option value="Delmas 83">Delmas 83</option>
-                  <option value="Canapé-Vert">Canapé-Vert</option>
-                  <option value="Aéroport Depot">Aéroport Depot</option>
-                </select>
+                {(isGraciamaUser || isObpRelated) ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 text-xs font-semibold flex items-center">
+                    Delmas 83
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={site}
+                    onChange={(e) => setSite(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="">Sélectionner un site...</option>
+                    <option value="Delmas 52">Delmas 52</option>
+                    <option value="Pétion-Ville">Pétion-Ville</option>
+                    <option value="Delmas 60">Delmas 60</option>
+                    <option value="Delmas 83">Delmas 83</option>
+                    <option value="Canapé-Vert">Canapé-Vert</option>
+                    <option value="Aéroport Depot">Aéroport Depot</option>
+                  </select>
+                )}
               </div>
             </div>
 

@@ -5,6 +5,7 @@ import { useInventory } from '@/context/InventoryContext';
 import { PrinterAsset } from '@/types/inventory';
 import { X, Printer, ShieldCheck, Tag, MapPin, Building, Plus } from 'lucide-react';
 import { getCompanyCode, generatePrinterId } from '@/lib/badgeBrands';
+import { isGraciama } from '@/lib/permissions';
 
 export default function PrinterModal() {
   const {
@@ -13,8 +14,11 @@ export default function PrinterModal() {
     editingPrinter,
     addPrinter,
     updatePrinter,
-    printers
+    printers,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [formData, setFormData] = useState<{
     company: string;
@@ -42,9 +46,10 @@ export default function PrinterModal() {
 
   useEffect(() => {
     if (editingPrinter) {
+      const isObp = isGraciamaUser || (editingPrinter.company || '').toLowerCase().includes('obonprix');
       setFormData({
-        company: editingPrinter.company || 'Lebrun S.A.',
-        site: editingPrinter.site || '',
+        company: isObp ? 'Obonprix' : (editingPrinter.company || 'Lebrun S.A.'),
+        site: isObp ? 'Delmas 83' : (editingPrinter.site || ''),
         name: editingPrinter.name || '',
         brand: editingPrinter.brand || '',
         model: editingPrinter.model || '',
@@ -56,8 +61,8 @@ export default function PrinterModal() {
       });
     } else {
       setFormData({
-        company: 'Lebrun S.A.',
-        site: '',
+        company: isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.',
+        site: isGraciamaUser ? 'Delmas 83' : '',
         name: '',
         brand: '',
         model: '',
@@ -68,7 +73,7 @@ export default function PrinterModal() {
         observations: ''
       });
     }
-  }, [editingPrinter, isPrinterModalOpen]);
+  }, [editingPrinter, isPrinterModalOpen, isGraciamaUser]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -81,15 +86,23 @@ export default function PrinterModal() {
 
     setIsSubmitting(true);
     try {
+      const finalCompany = isGraciamaUser ? 'Obonprix' : formData.company;
+      const finalSite = isGraciamaUser ? 'Delmas 83' : formData.site;
       let res;
       if (editingPrinter) {
-        res = await updatePrinter(editingPrinter.id, formData);
+        res = await updatePrinter(editingPrinter.id, {
+          ...formData,
+          company: finalCompany,
+          site: finalSite
+        });
       } else {
         const existingTags = printers.map(p => p.assetTag);
-        const tag = generatePrinterId(formData.company, existingTags);
+        const tag = generatePrinterId(finalCompany, existingTags);
 
         res = await addPrinter({
           ...formData,
+          company: finalCompany,
+          site: finalSite,
           assetTag: tag
         });
       }
@@ -141,38 +154,50 @@ export default function PrinterModal() {
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Société Titulaire <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
-                >
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                  <option value="Obonprix">Obonprix</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-semibold flex items-center text-xs">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                  >
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Emplacement / Site <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.site}
-                  required
-                  onChange={(e) => setFormData({ ...formData, site: e.target.value })}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
-                >
-                  <option value="">Sélectionner un site...</option>
-                  <option value="Delmas 52">Delmas 52</option>
-                  <option value="Pétion-Ville">Pétion-Ville</option>
-                  <option value="Delmas 60">Delmas 60</option>
-                  <option value="Delmas 83">Delmas 83</option>
-                  <option value="Canapé-Vert">Canapé-Vert</option>
-                  <option value="Aéroport Depot">Aéroport Depot</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-semibold flex items-center text-xs">
+                    Delmas 83
+                  </div>
+                ) : (
+                  <select
+                    value={formData.site}
+                    required
+                    onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                  >
+                    <option value="">Sélectionner un site...</option>
+                    <option value="Delmas 52">Delmas 52</option>
+                    <option value="Pétion-Ville">Pétion-Ville</option>
+                    <option value="Delmas 60">Delmas 60</option>
+                    <option value="Delmas 83">Delmas 83</option>
+                    <option value="Canapé-Vert">Canapé-Vert</option>
+                    <option value="Aéroport Depot">Aéroport Depot</option>
+                  </select>
+                )}
               </div>
             </div>
 

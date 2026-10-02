@@ -148,10 +148,10 @@ export default function LoginPage({ onSuccess, isStandalonePage = false }: Login
                 </div>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="username@gmail.com"
+                  placeholder="nom@entreprise.com ou identifiant"
                   required
 
                   className="w-full pl-9 pr-3 py-2 bg-slate-50/70 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-slate-700 focus:ring-1 focus:ring-slate-700 transition-colors"

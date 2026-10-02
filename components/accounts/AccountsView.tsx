@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 const DEFAULT_ROWS_PER_PAGE = 50;
 
@@ -21,8 +22,11 @@ export default function AccountsView() {
     openAccountModal,
     deleteITAccount,
     exportCSV,
-    searchQuery: globalSearch
+    searchQuery: globalSearch,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [search, setSearch] = useState('');
   const [deletingAccount, setDeletingAccount] = useState<ITAccount | null>(null);
@@ -32,20 +36,33 @@ export default function AccountsView() {
   // Combined search: header search + view search
   const activeSearch = search || globalSearch || '';
 
+  // Scoped accounts for Obonprix
+  const scopedAccounts = useMemo(() => {
+    if (isGraciamaUser) {
+      return itAccounts.filter(account => {
+        const c = (account.company || '').toLowerCase();
+        const u = (account.userId || '').toUpperCase();
+        const email = (account.email || '').toLowerCase();
+        return c.includes('obonprix') || c.includes('bonprix') || u.includes('OBP') || email.includes('obonprix');
+      });
+    }
+    return itAccounts;
+  }, [itAccounts, isGraciamaUser]);
+
   // KPI Calculations
   const stats = useMemo(() => {
-    const total = itAccounts.length;
-    const withPassword = itAccounts.filter(a => a.hasPassword).length;
+    const total = scopedAccounts.length;
+    const withPassword = scopedAccounts.filter(a => a.hasPassword).length;
 
     return {
       total,
       withPassword
     };
-  }, [itAccounts]);
+  }, [scopedAccounts]);
 
   // Filtering
   const filteredAccounts = useMemo(() => {
-    return itAccounts.filter(account => {
+    return scopedAccounts.filter(account => {
       if (activeSearch.trim()) {
         const query = activeSearch.toLowerCase();
         const matchesName = account.fullName.toLowerCase().includes(query);
@@ -62,7 +79,7 @@ export default function AccountsView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [itAccounts, activeSearch]);
+  }, [scopedAccounts, activeSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAccounts.length / rowsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { UPSAsset } from '@/types/inventory';
 import { X, Zap, BatteryCharging, ShieldCheck, Tag, MapPin, Building, Plus } from 'lucide-react';
+import { generateUPSId } from '@/lib/badgeBrands';
+import { isGraciama } from '@/lib/permissions';
 
 export default function UPSModal() {
   const {
@@ -12,8 +14,11 @@ export default function UPSModal() {
     editingUPSAsset,
     addUPSAsset,
     updateUPSAsset,
-    upsAssets
+    upsAssets,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [company, setCompany] = useState('Lebrun S.A.');
   const [site, setSite] = useState('');
@@ -30,8 +35,9 @@ export default function UPSModal() {
   useEffect(() => {
     if (!isUPSModalOpen) return;
     if (editingUPSAsset) {
-      setCompany(editingUPSAsset.company || 'Lebrun S.A.');
-      setSite(editingUPSAsset.site || '');
+      const isObp = isGraciamaUser || (editingUPSAsset.company || '').toLowerCase().includes('obonprix');
+      setCompany(isObp ? 'Obonprix' : (editingUPSAsset.company || 'Lebrun S.A.'));
+      setSite(isObp ? 'Delmas 83' : (editingUPSAsset.site || ''));
       setName(editingUPSAsset.name || '');
       setBrand(editingUPSAsset.brand || 'Forza');
       setModel(editingUPSAsset.model || '');
@@ -41,11 +47,12 @@ export default function UPSModal() {
       setObservations(editingUPSAsset.observations || '');
       setAssetTag(editingUPSAsset.assetTag || '');
     } else {
-      const code = 'LEB';
-      const count = upsAssets.length + 1;
-      setAssetTag(`UPS-${code}-${count.toString().padStart(3, '0')}`);
-      setCompany('Lebrun S.A.');
-      setSite('');
+      const initComp = isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.';
+      const initSite = isGraciamaUser ? 'Delmas 83' : '';
+      const existingTags = upsAssets.map(u => u.assetTag);
+      setAssetTag(generateUPSId(initComp, existingTags));
+      setCompany(initComp);
+      setSite(initSite);
       setName('');
       setBrand('Forza');
       setModel('');
@@ -54,7 +61,13 @@ export default function UPSModal() {
       setStatus('En fonctionnement');
       setObservations('');
     }
-  }, [editingUPSAsset, isUPSModalOpen]);
+  }, [editingUPSAsset, isUPSModalOpen, isGraciamaUser, upsAssets]);
+
+  const handleCompanyChange = (newComp: string) => {
+    setCompany(newComp);
+    const existingTags = upsAssets.map(u => u.assetTag);
+    setAssetTag(generateUPSId(newComp, existingTags));
+  };
 
   if (!isUPSModalOpen) return null;
 
@@ -64,12 +77,15 @@ export default function UPSModal() {
     setIsSubmitting(true);
 
     try {
-      const tag = assetTag.trim() || `UPS-${company.startsWith('Auto') ? 'AUT' : 'LEB'}-${Date.now().toString().slice(-4)}`;
+      const finalComp = isGraciamaUser ? 'Obonprix' : company;
+      const finalSite = isGraciamaUser ? 'Delmas 83' : site;
+      const existingTags = upsAssets.map(u => u.assetTag);
+      const tag = assetTag.trim() || generateUPSId(finalComp, existingTags);
 
       const payload: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'> = {
         assetTag: tag,
-        company,
-        site,
+        company: finalComp,
+        site: finalSite,
         name: name.trim() || `Onduleur ${brand} ${model}`.trim(),
         brand: brand.trim() || 'Forza',
         model: model.trim() || 'NT-1011D',
@@ -148,38 +164,50 @@ export default function UPSModal() {
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Société Titulaire <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
-                >
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                  <option value="Obonprix">Obonprix</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-semibold flex items-center text-xs">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={company}
+                    onChange={(e) => handleCompanyChange(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                  >
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Emplacement / Site <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={site}
-                  required
-                  onChange={(e) => setSite(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
-                >
-                  <option value="">Sélectionner un site...</option>
-                  <option value="Delmas 52">Delmas 52</option>
-                  <option value="Pétion-Ville">Pétion-Ville</option>
-                  <option value="Delmas 60">Delmas 60</option>
-                  <option value="Delmas 83">Delmas 83</option>
-                  <option value="Canapé-Vert">Canapé-Vert</option>
-                  <option value="Aéroport Depot">Aéroport Depot</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-semibold flex items-center text-xs">
+                    Delmas 83
+                  </div>
+                ) : (
+                  <select
+                    value={site}
+                    required
+                    onChange={(e) => setSite(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                  >
+                    <option value="">Sélectionner un site...</option>
+                    <option value="Delmas 52">Delmas 52</option>
+                    <option value="Pétion-Ville">Pétion-Ville</option>
+                    <option value="Delmas 60">Delmas 60</option>
+                    <option value="Delmas 83">Delmas 83</option>
+                    <option value="Canapé-Vert">Canapé-Vert</option>
+                    <option value="Aéroport Depot">Aéroport Depot</option>
+                  </select>
+                )}
               </div>
             </div>
 

@@ -20,17 +20,28 @@ import {
 import UPSDetailsModal from './UPSDetailsModal';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 export default function UPSView() {
-  const { upsAssets, openUPSModal, deleteUPSAsset, exportCSV } = useInventory();
+  const { upsAssets, currentUser, openUPSModal, deleteUPSAsset, exportCSV } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [companyFilter, setCompanyFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState(isGraciamaUser ? 'Obonprix' : 'all');
   const [selectedAssetForDetails, setSelectedAssetForDetails] = useState<UPSAsset | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<UPSAsset | null>(null);
 
   const filteredUPS = useMemo(() => {
     return upsAssets.filter(item => {
+      if (isGraciamaUser) {
+        const comp = (item.company || '').toLowerCase();
+        const site = (item.site || '').toLowerCase();
+        const tag = (item.assetTag || '').toUpperCase();
+        const name = (item.name || '').toLowerCase();
+        if (!comp.includes('obonprix') && !comp.includes('bonprix') && !site.includes('83') && !tag.includes('OBP') && !name.includes('obonprix')) {
+          return false;
+        }
+      }
       if (companyFilter !== 'all' && !item.company?.toLowerCase().includes(companyFilter.toLowerCase())) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -50,14 +61,15 @@ export default function UPSView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [upsAssets, companyFilter, searchQuery]);
+  }, [upsAssets, companyFilter, searchQuery, isGraciamaUser]);
 
   const stats = useMemo(() => {
-    const total = upsAssets.length;
-    const forza = upsAssets.filter(u => u.brand.toLowerCase().includes('forza')).length;
-    const apc = upsAssets.filter(u => u.brand.toLowerCase().includes('apc')).length;
+    const list = isGraciamaUser ? filteredUPS : upsAssets;
+    const total = list.length;
+    const forza = list.filter(u => u.brand.toLowerCase().includes('forza')).length;
+    const apc = list.filter(u => u.brand.toLowerCase().includes('apc')).length;
     return { total, forza, apc };
-  }, [upsAssets]);
+  }, [upsAssets, filteredUPS, isGraciamaUser]);
 
   const handleExportCSV = () => {
     exportCSV('ups');
@@ -242,19 +254,25 @@ export default function UPSView() {
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
-              >
-                <option value="all">Toutes les entreprises</option>
-                <option value="Lebrun">Lebrun S.A.</option>
-                <option value="Autobiz">Autobiz S.A.</option>
-                <option value="Caribe">Caribe Motors</option>
-                <option value="Leader">Leader Foods</option>
-                <option value="Tirezone">Tirezone</option>
-                <option value="Obonprix">Obonprix</option>
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 font-semibold">
+                  Obonprix
+                </div>
+              ) : (
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                >
+                  <option value="all">Toutes les entreprises</option>
+                  <option value="Lebrun">Lebrun S.A.</option>
+                  <option value="Autobiz">Autobiz S.A.</option>
+                  <option value="Caribe">Caribe Motors</option>
+                  <option value="Leader">Leader Foods</option>
+                  <option value="Tirezone">Tirezone</option>
+                  <option value="Obonprix">Obonprix</option>
+                </select>
+              )}
             </div>
           </div>
         }

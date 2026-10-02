@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useInventory } from '@/context/InventoryContext';
+import { isGraciama } from '@/lib/permissions';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { 
   Activity, 
@@ -67,6 +68,7 @@ function AvailabilityCounter({
 
 export default function OverviewCharts() {
   const { 
+    currentUser,
     printers, 
     itAssets, 
     employees, 
@@ -74,6 +76,8 @@ export default function OverviewCharts() {
     upsAssets, 
     applicationAccounts 
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   // Animation replay key & state for dynamic presentation
   const [animationKey, setAnimationKey] = useState(0);
@@ -159,19 +163,83 @@ export default function OverviewCharts() {
     return () => observer.disconnect();
   }, [animationKey]);
 
+  // Matching helper
+  const matchCompany = (comp: string | undefined, target: string, tag?: string, email?: string) => {
+    const t = target.toLowerCase();
+    const c = (comp || '').toLowerCase();
+    const tg = (tag || '').toUpperCase();
+    const em = (email || '').toLowerCase();
+
+    if (t.includes('caribe') && c.includes('caribe')) return true;
+    if (t.includes('leader') && c.includes('leader')) return true;
+    if (t.includes('tirezone') && c.includes('tire')) return true;
+    if (t.includes('autobiz') && c.includes('auto')) return true;
+    if (t.includes('obonprix') && (c.includes('obonprix') || c.includes('bonprix') || c.includes('obp'))) return true;
+    if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe') && !c.includes('obonprix')) return true;
+
+    if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('obonprix') || c.includes('lebrun')) {
+      return false;
+    }
+
+    if (t.includes('caribe')) return tg.includes('CAR') || em.includes('caribe');
+    if (t.includes('leader')) return tg.includes('LFD') || em.includes('leader');
+    if (t.includes('tirezone')) return tg.includes('TRZ') || em.includes('tirezone');
+    if (t.includes('autobiz')) return tg.includes('AUT') || em.includes('autobiz');
+    if (t.includes('obonprix')) return tg.includes('OBP') || em.includes('obonprix');
+    if (t.includes('lebrun')) return tg.includes('LEB') || em.includes('lebrun');
+
+    return c.includes(t);
+  };
+
+  // Scoped datasets for Graciama (Obonprix 83) or General Multi-company
+  const activePrinters = useMemo(() => {
+    return isGraciamaUser ? printers.filter(p => matchCompany(p.company, 'Obonprix')) : printers;
+  }, [printers, isGraciamaUser]);
+
+  const activeIT = useMemo(() => {
+    return isGraciamaUser 
+      ? itAssets.filter(i => {
+          const emp = employees.find(e => e.id === i.assignedPersonnelId || e.fullName === i.assignedTo);
+          return matchCompany(i.company || emp?.company, 'Obonprix', i.assetTag, i.assignedEmail) || i.location?.includes('83');
+        })
+      : itAssets;
+  }, [itAssets, employees, isGraciamaUser]);
+
+  const activeEmployees = useMemo(() => {
+    return isGraciamaUser ? employees.filter(e => matchCompany(e.company, 'Obonprix')) : employees;
+  }, [employees, isGraciamaUser]);
+
+  const activeNetwork = useMemo(() => {
+    return isGraciamaUser
+      ? (networkAssets || []).filter(n => matchCompany(n.company, 'Obonprix') || n.site?.includes('83') || n.assetTag?.includes('OBP') || n.hostname?.toLowerCase().includes('obonprix') || n.model?.toLowerCase().includes('obonprix'))
+      : (networkAssets || []);
+  }, [networkAssets, isGraciamaUser]);
+
+  const activeUPS = useMemo(() => {
+    return isGraciamaUser
+      ? (upsAssets || []).filter(u => matchCompany(u.company, 'Obonprix') || u.site?.includes('83') || u.assetTag?.includes('OBP') || u.name?.toLowerCase().includes('obonprix'))
+      : (upsAssets || []);
+  }, [upsAssets, isGraciamaUser]);
+
+  const activeApps = useMemo(() => {
+    return isGraciamaUser
+      ? (applicationAccounts || []).filter(a => matchCompany(a.organization, 'Obonprix') || a.username?.toLowerCase().includes('graciama') || a.username?.toLowerCase().includes('obonprix'))
+      : (applicationAccounts || []);
+  }, [applicationAccounts, isGraciamaUser]);
+
   // 1. Data: Material condition
-  const itGood = itAssets.filter(a => a.status === 'in_use').length;
-  const itReserve = itAssets.filter(a => a.status === 'available').length;
-  const itMaint = itAssets.filter(a => a.status === 'maintenance').length;
+  const itGood = activeIT.filter(a => a.status === 'in_use').length;
+  const itReserve = activeIT.filter(a => a.status === 'available').length;
+  const itMaint = activeIT.filter(a => a.status === 'maintenance').length;
 
-  const prnGood = printers.filter(p => p.status === 'Fonctionnel').length;
-  const prnMaint = printers.filter(p => p.status === 'Maintenance' || p.status === 'En panne').length;
+  const prnGood = activePrinters.filter(p => p.status === 'Fonctionnel').length;
+  const prnMaint = activePrinters.filter(p => p.status === 'Maintenance' || p.status === 'En panne').length;
 
-  const netGood = (networkAssets || []).filter(n => n.status !== 'En panne' && n.status !== 'Maintenance').length;
-  const netMaint = (networkAssets || []).filter(n => n.status === 'En panne' || n.status === 'Maintenance').length;
+  const netGood = activeNetwork.filter(n => n.status !== 'En panne' && n.status !== 'Maintenance').length;
+  const netMaint = activeNetwork.filter(n => n.status === 'En panne' || n.status === 'Maintenance').length;
 
-  const upsGood = (upsAssets || []).filter(u => u.status !== 'En panne' && u.status !== 'Maintenance').length;
-  const upsMaint = (upsAssets || []).filter(u => u.status === 'En panne' || u.status === 'Maintenance').length;
+  const upsGood = activeUPS.filter(u => u.status !== 'En panne' && u.status !== 'Maintenance').length;
+  const upsMaint = activeUPS.filter(u => u.status === 'En panne' || u.status === 'Maintenance').length;
 
   const totalGood = itGood + prnGood + netGood + upsGood;
   const totalReserve = itReserve;
@@ -212,44 +280,102 @@ export default function OverviewCharts() {
   const petionUPS = (upsAssets || []).filter(u => u.site?.toLowerCase().includes('pétion') || u.site?.toLowerCase().includes('petion')).length;
   const petionEmp = employees.filter(e => e.location?.toLowerCase().includes('pétion') || e.location?.toLowerCase().includes('petion')).length;
 
+  // 4. Data: Categories
+  const totalIT = activeIT.length;
+  const totalPrinters = activePrinters.length;
+  const totalNetwork = isGraciamaUser ? activeNetwork.length : (activeNetwork.length || 5);
+  const totalUPS = isGraciamaUser ? activeUPS.length : (activeUPS.length || 7);
+  const totalEmployees = activeEmployees.length;
+  const totalAppAccounts = isGraciamaUser ? activeApps.length : (activeApps.length || 13);
+
+  const centersLabels = useMemo(() => {
+    return isGraciamaUser ? ['Delmas 83 (Magasin)'] : ['Delmas 52 (Siège)', 'Pétion-Ville', 'Aéroport Depot'];
+  }, [isGraciamaUser]);
+
+  const centersDatasets = useMemo(() => {
+    if (isGraciamaUser) {
+      return [
+        {
+          label: 'Postes IT',
+          data: [totalIT],
+          backgroundColor: '#0f172a',
+          borderRadius: 4
+        },
+        {
+          label: 'Imprimantes',
+          data: [totalPrinters],
+          backgroundColor: '#334155',
+          borderRadius: 4
+        },
+        {
+          label: 'Réseau & UPS',
+          data: [totalNetwork + totalUPS],
+          backgroundColor: '#64748b',
+          borderRadius: 4
+        },
+        {
+          label: 'Personnel',
+          data: [totalEmployees],
+          backgroundColor: '#cbd5e1',
+          borderRadius: 4
+        }
+      ];
+    }
+    return [
+      {
+        label: 'Postes IT',
+        data: [delmasIT, petionIT, aeroIT],
+        backgroundColor: '#0f172a',
+        borderRadius: 4
+      },
+      {
+        label: 'Imprimantes',
+        data: [delmasPrn, petionPrn, aeroPrn],
+        backgroundColor: '#334155',
+        borderRadius: 4
+      },
+      {
+        label: 'Réseau & UPS',
+        data: [delmasNet + delmasUPS, petionNet + petionUPS, aeroNet + aeroUPS],
+        backgroundColor: '#64748b',
+        borderRadius: 4
+      },
+      {
+        label: 'Personnel',
+        data: [delmasEmp, petionEmp, aeroEmp],
+        backgroundColor: '#cbd5e1',
+        borderRadius: 4
+      }
+    ];
+  }, [isGraciamaUser, totalIT, totalPrinters, totalNetwork, totalUPS, totalEmployees, delmasIT, petionIT, aeroIT, delmasPrn, petionPrn, aeroPrn, delmasNet, delmasUPS, petionNet, petionUPS, aeroNet, aeroUPS, delmasEmp, petionEmp, aeroEmp]);
+
   // 3. Data: Company breakdown (memoized to keep reference stable and prevent chart redraws)
-  const companies = useMemo(() => [
-    { name: 'Lebrun S.A.', tag: 'LEB' },
-    { name: 'Autobiz', tag: 'AUT' },
-    { name: 'Caribe Motors', tag: 'CAR' },
-    { name: 'Leader Foods', tag: 'LFD' },
-    { name: 'Tirezone', tag: 'TRZ' },
-    { name: 'Obonprix', tag: 'OBP' }
-  ], []);
+  const companies = useMemo(() => {
+    if (isGraciamaUser) {
+      return [{ name: 'Obonprix', tag: 'OBP' }];
+    }
+    return [
+      { name: 'Lebrun S.A.', tag: 'LEB' },
+      { name: 'Autobiz', tag: 'AUT' },
+      { name: 'Caribe Motors', tag: 'CAR' },
+      { name: 'Leader Foods', tag: 'LFD' },
+      { name: 'Tirezone', tag: 'TRZ' },
+      { name: 'Obonprix', tag: 'OBP' }
+    ];
+  }, [isGraciamaUser]);
 
   const companyData = useMemo(() => {
-    const matchCompany = (comp: string | undefined, target: string, tag?: string, email?: string) => {
-      const t = target.toLowerCase();
-      const c = (comp || '').toLowerCase();
-      const tg = (tag || '').toUpperCase();
-      const em = (email || '').toLowerCase();
-
-      if (t.includes('caribe') && c.includes('caribe')) return true;
-      if (t.includes('leader') && c.includes('leader')) return true;
-      if (t.includes('tirezone') && c.includes('tire')) return true;
-      if (t.includes('autobiz') && c.includes('auto')) return true;
-      if (t.includes('obonprix') && (c.includes('obonprix') || c.includes('bonprix') || c.includes('obp'))) return true;
-      if (t.includes('lebrun') && c.includes('lebrun') && !c.includes('auto') && !c.includes('caribe') && !c.includes('obonprix')) return true;
-
-      if (c.includes('caribe') || c.includes('leader') || c.includes('tire') || c.includes('auto') || c.includes('obonprix') || c.includes('lebrun')) {
-        return false;
-      }
-
-      if (t.includes('caribe')) return tg.includes('CAR') || em.includes('caribe');
-      if (t.includes('leader')) return tg.includes('LFD') || em.includes('leader');
-      if (t.includes('tirezone')) return tg.includes('TRZ') || em.includes('tirezone');
-      if (t.includes('autobiz')) return tg.includes('AUT') || em.includes('autobiz');
-      if (t.includes('obonprix')) return tg.includes('OBP') || em.includes('obonprix');
-      if (t.includes('lebrun')) return tg.includes('LEB') || em.includes('lebrun');
-
-      return c.includes(t);
-    };
-
+    if (isGraciamaUser) {
+      return [
+        {
+          name: 'Obonprix',
+          printers: totalPrinters,
+          it: totalIT,
+          employees: totalEmployees,
+          total: totalPrinters + totalIT + totalEmployees
+        }
+      ];
+    }
     return companies.map(c => {
       const cPrinters = printers.filter(p => matchCompany(p.company, c.name)).length;
       const cIT = itAssets.filter(i => {
@@ -265,26 +391,45 @@ export default function OverviewCharts() {
         total: cPrinters + cIT + cEmp
       };
     });
-  }, [companies, printers, itAssets, employees]);
+  }, [isGraciamaUser, totalPrinters, totalIT, totalEmployees, companies, printers, itAssets, employees]);
 
-  // 4. Data: Categories
-  const totalIT = itAssets.length;
-  const totalPrinters = printers.length;
-  const totalNetwork = networkAssets?.length || 5;
-  const totalUPS = upsAssets?.length || 7;
-  const totalEmployees = employees.length;
-  const totalAppAccounts = applicationAccounts?.length || 13;
+  const companyChartLabels = useMemo(() => {
+    return companyData.map(c => c.name);
+  }, [companyData]);
+
+  const companyChartDatasets = useMemo(() => {
+    return [
+      {
+        label: 'Imprimantes',
+        data: companyData.map(c => c.printers),
+        backgroundColor: '#1e293b',
+        borderRadius: 3
+      },
+      {
+        label: 'Postes IT',
+        data: companyData.map(c => c.it),
+        backgroundColor: '#475569',
+        borderRadius: 3
+      },
+      {
+        label: 'Collaborateurs',
+        data: companyData.map(c => c.employees),
+        backgroundColor: '#94a3b8',
+        borderRadius: 3
+      }
+    ];
+  }, [companyData]);
 
   // 5. Data: Printer typology & connectivity
-  const multiPrn = printers.filter(p => p.type.toLowerCase().includes('multi')).length;
-  const laserPrn = printers.filter(p => p.type.toLowerCase().includes('laser') && !p.type.toLowerCase().includes('cheque')).length;
-  const chequePrn = printers.filter(p => p.type.toLowerCase().includes('cheque')).length;
-  const netConnectedPrn = printers.filter(p => p.ipAddress && p.ipAddress !== 'N/A').length;
+  const multiPrn = activePrinters.filter(p => p.type.toLowerCase().includes('multi')).length;
+  const laserPrn = activePrinters.filter(p => p.type.toLowerCase().includes('laser') && !p.type.toLowerCase().includes('cheque')).length;
+  const chequePrn = activePrinters.filter(p => p.type.toLowerCase().includes('cheque') || p.type.toLowerCase().includes('ticket')).length;
+  const netConnectedPrn = activePrinters.filter(p => p.ipAddress && p.ipAddress !== 'N/A').length;
 
   // 6. Data: IT CPU & Specs
-  const i5Count = itAssets.filter(a => (a.cpu || '').toLowerCase().includes('i5')).length;
-  const i3Count = itAssets.filter(a => (a.cpu || '').toLowerCase().includes('i3')).length;
-  const i7Count = itAssets.filter(a => (a.cpu || '').toLowerCase().includes('i7') || (a.cpu || '').toLowerCase().includes('xeon')).length;
+  const i5Count = activeIT.filter(a => (a.cpu || '').toLowerCase().includes('i5')).length;
+  const i3Count = activeIT.filter(a => (a.cpu || '').toLowerCase().includes('i3')).length;
+  const i7Count = activeIT.filter(a => (a.cpu || '').toLowerCase().includes('i7') || (a.cpu || '').toLowerCase().includes('xeon')).length;
   const otherCpu = Math.max(0, totalIT - (i5Count + i3Count + i7Count));
 
   // --- CHART 1: Material Condition (Doughnut) ---
@@ -347,33 +492,8 @@ export default function OverviewCharts() {
     const chart = new ChartJS(ctx, {
       type: 'bar',
       data: {
-        labels: ['Delmas 52 (Siège)', 'Pétion-Ville', 'Aéroport Depot'],
-        datasets: [
-          {
-            label: 'Postes IT',
-            data: [delmasIT, petionIT, aeroIT],
-            backgroundColor: '#0f172a',
-            borderRadius: 4
-          },
-          {
-            label: 'Imprimantes',
-            data: [delmasPrn, petionPrn, aeroPrn],
-            backgroundColor: '#334155',
-            borderRadius: 4
-          },
-          {
-            label: 'Réseau & UPS',
-            data: [delmasNet + delmasUPS, petionNet + petionUPS, aeroNet + aeroUPS],
-            backgroundColor: '#64748b',
-            borderRadius: 4
-          },
-          {
-            label: 'Personnel',
-            data: [delmasEmp, petionEmp, aeroEmp],
-            backgroundColor: '#cbd5e1',
-            borderRadius: 4
-          }
-        ]
+        labels: centersLabels,
+        datasets: centersDatasets
       },
       options: {
         responsive: true,
@@ -416,9 +536,9 @@ export default function OverviewCharts() {
     });
 
     return () => chart.destroy();
-  }, [delmasIT, petionIT, aeroIT, delmasPrn, petionPrn, aeroPrn, delmasNet, delmasUPS, petionNet, petionUPS, aeroNet, aeroUPS, delmasEmp, petionEmp, aeroEmp, inView.chart2, animationKey]);
+  }, [centersLabels, centersDatasets, inView.chart2, animationKey]);
 
-  // --- CHART 3: Volume by Company (Stacked Bar) ---
+  // --- CHART 3: Volume by Company / Pôles Obonprix (Stacked Bar) ---
   useEffect(() => {
     if (!inView.chart3 || !companyChartRef.current) return;
     const ctx = companyChartRef.current.getContext('2d');
@@ -427,27 +547,8 @@ export default function OverviewCharts() {
     const chart = new ChartJS(ctx, {
       type: 'bar',
       data: {
-        labels: companyData.map(c => c.name),
-        datasets: [
-          {
-            label: 'Imprimantes',
-            data: companyData.map(c => c.printers),
-            backgroundColor: '#1e293b',
-            borderRadius: 3
-          },
-          {
-            label: 'Postes IT',
-            data: companyData.map(c => c.it),
-            backgroundColor: '#475569',
-            borderRadius: 3
-          },
-          {
-            label: 'Collaborateurs',
-            data: companyData.map(c => c.employees),
-            backgroundColor: '#94a3b8',
-            borderRadius: 3
-          }
-        ]
+        labels: companyChartLabels,
+        datasets: companyChartDatasets
       },
       options: {
         responsive: true,
@@ -458,7 +559,7 @@ export default function OverviewCharts() {
           delay: (context: any) => {
             let delay = 0;
             if (context.type === 'data' && context.mode === 'default') {
-              // Grouped by company column so stacked layers rise smoothly together without jumping
+              // Grouped by column so stacked layers rise smoothly together without jumping
               delay = context.dataIndex * 180;
             }
             return delay;
@@ -493,7 +594,7 @@ export default function OverviewCharts() {
     });
 
     return () => chart.destroy();
-  }, [companyData, inView.chart3, animationKey]);
+  }, [companyChartLabels, companyChartDatasets, inView.chart3, animationKey]);
 
   // --- CHART 4: Categories Breakdown (Doughnut) ---
   useEffect(() => {
@@ -704,8 +805,12 @@ export default function OverviewCharts() {
               <div className="flex items-center gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-800">État & Santé des Matériaux</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">Supervision de {totalHardware} équipements physiques</p>
+                  <h3 className="text-xs font-semibold text-slate-800">
+                    État & Santé des Matériaux
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-normal">
+                    Supervision de {totalHardware} équipements physiques
+                  </p>
                 </div>
               </div>
               <span className="text-xs text-slate-500 font-semibold font-mono">
@@ -746,11 +851,17 @@ export default function OverviewCharts() {
               <div className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-800">Centres & Environnements d&apos;Implantation</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">Volume d&apos;équipements par centre opérationnel</p>
+                  <h3 className="text-xs font-semibold text-slate-800">
+                    Centres & Environnements d'Implantation
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-normal">
+                    Volume d'équipements par centre opérationnel
+                  </p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 font-normal">Delmas 52 • Pétion-Ville • Aéroport</span>
+              <span className="text-xs text-slate-400 font-normal">
+                {isGraciamaUser ? 'Delmas 83' : 'Delmas 52 • Pétion-Ville • Aéroport'}
+              </span>
             </div>
 
             <div className="relative h-64 w-full pt-2">
@@ -758,11 +869,17 @@ export default function OverviewCharts() {
             </div>
           </div>
 
-          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-400 font-normal">
-            <span>Siège : <span className="text-slate-600 font-medium">Delmas 52</span> ({delmasIT + delmasPrn + delmasNet + delmasUPS} équipements)</span>
-            <span>Succursale : <span className="text-slate-600 font-medium">Pétion-Ville</span> ({petionIT + petionPrn + petionNet + petionUPS} équipements)</span>
-            <span>Dépôt : <span className="text-slate-600 font-medium">Aéroport</span> ({aeroIT + aeroPrn + aeroNet + aeroUPS} équipements)</span>
-          </div>
+          {isGraciamaUser ? (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-400 font-normal">
+              <span>Magasin : <span className="text-slate-600 font-medium">Delmas 83</span> ({totalIT + totalPrinters + totalNetwork + totalUPS} équipements • {totalEmployees} collaborateur)</span>
+            </div>
+          ) : (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-400 font-normal">
+              <span>Siège : <span className="text-slate-600 font-medium">Delmas 52</span> ({delmasIT + delmasPrn + delmasNet + delmasUPS} équipements)</span>
+              <span>Succursale : <span className="text-slate-600 font-medium">Pétion-Ville</span> ({petionIT + petionPrn + petionNet + petionUPS} équipements)</span>
+              <span>Dépôt : <span className="text-slate-600 font-medium">Aéroport</span> ({aeroIT + aeroPrn + aeroNet + aeroUPS} équipements)</span>
+            </div>
+          )}
         </div>
 
         {/* GRAPH 3: Volume & Charge par Filiale */}
@@ -778,11 +895,17 @@ export default function OverviewCharts() {
               <div className="flex items-center gap-2.5">
                 <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-800">Volume & Charge par Filiale</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">Imprimantes, postes IT et collaborateurs</p>
+                  <h3 className="text-xs font-semibold text-slate-800">
+                    Volume & Charge par Filiale
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-normal">
+                    Imprimantes, postes IT et collaborateurs
+                  </p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 font-normal">5 sociétés</span>
+              <span className="text-xs text-slate-400 font-normal">
+                {isGraciamaUser ? 'Obonprix' : '6 sociétés'}
+              </span>
             </div>
 
             <div className="relative h-64 w-full pt-2">
@@ -790,10 +913,17 @@ export default function OverviewCharts() {
             </div>
           </div>
 
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-normal">
-            <span>Dotation majeure : <span className="text-slate-600 font-medium">Lebrun S.A.</span></span>
-            <span>Deuxième pôle : <span className="text-slate-600 font-medium">Autobiz</span></span>
-          </div>
+          {isGraciamaUser ? (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-normal">
+              <span>Société : <span className="text-slate-600 font-medium">Obonprix</span></span>
+              <span>Implantation : <span className="text-slate-600 font-medium">Delmas 83</span></span>
+            </div>
+          ) : (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-normal">
+              <span>Dotation majeure : <span className="text-slate-600 font-medium">Lebrun S.A.</span></span>
+              <span>Deuxième pôle : <span className="text-slate-600 font-medium">Autobiz</span></span>
+            </div>
+          )}
         </div>
 
         {/* GRAPH 4: Répartition Globale par Famille */}
@@ -809,11 +939,17 @@ export default function OverviewCharts() {
               <div className="flex items-center gap-2.5">
                 <PieChart className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-800">Répartition Globale par Famille</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">{totalIT + totalPrinters + totalNetwork + totalUPS + totalEmployees + totalAppAccounts} éléments suivis</p>
+                  <h3 className="text-xs font-semibold text-slate-800">
+                    Répartition Globale par Famille
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-normal">
+                    {totalIT + totalPrinters + totalNetwork + totalUPS + totalEmployees + totalAppAccounts} éléments suivis
+                  </p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 font-normal">6 catégories</span>
+              <span className="text-xs text-slate-400 font-normal">
+                6 catégories
+              </span>
             </div>
 
             <div className="relative h-64 w-full pt-2 flex items-center justify-center">
@@ -844,7 +980,9 @@ export default function OverviewCharts() {
                 <Printer className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
                   <h3 className="text-xs font-semibold text-slate-800">Typologie & Connectivité des Imprimantes</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">{totalPrinters} imprimantes répertoriées</p>
+                  <p className="text-[11px] text-slate-400 font-normal">
+                    {totalPrinters} imprimante(s) répertoriées
+                  </p>
                 </div>
               </div>
               <span className="text-xs text-slate-400 font-normal">{netConnectedPrn} connectées IP</span>
@@ -874,11 +1012,17 @@ export default function OverviewCharts() {
               <div className="flex items-center gap-2.5">
                 <Cpu className="w-4 h-4 text-slate-400 shrink-0" />
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-800">Architecture CPU & Puissance Postes IT</h3>
-                  <p className="text-[11px] text-slate-400 font-normal">Distribution des processeurs Dell OptiPlex en service</p>
+                  <h3 className="text-xs font-semibold text-slate-800">
+                    Architecture CPU & Puissance Postes IT
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-normal">
+                    Distribution des processeurs Dell OptiPlex en service
+                  </p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 font-normal">{totalIT} stations Dell</span>
+              <span className="text-xs text-slate-400 font-normal">
+                {totalIT} stations Dell
+              </span>
             </div>
 
             <div className="relative h-64 w-full pt-2">

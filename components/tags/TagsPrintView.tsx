@@ -26,6 +26,8 @@ import {
   List
 } from 'lucide-react';
 
+import { isGraciama } from '@/lib/permissions';
+
 export interface TagItem {
   id: string;
   tag: string;
@@ -45,11 +47,14 @@ export default function TagsPrintView() {
     networkAssets = [],
     upsAssets = [],
     phones = [],
-    employees = []
+    employees = [],
+    currentUser
   } = useInventory();
 
-  const [selectedCompany, setSelectedCompany] = useState<string>('all');
-  const [selectedSite, setSelectedSite] = useState<string>('all');
+  const isGraciamaUser = isGraciama(currentUser);
+
+  const [selectedCompany, setSelectedCompany] = useState<string>(isGraciamaUser ? 'Obonprix' : 'all');
+  const [selectedSite, setSelectedSite] = useState<string>(isGraciamaUser ? 'Delmas 83' : 'all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
@@ -158,8 +163,17 @@ export default function TagsPrintView() {
       }
     });
 
+    if (isGraciamaUser) {
+      return list.filter(item => {
+        const c = (item.company || '').toLowerCase();
+        const s = (item.site || '').toLowerCase();
+        const t = (item.tag || '').toUpperCase();
+        return c.includes('obonprix') || c.includes('bonprix') || s.includes('83') || t.includes('OBP');
+      });
+    }
+
     return list;
-  }, [printers, itAssets, networkAssets, upsAssets, phones, employees]);
+  }, [printers, itAssets, networkAssets, upsAssets, phones, employees, isGraciamaUser]);
 
   // Extract list of companies
   const companiesList = useMemo(() => {
@@ -406,24 +420,30 @@ export default function TagsPrintView() {
               <Building className="w-3.5 h-3.5 text-slate-400" />
               Entreprise
             </label>
-            <select
-              value={selectedCompany}
-              onChange={(e) => {
-                setSelectedCompany(e.target.value);
-                setSelectedSite('all'); // Reset site selection when company changes
-              }}
-              className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer"
-            >
-              <option value="all">Toutes les entreprises ({allTags.length})</option>
-              {companiesList.map((company) => {
-                const count = allTags.filter((t) => t.company === company).length;
-                return (
-                  <option key={company} value={company}>
-                    {company} ({count})
-                  </option>
-                );
-              })}
-            </select>
+            {isGraciamaUser ? (
+              <div className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 flex items-center">
+                Obonprix
+              </div>
+            ) : (
+              <select
+                value={selectedCompany}
+                onChange={(e) => {
+                  setSelectedCompany(e.target.value);
+                  setSelectedSite('all'); // Reset site selection when company changes
+                }}
+                className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer"
+              >
+                <option value="all">Toutes les entreprises ({allTags.length})</option>
+                {companiesList.map((company) => {
+                  const count = allTags.filter((t) => t.company === company).length;
+                  return (
+                    <option key={company} value={company}>
+                      {company} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            )}
           </div>
 
           {/* Site Filter */}
@@ -432,13 +452,18 @@ export default function TagsPrintView() {
               <MapPin className="w-3.5 h-3.5 text-slate-400" />
               Site / Emplacement
             </label>
-            <select
-              value={selectedSite}
-              onChange={(e) => setSelectedSite(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer"
-            >
-              <option value="all">Tous les sites</option>
-              {sitesList.map((site) => {
+            {isGraciamaUser ? (
+              <div className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 flex items-center">
+                Delmas 83
+              </div>
+            ) : (
+              <select
+                value={selectedSite}
+                onChange={(e) => setSelectedSite(e.target.value)}
+                className="w-full h-9 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all cursor-pointer"
+              >
+                <option value="all">Tous les sites</option>
+                {sitesList.map((site) => {
                 const count = allTags.filter(
                   (t) => (selectedCompany === 'all' || t.company === selectedCompany) && t.site === site
                 ).length;
@@ -449,6 +474,7 @@ export default function TagsPrintView() {
                 );
               })}
             </select>
+            )}
           </div>
 
           {/* Category Filter */}

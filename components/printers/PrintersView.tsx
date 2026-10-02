@@ -28,20 +28,24 @@ import {
 import PrinterDetailsModal from './PrinterDetailsModal';
 
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 export default function PrintersView() {
   const { 
     printers, 
+    currentUser,
     deletePrinter, 
-    openQRModal,
+    openQRModal, 
     openPrinterModal,
-    exportCSV
+    exportCSV 
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [selectedPrinterForDetails, setSelectedPrinterForDetails] = useState<PrinterAsset | null>(null);
   const [deletingPrinter, setDeletingPrinter] = useState<PrinterAsset | null>(null);
 
-  const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [companyFilter, setCompanyFilter] = useState<string>(isGraciamaUser ? 'Obonprix' : 'all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -53,6 +57,14 @@ export default function PrintersView() {
 
   const filteredPrinters = useMemo(() => {
     return printers.filter(p => {
+      if (isGraciamaUser) {
+        const comp = (p.company || '').toLowerCase();
+        const site = (p.site || '').toLowerCase();
+        const tag = (p.assetTag || '').toUpperCase();
+        if (!comp.includes('obonprix') && !comp.includes('bonprix') && !site.includes('83') && !tag.includes('OBP')) {
+          return false;
+        }
+      }
       if (companyFilter !== 'all' && p.company !== companyFilter) return false;
       if (siteFilter !== 'all' && p.site !== siteFilter) return false;
       if (typeFilter !== 'all' && p.type !== typeFilter) return false;
@@ -73,16 +85,17 @@ export default function PrintersView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [printers, companyFilter, siteFilter, typeFilter, searchQuery]);
+  }, [printers, companyFilter, siteFilter, typeFilter, searchQuery, isGraciamaUser]);
 
   // KPIs
   const stats = useMemo(() => {
-    const total = printers.length;
-    const multi = printers.filter(p => p.type.toLowerCase().includes('multi')).length;
-    const laser = printers.filter(p => p.type.toLowerCase().includes('laser')).length;
-    const network = printers.filter(p => p.ipAddress && p.ipAddress !== 'N/A').length;
+    const targetPrinters = isGraciamaUser ? filteredPrinters : printers;
+    const total = targetPrinters.length;
+    const multi = targetPrinters.filter(p => p.type.toLowerCase().includes('multi')).length;
+    const laser = targetPrinters.filter(p => p.type.toLowerCase().includes('laser')).length;
+    const network = targetPrinters.filter(p => p.ipAddress && p.ipAddress !== 'N/A').length;
     return { total, multi, laser, network };
-  }, [printers]);
+  }, [printers, filteredPrinters, isGraciamaUser]);
 
   const handleCopySerial = (sn: string) => {
     navigator.clipboard.writeText(sn);
@@ -279,7 +292,7 @@ export default function PrintersView() {
             Imprimantes
           </h1>
           <p className="text-xs text-slate-400 font-normal mt-0.5">
-            Suivi centralisé du parc d'imprimantes et multifonctions réseau
+            Suivi centralisé du parc d&apos;imprimantes et multifonctions réseau
           </p>
         </div>
 
@@ -367,28 +380,40 @@ export default function PrintersView() {
             {/* Dropdowns */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Company */}
-              <select
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-              >
-                <option value="all">Toutes les entreprises</option>
-                {companies.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-700 font-semibold">
+                  Obonprix
+                </div>
+              ) : (
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+                >
+                  <option value="all">Toutes les entreprises</option>
+                  {companies.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              )}
 
               {/* Site */}
-              <select
-                value={siteFilter}
-                onChange={(e) => setSiteFilter(e.target.value)}
-                className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
-              >
-                <option value="all">Tous les sites</option>
-                {sites.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              {isGraciamaUser ? (
+                <div className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-700 font-medium">
+                  Delmas 83
+                </div>
+              ) : (
+                <select
+                  value={siteFilter}
+                  onChange={(e) => setSiteFilter(e.target.value)}
+                  className="px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white text-slate-700 cursor-pointer"
+                >
+                  <option value="all">Tous les sites</option>
+                  {sites.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              )}
 
               {/* Type */}
               <select

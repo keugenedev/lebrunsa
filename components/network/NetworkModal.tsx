@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { NetworkAsset } from '@/types/inventory';
 import { X, Network, Wifi, Server, ShieldCheck, Tag, MapPin, Building, Plus } from 'lucide-react';
+import { generateNetworkId } from '@/lib/badgeBrands';
+import { isGraciama } from '@/lib/permissions';
 
 export default function NetworkModal() {
   const {
@@ -12,8 +14,11 @@ export default function NetworkModal() {
     editingNetworkAsset,
     addNetworkAsset,
     updateNetworkAsset,
-    networkAssets
+    networkAssets,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [company, setCompany] = useState('Lebrun S.A.');
   const [site, setSite] = useState('');
@@ -33,8 +38,9 @@ export default function NetworkModal() {
   useEffect(() => {
     if (!isNetworkModalOpen) return;
     if (editingNetworkAsset) {
-      setCompany(editingNetworkAsset.company || 'Lebrun S.A.');
-      setSite(editingNetworkAsset.site || '');
+      const isObp = isGraciamaUser || (editingNetworkAsset.company || '').toLowerCase().includes('obonprix');
+      setCompany(isObp ? 'Obonprix' : (editingNetworkAsset.company || 'Lebrun S.A.'));
+      setSite(isObp ? 'Delmas 83' : (editingNetworkAsset.site || ''));
       setDeviceType(editingNetworkAsset.deviceType || 'Switch Gigabit rackable');
       setBrand(editingNetworkAsset.brand || 'TP-Link');
       setModel(editingNetworkAsset.model || '');
@@ -46,11 +52,12 @@ export default function NetworkModal() {
       setObservations(editingNetworkAsset.observations || '');
       setAssetTag(editingNetworkAsset.assetTag || '');
     } else {
-      const code = 'LEB';
-      const count = networkAssets.length + 1;
-      setAssetTag(`NET-${code}-${count.toString().padStart(3, '0')}`);
-      setCompany('Lebrun S.A.');
-      setSite('');
+      const initComp = isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.';
+      const initSite = isGraciamaUser ? 'Delmas 83' : '';
+      const existingTags = networkAssets.map(n => n.assetTag);
+      setAssetTag(generateNetworkId(initComp, existingTags));
+      setCompany(initComp);
+      setSite(initSite);
       setDeviceType('Switch Gigabit rackable');
       setBrand('TP-Link');
       setModel('');
@@ -61,7 +68,13 @@ export default function NetworkModal() {
       setStatus('En fonctionnement');
       setObservations('');
     }
-  }, [editingNetworkAsset, isNetworkModalOpen]);
+  }, [editingNetworkAsset, isNetworkModalOpen, isGraciamaUser, networkAssets]);
+
+  const handleCompanyChange = (newComp: string) => {
+    setCompany(newComp);
+    const existingTags = networkAssets.map(n => n.assetTag);
+    setAssetTag(generateNetworkId(newComp, existingTags));
+  };
 
   if (!isNetworkModalOpen) return null;
 
@@ -71,12 +84,15 @@ export default function NetworkModal() {
     setIsSubmitting(true);
 
     try {
-      const tag = assetTag.trim() || `NET-${company.startsWith('Auto') ? 'AUT' : 'LEB'}-${Date.now().toString().slice(-4)}`;
+      const finalComp = isGraciamaUser ? 'Obonprix' : company;
+      const finalSite = isGraciamaUser ? 'Delmas 83' : site;
+      const existingTags = networkAssets.map(n => n.assetTag);
+      const tag = assetTag.trim() || generateNetworkId(finalComp, existingTags);
 
       const payload: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'> = {
         assetTag: tag,
-        company,
-        site,
+        company: finalComp,
+        site: finalSite,
         deviceType,
         brand: brand.trim() || 'TP-Link',
         model: model.trim() || 'TL-Gigabit',
@@ -157,38 +173,50 @@ export default function NetworkModal() {
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Société Titulaire <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
-                >
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                  <option value="Obonprix">Obonprix</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-semibold flex items-center text-xs">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={company}
+                    onChange={(e) => handleCompanyChange(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                  >
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1 whitespace-nowrap">
                   Emplacement / Site <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={site}
-                  required
-                  onChange={(e) => setSite(e.target.value)}
-                  className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
-                >
-                  <option value="">Sélectionner un site...</option>
-                  <option value="Delmas 52">Delmas 52</option>
-                  <option value="Pétion-Ville">Pétion-Ville</option>
-                  <option value="Delmas 60">Delmas 60</option>
-                  <option value="Delmas 83">Delmas 83</option>
-                  <option value="Canapé-Vert">Canapé-Vert</option>
-                  <option value="Aéroport Depot">Aéroport Depot</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full h-10 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-semibold flex items-center text-xs">
+                    Delmas 83
+                  </div>
+                ) : (
+                  <select
+                    value={site}
+                    required
+                    onChange={(e) => setSite(e.target.value)}
+                    className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 cursor-pointer text-xs"
+                  >
+                    <option value="">Sélectionner un site...</option>
+                    <option value="Delmas 52">Delmas 52</option>
+                    <option value="Pétion-Ville">Pétion-Ville</option>
+                    <option value="Delmas 60">Delmas 60</option>
+                    <option value="Delmas 83">Delmas 83</option>
+                    <option value="Canapé-Vert">Canapé-Vert</option>
+                    <option value="Aéroport Depot">Aéroport Depot</option>
+                  </select>
+                )}
               </div>
             </div>
           </div>

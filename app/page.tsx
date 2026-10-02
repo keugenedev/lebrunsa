@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { InventoryProvider, useInventory } from '@/context/InventoryContext';
-import { isCarlHens } from '@/lib/permissions';
+import { isCarlHens, isGraciama } from '@/lib/permissions';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import OverviewView from '@/components/dashboard/OverviewView';
@@ -98,7 +98,7 @@ function MainContent() {
       case 'personnel':
         return <PersonnelView />;
       case 'accounts':
-        return <AccountsView />;
+        return isGraciama(currentUser) ? <OverviewView /> : <AccountsView />;
       case 'documents':
         return <DocumentsView />;
       case 'phones':

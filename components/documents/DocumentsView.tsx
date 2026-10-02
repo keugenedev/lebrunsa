@@ -33,6 +33,7 @@ import {
 } from '@/lib/printAssignmentSheet';
 import { downloadPhoneSheetPDF } from '@/lib/printPhoneSheet';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { isGraciama } from '@/lib/permissions';
 
 const CATEGORIES: DocumentCategory[] = [
   'Fiches d\'Affectation',
@@ -60,8 +61,11 @@ export default function DocumentsView() {
     exportCSV,
     getEmployeeAssignedAssets,
     searchQuery: globalSearch,
-    showToast
+    showToast,
+    currentUser
   } = useInventory();
+
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [deletingDoc, setDeletingDoc] = useState<DocumentItem | null>(null);
 
@@ -78,14 +82,14 @@ export default function DocumentsView() {
 
   // Search & Filters for Fiches
   const [sheetSearch, setSheetSearch] = useState('');
-  const [sheetCompanyFilter, setSheetCompanyFilter] = useState('all');
+  const [sheetCompanyFilter, setSheetCompanyFilter] = useState(isGraciamaUser ? 'Obonprix' : 'all');
   const [sheetPage, setSheetPage] = useState(1);
   const [sheetRowsPerPage, setSheetRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
   // Search & Filters for Repository
   const [repoSearch, setRepoSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedCompany, setSelectedCompany] = useState<string>('all');
+  const [selectedCompany, setSelectedCompany] = useState<string>(isGraciamaUser ? 'Obonprix' : 'all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [repoPage, setRepoPage] = useState(1);
   const [repoRowsPerPage, setRepoRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
@@ -115,6 +119,13 @@ export default function DocumentsView() {
   // Filtered Employees with Assigned Equipment
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
+      if (isGraciamaUser) {
+        const c = (emp.company || '').toLowerCase();
+        const id = (emp.employeeId || '').toUpperCase();
+        if (!c.includes('obonprix') && !c.includes('bonprix') && !id.includes('OBP')) {
+          return false;
+        }
+      }
       // Company filter
       if (sheetCompanyFilter !== 'all' && emp.company !== sheetCompanyFilter) {
         return false;
@@ -142,7 +153,7 @@ export default function DocumentsView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [employees, sheetCompanyFilter, effectiveSheetSearch, sheetRefs, assignmentSheets]);
+  }, [employees, isGraciamaUser, sheetCompanyFilter, effectiveSheetSearch, sheetRefs, assignmentSheets]);
 
   // Overall calculations for assignment sheets (NO PRICE)
   const sheetStats = useMemo(() => {
@@ -163,6 +174,12 @@ export default function DocumentsView() {
   // Filtered Documents in Repository
   const filteredDocuments = useMemo(() => {
     return documents.filter(doc => {
+      if (isGraciamaUser) {
+        const c = (doc.company || '').toLowerCase();
+        if (!c.includes('obonprix') && !c.includes('bonprix')) {
+          return false;
+        }
+      }
       if (selectedCategory !== 'all' && doc.category !== selectedCategory) {
         return false;
       }
@@ -189,7 +206,7 @@ export default function DocumentsView() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [documents, selectedCategory, selectedCompany, selectedStatus, effectiveRepoSearch]);
+  }, [documents, isGraciamaUser, selectedCategory, selectedCompany, selectedStatus, effectiveRepoSearch]);
 
   const sheetTotalPages = Math.max(1, Math.ceil(filteredEmployees.length / sheetRowsPerPage));
   const safeSheetPage = Math.min(sheetPage, sheetTotalPages);
@@ -649,22 +666,28 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
 
               {/* Company Filter */}
               <div>
-                <select
-                  value={sheetCompanyFilter}
-                  onChange={(e) => {
-                    setSheetCompanyFilter(e.target.value);
-                    setSheetPage(1);
-                  }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all cursor-pointer"
-                >
-                  <option value="all">Toutes les Entreprises</option>
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                  <option value="Obonprix">Obonprix</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50 text-slate-700 font-semibold">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={sheetCompanyFilter}
+                    onChange={(e) => {
+                      setSheetCompanyFilter(e.target.value);
+                      setSheetPage(1);
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all cursor-pointer"
+                  >
+                    <option value="all">Toutes les Entreprises</option>
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
             </div>
           </div>
@@ -945,22 +968,28 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
 
               {/* Company Filter */}
               <div>
-                <select
-                  value={selectedCompany}
-                  onChange={(e) => {
-                    setSelectedCompany(e.target.value);
-                    setRepoPage(1);
-                  }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
-                >
-                  <option value="all">Toutes les Entreprises</option>
-                  <option value="Lebrun S.A.">Lebrun S.A.</option>
-                  <option value="Caribe Motors">Caribe Motors</option>
-                  <option value="Autobiz">Autobiz</option>
-                  <option value="Leader Foods">Leader Foods</option>
-                  <option value="Tirezone">Tirezone</option>
-                  <option value="Obonprix">Obonprix</option>
-                </select>
+                {isGraciamaUser ? (
+                  <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50 text-slate-700 font-semibold">
+                    Obonprix
+                  </div>
+                ) : (
+                  <select
+                    value={selectedCompany}
+                    onChange={(e) => {
+                      setSelectedCompany(e.target.value);
+                      setRepoPage(1);
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all"
+                  >
+                    <option value="all">Toutes les Entreprises</option>
+                    <option value="Lebrun S.A.">Lebrun S.A.</option>
+                    <option value="Caribe Motors">Caribe Motors</option>
+                    <option value="Autobiz">Autobiz</option>
+                    <option value="Leader Foods">Leader Foods</option>
+                    <option value="Tirezone">Tirezone</option>
+                    <option value="Obonprix">Obonprix</option>
+                  </select>
+                )}
               </div>
 
               {/* Status Filter */}

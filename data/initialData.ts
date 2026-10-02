@@ -495,22 +495,6 @@ export const INITIAL_PRINTERS: PrinterAsset[] = [
     "observations": "Good",
     "createdAt": "2024-01-15",
     "updatedAt": "2026-09-18"
-  },
-  {
-    "id": "prn-obp-1",
-    "assetTag": "PRN-OBP-001",
-    "name": "HP LaserJet Pro MFP",
-    "company": "Obonprix",
-    "site": "Delmas 83",
-    "brand": "HP",
-    "model": "LaserJet Pro MFP 4103fdw",
-    "serialNumber": "VND3K98201",
-    "ipAddress": "192.168.83.25",
-    "type": "Multifonction",
-    "status": "Fonctionnel",
-    "observations": "Imprimante réseau multifonction magasin Delmas 83",
-    "createdAt": "2026-01-15",
-    "updatedAt": "2026-10-01"
   }
 ];
 
@@ -2046,31 +2030,6 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "purchaseCost": 950,
     "createdAt": "2023-01-15",
     "updatedAt": "2026-09-19"
-  },
-  {
-    "id": "it-obp-1",
-    "category": "it",
-    "subCategory": "desktop",
-    "assetTag": "IT-OBP-001",
-    "name": "Dell OptiPlex 7090 Micro",
-    "company": "Obonprix",
-    "location": "Delmas 83",
-    "brand": "Dell",
-    "model": "OptiPlex 7090 Micro",
-    "serialNumber": "8GHY242",
-    "cpu": "Intel Core i7 @ 2.90 GHz",
-    "ram": "16 GB",
-    "storage": "512 GB SSD",
-    "os": "Windows 11 Pro",
-    "status": "in_use",
-    "purchaseDate": "2024-01-15",
-    "warrantyExpiry": "2027-01-15",
-    "purchaseCost": 950,
-    "assignedTo": "Jean-Marc Chery",
-    "assignedEmail": "jmchery@obonprix.ht",
-    "notes": "Poste principal Direction Obonprix Delmas 83",
-    "createdAt": "2026-01-15",
-    "updatedAt": "2026-10-01"
   }
 ];
 
@@ -3046,88 +3005,16 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     "employeeId": "EMP-OBP-001",
     "company": "Obonprix",
     "site": "Delmas 83",
-    "lastName": "Chery",
-    "firstName": "Jean-Marc",
-    "fullName": "Jean-Marc Chery",
-    "email": "jmchery@obonprix.ht",
-    "phone": "50934128899",
-    "department": "Direction Magasin",
-    "jobTitle": "Directeur de Magasin",
+    "lastName": "Guerrier",
+    "firstName": "Mia",
+    "fullName": "Mia Guerrier",
+    "email": "miaguerrier@obonprix83",
+    "phone": "50937000083",
+    "department": "Direction",
+    "jobTitle": "Responsable Magasin",
     "location": "Delmas 83",
     "status": "active",
-    "hireDate": "2024-02-15",
-    "notes": "Dell OptiPlex 7090 Micro • Windows 11 Pro 16 GB RAM",
-    "bloodGroup": "O+",
-    "nif": "004-982-110-3",
-    "workstation": {
-      "type": "Desktop",
-      "pcName": "OBP-PC-001",
-      "pcSerial": "8GHY242",
-      "pcSpecs": "Windows 11 Pro Intel Core i7 512 GB SSD 16 GB RAM",
-      "monitorModel": "Dell 24\"",
-      "monitorSerial": "CN-0OBP01-2026",
-      "monitorObs": "Good",
-      "keyboard": "Dell USB",
-      "keyboardDetails": "Dell USB",
-      "keyboardObs": "Good",
-      "mouse": "Dell USB",
-      "mouseDetails": "Dell USB",
-      "mouseObs": "Good",
-      "generalState": "Good",
-      "observations": "Station de gestion magasin Delmas 83"
-    },
-    "accounts": {
-      "windowsUsername": "Jean-Marc Chery",
-      "windowsPassword": "1234",
-      "appUsername": "jmchery",
-      "appPassword": "CP@2026",
-      "applications": "Obonprix POS & ERP",
-      "organization": "Obonprix"
-    }
-  },
-  {
-    "id": "emp-obp-2",
-    "employeeId": "EMP-OBP-002",
-    "company": "Obonprix",
-    "site": "Delmas 83",
-    "lastName": "Saint-Louis",
-    "firstName": "Nathalie",
-    "fullName": "Nathalie Saint-Louis",
-    "email": "nsaintlouis@obonprix.ht",
-    "phone": "50942115577",
-    "department": "Caisse & Finance",
-    "jobTitle": "Superviseur Caisse",
-    "location": "Delmas 83",
-    "status": "active",
-    "hireDate": "2024-03-01",
-    "notes": "Dell OptiPlex 7080 • Windows 11 Pro",
-    "bloodGroup": "A+",
-    "nif": "008-331-409-7",
-    "workstation": {
-      "type": "Desktop",
-      "pcName": "OBP-PC-002",
-      "pcSerial": "7KJX991",
-      "pcSpecs": "Windows 11 Pro Intel Core i5 256 GB SSD 8 GB RAM",
-      "monitorModel": "Dell 22\"",
-      "monitorSerial": "CN-0OBP02-2026",
-      "monitorObs": "Good",
-      "keyboard": "Dell USB",
-      "keyboardDetails": "Dell USB",
-      "keyboardObs": "Good",
-      "mouse": "Dell USB",
-      "mouseDetails": "Dell USB",
-      "mouseObs": "Good",
-      "generalState": "Good",
-      "observations": "Poste supervision caisses magasin Delmas 83"
-    },
-    "accounts": {
-      "windowsUsername": "Nathalie Saint-Louis",
-      "windowsPassword": "1234",
-      "appUsername": "nsaintlouis",
-      "appPassword": "CP@2026",
-      "applications": "Obonprix POS & ERP",
-      "organization": "Obonprix"
-    }
+    "hireDate": "2024-01-10"
   }
 ];
 
@@ -3174,6 +3061,19 @@ export const INITIAL_WIFI_NETWORKS: WifiNetwork[] = [
     locationDetail: "Delmas 52 - Showroom Commercial & Bureaux Autobiz",
     isGuestNetwork: false,
     notes: "Connexion Satellite Starlink Haute Performance Autobiz Delmas 52"
+  },
+  {
+    id: "wifi-delmas83-obonprix",
+    establishment: "Delmas 83",
+    company: "Obonprix",
+    ssid: "Obonprix Wi-Fi",
+    password: "",
+    providerType: "Fibre Dédiée",
+    frequencyBand: "Dual-Band (2.4 / 5 GHz)",
+    security: "WPA2-Personal",
+    locationDetail: "Delmas 83 - Magasin & Bureaux Obonprix",
+    isGuestNetwork: false,
+    notes: "Réseau Wi-Fi officiel Obonprix Delmas 83"
   }
 ];
 

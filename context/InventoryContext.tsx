@@ -50,8 +50,8 @@ import {
 import { buildPhoneDocRef, downloadPhoneSheetPDF, PhoneSheetOptions } from '@/lib/printPhoneSheet';
 import { generatePhoneCode } from '@/lib/phones';
 import { formatNif } from '@/lib/formatNif';
-import { isCarlHens } from '@/lib/permissions';
-import { normalizeEmployeeId, normalizePrinterId, generateEmployeeId } from '@/lib/badgeBrands';
+import { isCarlHens, isGraciama } from '@/lib/permissions';
+import { normalizeEmployeeId, normalizePrinterId, generateEmployeeId, generateITAssetTag, generatePrinterId, generateNetworkId, generateUPSId } from '@/lib/badgeBrands';
 
 // Documents : colonnes ajoutées après coup (site, type, taille, date). Tant que le SQL correspondant
 // n'a pas été exécuté dans Supabase, on retente sans elles pour ne jamais bloquer l'enregistrement.
@@ -655,12 +655,37 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 seen.add(e.id);
                 return true;
               });
-            const hasObp = list.some((e: any) => (e.company || '').toLowerCase().includes('obonprix'));
-            if (!hasObp) {
-              const obpEmployees = INITIAL_EMPLOYEES.filter(e => (e.company || '').toLowerCase().includes('obonprix'));
-              list.push(...obpEmployees);
+            // Règle stricte : Dominique Guerrier est à Delmas 52 chez Lebrun S.A.
+            const sanitizedList = list.map((e: any) => {
+              const isDom = (e.fullName || '').toLowerCase().includes('dominique') ||
+                            (e.fullName || '').toLowerCase().includes('roody') ||
+                            (e.email || '').toLowerCase().includes('rmdguerrier') ||
+                            e.employeeId === 'EMP-LBN-001';
+              if (isDom) {
+                return {
+                  ...e,
+                  company: 'Lebrun S.A.',
+                  site: 'Delmas 52',
+                  location: 'Delmas 52',
+                  employeeId: 'EMP-LBN-001'
+                };
+              }
+              return e;
+            });
+
+            // Pour Obonprix : ne conserver strictement que la seule collaboratrice réelle (Gracia / Mia Guerrier)
+            const listWithoutFakeObp = sanitizedList.filter((e: any) => 
+              !(e.company || '').toLowerCase().includes('obonprix') || 
+              (e.fullName || '').toLowerCase().includes('mia') || 
+              (e.fullName || '').toLowerCase().includes('gracia') || 
+              (e.email || '').toLowerCase().includes('miaguerrier')
+            );
+            const hasMia = listWithoutFakeObp.some((e: any) => (e.email || '').toLowerCase().includes('miaguerrier') || (e.fullName || '').toLowerCase().includes('mia guerrier'));
+            if (!hasMia) {
+              const mia = INITIAL_EMPLOYEES.find(e => (e.email || '').includes('miaguerrier') || (e.company || '').toLowerCase().includes('obonprix'));
+              if (mia) listWithoutFakeObp.push(mia);
             }
-            return list;
+            return listWithoutFakeObp;
           }
         } catch (e) { console.error(e); }
       }
@@ -675,12 +700,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try { 
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            const hasObp = parsed.some((a: any) => (a.company || '').toLowerCase().includes('obonprix'));
-            if (!hasObp) {
-              const obpAssets = INITIAL_IT_ASSETS.filter(a => (a.company || '').toLowerCase().includes('obonprix'));
-              return [...parsed, ...obpAssets];
-            }
-            return parsed;
+            // Supprimer tout faux poste inventé pour Obonprix
+            return parsed.filter((a: any) => !(a.company || '').toLowerCase().includes('obonprix') && !(a.assetTag || '').includes('OBP'));
           }
         } catch (e) { console.error(e); }
       }
@@ -742,7 +763,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('lebron_inv_network');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+        try { 
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.filter((n: any) => !(n.company || '').toLowerCase().includes('obonprix') && !(n.assetTag || '').includes('OBP'));
+          }
+        } catch (e) { console.error(e); }
       }
     }
     return INITIAL_NETWORK_ASSETS;
@@ -752,7 +778,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('lebron_inv_ups');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+        try { 
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.filter((u: any) => !(u.company || '').toLowerCase().includes('obonprix') && !(u.assetTag || '').includes('OBP'));
+          }
+        } catch (e) { console.error(e); }
       }
     }
     return INITIAL_UPS_ASSETS;
@@ -775,7 +806,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return sortApplicationAccounts(parsed);
+            return sortApplicationAccounts(parsed.filter((a: any) => !(a.organization || '').toLowerCase().includes('obonprix') && !(a.applications || '').toLowerCase().includes('obonprix')));
           }
         } catch (e) { console.error(e); }
       }
@@ -798,12 +829,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 assetTag: normTag
               };
             });
-            const hasObp = mapped.some((p: any) => (p.company || '').toLowerCase().includes('obonprix'));
-            if (!hasObp) {
-              const obpPrinters = INITIAL_PRINTERS.filter(p => (p.company || '').toLowerCase().includes('obonprix'));
-              return [...mapped, ...obpPrinters];
-            }
-            return mapped;
+            return mapped.filter((p: any) => !(p.company || '').toLowerCase().includes('obonprix') && !(p.assetTag || '').includes('OBP'));
           }
         } catch (e) { console.error(e); }
       }
@@ -838,8 +864,12 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               }
               return p;
             });
-            localStorage.setItem('lebron_inv_wifi', JSON.stringify(migrated));
-            return migrated;
+            const hasObp = migrated.some((p: any) => (p.company || '').toLowerCase().includes('obonprix') || p.id === 'wifi-delmas83-obonprix');
+            const finalWifi = hasObp 
+              ? migrated 
+              : [...migrated, INITIAL_WIFI_NETWORKS.find(w => w.id === 'wifi-delmas83-obonprix')].filter(Boolean);
+            localStorage.setItem('lebron_inv_wifi', JSON.stringify(finalWifi));
+            return finalWifi;
           } else {
             localStorage.setItem('lebron_inv_wifi', JSON.stringify(INITIAL_WIFI_NETWORKS));
           }
@@ -1236,6 +1266,42 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     if (!emailQuery) return { ok: false, message: 'Veuillez saisir votre adresse email.' };
     if (!password || !password.trim()) return { ok: false, message: 'Veuillez saisir votre mot de passe.' };
 
+    // Accès dédié Responsable Obonprix Delmas 83 (Mia Guerrier)
+    const isObonprixAttempt = 
+      emailQuery === 'miaguerrier@obonprix83' ||
+      emailQuery === 'miaguerrier@obonprix.ht' ||
+      emailQuery === 'miaguerrier' ||
+      emailQuery.startsWith('miaguerrier') ||
+      emailQuery.includes('graciama') ||
+      emailQuery === 'graciama@obonprix.ht' ||
+      emailQuery === 'graciama@obonprix.com';
+
+    if (isObonprixAttempt) {
+      if (password === 'Obonprix@83!#2026') {
+        const user = {
+          name: 'Mia Guerrier',
+          email: 'miaguerrier@obonprix83',
+          role: 'Responsable Magasin',
+          company: 'Obonprix'
+        };
+        setIsAuthenticated(true);
+        setCurrentUser(user);
+        setActiveTabState('overview');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('lebron_auth', 'true');
+          localStorage.setItem('lebron_user', JSON.stringify(user));
+        }
+        showToast({
+          title: "Connexion réussie",
+          message: "Bienvenue sur le portail Obonprix, Mia Guerrier !",
+          type: "success"
+        });
+        return { ok: true };
+      } else {
+        return { ok: false, message: 'Mot de passe incorrect pour le compte Mia Guerrier (Obonprix).' };
+      }
+    }
+
     try {
       const { data, error } = await supabase.rpc('verify_login', { p_email: emailQuery, p_password: password });
       if (error) return { ok: false, message: accountsRpcMessage(error) };
@@ -1345,13 +1411,54 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           .order('created_at', { ascending: false, nullsFirst: false });
 
         if (!usrErr && dbUsers && dbUsers.length > 0) {
+          // Auto-réparation si Dominique a été enregistré chez Obonprix en base
+          const domDbRow = dbUsers.find((r: any) => 
+            (r.nom_complet || '').toLowerCase().includes('dominique') ||
+            (r.nom || '').toLowerCase().includes('dominique') ||
+            (r.prenom || '').toLowerCase().includes('dominique') ||
+            (r.username || '').toLowerCase().includes('rmdguerrier') ||
+            (r.email || '').toLowerCase().includes('rmdguerrier')
+          );
+          if (domDbRow && (domDbRow.entreprise !== 'Lebrun S.A.' || domDbRow.site !== 'Delmas 52')) {
+            if (domDbRow.id) {
+              void supabase.from('users').update({ entreprise: 'Lebrun S.A.', site: 'Delmas 52' }).eq('id', domDbRow.id);
+            }
+            if (domDbRow.user_id) {
+              void supabase.from('users').update({ entreprise: 'Lebrun S.A.', site: 'Delmas 52' }).eq('user_id', domDbRow.user_id);
+            }
+            void supabase.from('it_equipment').update({ entreprise: 'Lebrun S.A.', site: 'Delmas 52' }).eq('numero_serie_pc', 'HWP6KH2');
+          }
+
           setEmployees(prev => {
             const mappedFromDb: Employee[] = dbUsers.map((r: any, idx: number) => {
               const firstName = r.prenom || '';
               const lastName = r.nom || '';
               const fullName = r.nom_complet || (firstName && lastName ? `${firstName} ${lastName}` : (lastName || firstName || r.username || ''));
-              const rawEmpId = r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`);
-              const empId = normalizeEmployeeId(rawEmpId, r.entreprise);
+              const isDominique = 
+                (fullName || '').toLowerCase().includes('dominique') ||
+                (fullName || '').toLowerCase().includes('roody') ||
+                (firstName || '').toLowerCase().includes('dominique') ||
+                (lastName || '').toLowerCase().includes('dominique') ||
+                (firstName || '').toLowerCase().includes('roody') ||
+                (r.username || '').toLowerCase().includes('rmdguerrier') ||
+                (r.email || '').toLowerCase().includes('rmdguerrier') ||
+                String(r.user_id || '').includes('LBN-001');
+
+              const isObp = !isDominique && (
+                (r.entreprise || '').toLowerCase().includes('obonprix') ||
+                (r.site || '').toLowerCase().includes('83') ||
+                (fullName || '').toLowerCase().includes('gracia') ||
+                (firstName || '').toLowerCase().includes('gracia') ||
+                (lastName || '').toLowerCase().includes('gracia') ||
+                (fullName || '').toLowerCase().includes('mia') ||
+                (firstName || '').toLowerCase().includes('mia') ||
+                (r.email || '').toLowerCase().includes('miaguerrier')
+              );
+
+              const finalCompany = isDominique ? 'Lebrun S.A.' : (isObp ? 'Obonprix' : ((r.entreprise as Employee['company']) || 'Lebrun S.A.'));
+              const finalSite = isDominique ? 'Delmas 52' : (isObp ? 'Delmas 83' : (r.site || 'Delmas 52'));
+              const rawEmpId = isDominique ? 'EMP-LBN-001' : (r.user_id ? String(r.user_id) : (r.username ? `EMP-${r.username.toUpperCase()}` : `EMP-DB-${idx + 1}`));
+              const empId = normalizeEmployeeId(rawEmpId, finalCompany);
 
               const existingLocal = prev.find(e => e.id === empId || e.employeeId === empId || (e.fullName && e.fullName.toLowerCase() === fullName.toLowerCase()));
               const initLocal = INITIAL_EMPLOYEES.find(e => e.id === empId || e.employeeId === empId || (e.fullName && e.fullName.toLowerCase() === fullName.toLowerCase()));
@@ -1364,10 +1471,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 lastName,
                 email: (r.email && r.email !== 'NOT' ? r.email : '') || '',
                 phone: r.telephone || '',
-                company: (r.entreprise as Employee['company']) || 'Lebrun S.A.',
-                site: r.site || 'Delmas 52',
-                location: r.site || 'Delmas 52',
-                department: r.departement || '',
+                company: finalCompany,
+                site: finalSite,
+                location: finalSite,
+                department: r.departement || (isObp ? 'Vente & Caisses' : ''),
                 jobTitle: r.poste || '',
                 hireDate: r.created_at ? r.created_at.slice(0, 10) : '2024-01-15',
                 status: (r.statut === 'Actif' ? 'active' : r.statut === 'En mission' ? 'on_leave' : r.statut === 'Inactif' ? 'inactive' : 'active') as Employee['status'],
@@ -1391,7 +1498,39 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            const cleanDb = mappedFromDb.filter(e => !isTestEmployee(e));
+            const cleanDb = mappedFromDb.map((e: any) => {
+              const isDom = (e.fullName || '').toLowerCase().includes('dominique') ||
+                            (e.fullName || '').toLowerCase().includes('roody') ||
+                            (e.email || '').toLowerCase().includes('rmdguerrier') ||
+                            e.employeeId === 'EMP-LBN-001';
+              if (isDom) {
+                return {
+                  ...e,
+                  company: 'Lebrun S.A.',
+                  site: 'Delmas 52',
+                  location: 'Delmas 52',
+                  employeeId: 'EMP-LBN-001'
+                };
+              }
+              return e;
+            }).filter(e => {
+              if (isTestEmployee(e)) return false;
+              // Règle stricte Obonprix : une seule et unique collaboratrice (Gracia / Mia Guerrier)
+              if ((e.company || '').toLowerCase().includes('obonprix')) {
+                const isGraciaMia = (e.fullName || '').toLowerCase().includes('mia') ||
+                                    (e.fullName || '').toLowerCase().includes('gracia') ||
+                                    (e.email || '').toLowerCase().includes('miaguerrier');
+                return isGraciaMia;
+              }
+              return true;
+            });
+
+            // S'assurer que Gracia / Mia Guerrier est toujours présente dans la liste Obonprix
+            const hasMia = cleanDb.some((e: any) => (e.email || '').toLowerCase().includes('miaguerrier') || (e.fullName || '').toLowerCase().includes('mia guerrier') || (e.fullName || '').toLowerCase().includes('gracia'));
+            if (!hasMia) {
+              const mia = INITIAL_EMPLOYEES.find(e => (e.email || '').includes('miaguerrier') || (e.company || '').toLowerCase().includes('obonprix'));
+              if (mia) cleanDb.push(mia);
+            }
 
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_employees', JSON.stringify(cleanDb));
@@ -1753,9 +1892,30 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // Employee Actions
   const addEmployee = async (emp: Omit<Employee, 'id'>) => {
     const isCarl = isCarlHens(currentUser);
-    const targetCompany = isCarl ? 'Caribe Motors' : (emp.company || 'Lebrun S.A.');
-    const targetSite = isCarl ? (emp.site || 'Pétion-Ville') : (emp.site || 'Delmas 52');
-    const targetPhotoUrl = isCarl ? undefined : (emp.photoUrl?.trim() || undefined);
+    const isGrac = isGraciama(currentUser);
+    const isDominique = 
+      (emp.fullName || '').toLowerCase().includes('dominique') ||
+      (emp.fullName || '').toLowerCase().includes('roody') ||
+      (emp.lastName || '').toLowerCase().includes('dominique') ||
+      (emp.firstName || '').toLowerCase().includes('dominique') ||
+      (emp.email || '').toLowerCase().includes('rmdguerrier');
+
+    const isObpRelated = !isDominique && (
+      isGrac ||
+      (emp.company || '').toLowerCase().includes('obonprix') ||
+      (emp.site || '').toLowerCase().includes('83') ||
+      (emp.fullName || '').toLowerCase().includes('gracia') ||
+      (emp.lastName || '').toLowerCase().includes('gracia') ||
+      (emp.firstName || '').toLowerCase().includes('gracia') ||
+      (emp.fullName || '').toLowerCase().includes('mia') ||
+      (emp.firstName || '').toLowerCase().includes('mia') ||
+      (emp.email || '').toLowerCase().includes('miaguerrier') ||
+      (emp.email || '').toLowerCase().includes('obonprix')
+    );
+
+    const targetCompany = isDominique ? 'Lebrun S.A.' : (isCarl ? 'Caribe Motors' : isObpRelated ? 'Obonprix' : (emp.company || 'Lebrun S.A.'));
+    const targetSite = isDominique ? 'Delmas 52' : (isCarl ? (emp.site || 'Pétion-Ville') : isObpRelated ? 'Delmas 83' : (emp.site || 'Delmas 52'));
+    const targetPhotoUrl = emp.photoUrl?.trim() || undefined;
 
     const cleanUserId = normalizeEmployeeId(emp.employeeId || '', targetCompany);
     const cleanUsername = emp.accounts?.appUsername || cleanUserId.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1856,6 +2016,40 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     const targetEmp = employees.find(e => e.id === id || e.employeeId === id);
     const oldFullName = targetEmp?.fullName;
     const oldEmployeeId = targetEmp?.employeeId;
+
+    const isDominique = 
+      (targetEmp?.employeeId === 'EMP-LBN-001') ||
+      (updates.employeeId === 'EMP-LBN-001') ||
+      (targetEmp?.fullName || '').toLowerCase().includes('dominique') ||
+      (targetEmp?.fullName || '').toLowerCase().includes('roody') ||
+      (targetEmp?.email || '').toLowerCase().includes('rmdguerrier') ||
+      (updates.fullName || '').toLowerCase().includes('dominique') ||
+      (updates.fullName || '').toLowerCase().includes('roody') ||
+      (updates.email || '').toLowerCase().includes('rmdguerrier');
+
+    const isObpEmp = !isDominique && (
+      isGraciama(currentUser) ||
+      (targetEmp?.company || '').toLowerCase().includes('obonprix') ||
+      (targetEmp?.site || '').toLowerCase().includes('83') ||
+      (updates.company || '').toLowerCase().includes('obonprix') ||
+      (updates.site || '').toLowerCase().includes('83') ||
+      (targetEmp?.fullName || '').toLowerCase().includes('mia guerrier') ||
+      (targetEmp?.fullName || '').toLowerCase().includes('gracia') ||
+      (updates.fullName || '').toLowerCase().includes('mia guerrier') ||
+      (updates.fullName || '').toLowerCase().includes('gracia') ||
+      (updates.lastName || '').toLowerCase().includes('gracia') ||
+      (updates.firstName || '').toLowerCase().includes('gracia') ||
+      (targetEmp?.email || '').toLowerCase().includes('miaguerrier') ||
+      (updates.email || '').toLowerCase().includes('miaguerrier')
+    );
+
+    if (isDominique) {
+      updates.company = 'Lebrun S.A.';
+      updates.site = 'Delmas 52';
+    } else if (isObpEmp) {
+      updates.company = 'Obonprix';
+      updates.site = 'Delmas 83';
+    }
 
     // 1. Enregistrement en base d'abord : « succès » n'est affiché que si la base a accepté la modification.
     let dbFailure: string | null = null;
@@ -2614,9 +2808,51 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // IT Actions
   const addITAsset = async (asset: Omit<ITAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
+
+    const assignedEmp = employees.find(e => 
+      (asset.assignedPersonnelId && (e.id === asset.assignedPersonnelId || e.employeeId === asset.assignedPersonnelId)) ||
+      (asset.assignedTo && e.fullName.toLowerCase() === asset.assignedTo.toLowerCase())
+    );
+
+    const isDominique = 
+      (assignedEmp?.employeeId === 'EMP-LBN-001') ||
+      (assignedEmp?.fullName || '').toLowerCase().includes('dominique') ||
+      (assignedEmp?.fullName || '').toLowerCase().includes('roody') ||
+      (assignedEmp?.email || '').toLowerCase().includes('rmdguerrier') ||
+      (asset.assignedTo || '').toLowerCase().includes('dominique') ||
+      (asset.assignedTo || '').toLowerCase().includes('roody') ||
+      (asset.assignedPersonnelId === 'EMP-LBN-001');
+
+    const isEmpObp = !isDominique && (
+      isGraciama(currentUser) ||
+      (assignedEmp?.company || '').toLowerCase().includes('obonprix') ||
+      (assignedEmp?.fullName || '').toLowerCase().includes('mia guerrier') ||
+      (assignedEmp?.fullName || '').toLowerCase().includes('gracia') ||
+      (assignedEmp?.email || '').toLowerCase().includes('miaguerrier') ||
+      (asset.company || '').toLowerCase().includes('obonprix') ||
+      (asset.assignedTo || '').toLowerCase().includes('gracia') ||
+      (asset.assignedTo || '').toLowerCase().includes('mia guerrier')
+    );
+
+    const effectiveCompany = isDominique ? 'Lebrun S.A.' : (isEmpObp ? 'Obonprix' : (assignedEmp?.company || asset.company || 'Lebrun S.A.'));
+    const effectiveLocation = isDominique ? 'Delmas 52' : (isEmpObp ? 'Delmas 83' : (assignedEmp?.site || asset.location || 'Delmas 52'));
+
+    // Auto generate IT tag using backend logic if missing or needs company prefix
+    const existingTags = itAssets.map(a => a.assetTag);
+    let finalTag = asset.assetTag;
+    if (!finalTag || finalTag.startsWith('it-') || finalTag.includes('undefined')) {
+      finalTag = generateITAssetTag(effectiveCompany, existingTags);
+    }
+
     const newAsset: ITAsset = {
       ...asset,
-      id: asset.assetTag || `it-${Date.now()}`,
+      company: effectiveCompany,
+      location: effectiveLocation,
+      assetTag: finalTag,
+      id: finalTag,
+      assignedPersonnelId: assignedEmp ? assignedEmp.employeeId : asset.assignedPersonnelId,
+      assignedTo: assignedEmp ? assignedEmp.fullName : asset.assignedTo,
+      assignedDepartment: assignedEmp ? assignedEmp.department : asset.assignedDepartment,
       createdAt: now,
       updatedAt: now
     };
@@ -2635,11 +2871,6 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         monObsStr !== 'Good' ? `Écran: ${monObsStr}` : '',
         newAsset.notes
       ].filter(Boolean).join(' • ');
-
-      const assignedEmp = employees.find(e => 
-        (newAsset.assignedPersonnelId && (e.id === newAsset.assignedPersonnelId || e.employeeId === newAsset.assignedPersonnelId)) ||
-        (newAsset.assignedTo && e.fullName.toLowerCase() === newAsset.assignedTo.toLowerCase())
-      );
 
       // Verify that user_id exists in users table to prevent foreign key violation
       const validUserId = assignedEmp?.employeeId && assignedEmp.employeeId.startsWith('EMP-') 
@@ -2874,27 +3105,40 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // Network Actions
   const addNetworkAsset = async (asset: Omit<NetworkAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
+    const isObp = isGraciama(currentUser) || (asset.company || '').toLowerCase().includes('obonprix');
+    const finalComp = isObp ? 'Obonprix' : (asset.company || 'Lebrun S.A.');
+    const finalSite = isObp ? 'Delmas 83' : (asset.site || 'Delmas 52');
+
+    const existingTags = networkAssets.map(n => n.assetTag);
+    let finalTag = asset.assetTag;
+    if (!finalTag || finalTag.startsWith('net-') || finalTag.includes('undefined')) {
+      finalTag = generateNetworkId(finalComp, existingTags);
+    }
+
     const newNet: NetworkAsset = {
       ...asset,
-      id: asset.assetTag || `net-${Date.now()}`,
+      company: finalComp,
+      site: finalSite,
+      assetTag: finalTag,
+      id: finalTag,
       createdAt: now,
       updatedAt: now
     };
 
     try {
       const { data, error } = await supabase.from('network_equipment').insert({
-        network_equipment_id: asset.assetTag,
-        entreprise: asset.company,
-        site: asset.site,
-        type_equipement_reseau: asset.deviceType,
-        marque: asset.brand,
-        modele: asset.model,
-        hostname: asset.hostname,
-        numero_serie: asset.serialNumber,
-        adresse_ip: asset.ipAddress,
-        adresse_mac: asset.macAddress,
-        etat: asset.status,
-        observations: asset.observations
+        network_equipment_id: finalTag,
+        entreprise: finalComp,
+        site: finalSite,
+        type_equipement_reseau: newNet.deviceType,
+        marque: newNet.brand,
+        modele: newNet.model,
+        hostname: newNet.hostname,
+        numero_serie: newNet.serialNumber,
+        adresse_ip: newNet.ipAddress,
+        adresse_mac: newNet.macAddress,
+        etat: newNet.status,
+        observations: newNet.observations
       }).select();
 
       if (error) {
@@ -3018,25 +3262,38 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // UPS Actions
   const addUPSAsset = async (asset: Omit<UPSAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
+    const isObp = isGraciama(currentUser) || (asset.company || '').toLowerCase().includes('obonprix');
+    const finalComp = isObp ? 'Obonprix' : (asset.company || 'Lebrun S.A.');
+    const finalSite = isObp ? 'Delmas 83' : (asset.site || 'Delmas 52');
+
+    const existingTags = upsAssets.map(u => u.assetTag);
+    let finalTag = asset.assetTag;
+    if (!finalTag || finalTag.startsWith('ups-') || finalTag.includes('undefined')) {
+      finalTag = generateUPSId(finalComp, existingTags);
+    }
+
     const newUPS: UPSAsset = {
       ...asset,
-      id: asset.assetTag || `ups-${Date.now()}`,
+      company: finalComp,
+      site: finalSite,
+      assetTag: finalTag,
+      id: finalTag,
       createdAt: now,
       updatedAt: now
     };
 
     try {
       const { data, error } = await supabase.from('ups').insert({
-        ups_id: asset.assetTag,
-        entreprise: asset.company,
-        site: asset.site,
-        ups: asset.name,
-        marque: asset.brand,
-        modele: asset.model,
-        capacite_va: asset.capacity,
-        nom_reference: asset.reference,
-        etat: asset.status,
-        observations: asset.observations
+        ups_id: finalTag,
+        entreprise: finalComp,
+        site: finalSite,
+        ups: newUPS.name,
+        marque: newUPS.brand,
+        modele: newUPS.model,
+        capacite_va: newUPS.capacity,
+        nom_reference: newUPS.reference,
+        etat: newUPS.status,
+        observations: newUPS.observations
       }).select();
 
       if (error) {
@@ -3641,26 +3898,39 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   // Actions Printers
   const addPrinter = async (printer: Omit<PrinterAsset, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
+    const isObp = isGraciama(currentUser) || (printer.company || '').toLowerCase().includes('obonprix');
+    const finalComp = isObp ? 'Obonprix' : (printer.company || 'Lebrun S.A.');
+    const finalSite = isObp ? 'Delmas 83' : (printer.site || 'Delmas 52');
+
+    const existingTags = printers.map(p => p.assetTag);
+    let finalTag = printer.assetTag;
+    if (!finalTag || finalTag.startsWith('prn-') || finalTag.includes('undefined')) {
+      finalTag = generatePrinterId(finalComp, existingTags);
+    }
+
     const newPrinter: PrinterAsset = {
       ...printer,
-      id: printer.assetTag || `prn-${Date.now()}`,
+      company: finalComp,
+      site: finalSite,
+      assetTag: finalTag,
+      id: finalTag,
       createdAt: now,
       updatedAt: now
     };
 
     try {
       const { data, error } = await supabase.from('printers').insert({
-        printer_id: printer.assetTag,
-        entreprise: printer.company,
-        site: printer.site,
-        nom_imprimante: printer.name,
-        marque: printer.brand,
-        modele: printer.model,
-        numero_serie: printer.serialNumber || 'N/A',
-        adresse_ip: printer.ipAddress || 'N/A',
-        type: printer.type || 'Multifonction',
-        etat: printer.status || 'Fonctionnel',
-        observations: printer.observations || 'Good'
+        printer_id: finalTag,
+        entreprise: finalComp,
+        site: finalSite,
+        nom_imprimante: newPrinter.name,
+        marque: newPrinter.brand,
+        modele: newPrinter.model,
+        numero_serie: newPrinter.serialNumber || 'N/A',
+        adresse_ip: newPrinter.ipAddress || 'N/A',
+        type: newPrinter.type || 'Multifonction',
+        etat: newPrinter.status || 'Fonctionnel',
+        observations: newPrinter.observations || 'Good'
       }).select();
 
       if (error) {
@@ -3894,9 +4164,14 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     let sheetTitle = 'Inventaire';
 
     const isCarl = isCarlHens(currentUser);
-    if (isCarl || cat === 'personnel') {
-      filename = isCarl ? `CaribeMotors_Personnel_${today}.xlsx` : `LebrunSA_Personnel_${today}.xlsx`;
-      sheetTitle = isCarl ? 'Personnel Caribe' : 'Personnel';
+    const isGrac = isGraciama(currentUser);
+    if (isCarl || (isGrac && cat === 'personnel') || cat === 'personnel') {
+      filename = isCarl 
+        ? `CaribeMotors_Personnel_${today}.xlsx` 
+        : isGrac 
+        ? `Obonprix_Personnel_${today}.xlsx` 
+        : `LebrunSA_Personnel_${today}.xlsx`;
+      sheetTitle = isCarl ? 'Personnel Caribe' : isGrac ? 'Personnel Obonprix' : 'Personnel';
       headers = [
         'Matricule',
         'Nom & Prénom',
@@ -3915,6 +4190,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       ];
       const targetEmployees = isCarl
         ? employees.filter(e => (e.company || '').toLowerCase().includes('caribe'))
+        : isGrac
+        ? employees.filter(e => (e.company || '').toLowerCase().includes('obonprix'))
         : employees;
       rows = targetEmployees.map(e => [
         e.employeeId,
@@ -4019,8 +4296,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         ];
       });
     } else if (cat === 'printers') {
-      filename = `LebrunSA_Inventaire_Imprimantes_${today}.xlsx`;
-      sheetTitle = 'Imprimantes';
+      filename = isGrac ? `Obonprix_Inventaire_Imprimantes_${today}.xlsx` : `LebrunSA_Inventaire_Imprimantes_${today}.xlsx`;
+      sheetTitle = isGrac ? 'Imprimantes Obonprix' : 'Imprimantes';
       headers = [
         'Tag Matériel',
         'Nom de l\'Imprimante',
@@ -4034,7 +4311,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         'État de Fonctionnement',
         'Observations'
       ];
-      rows = printers.map(p => [
+      const targetPrinters = isGrac ? printers.filter(p => (p.company || '').toLowerCase().includes('obonprix')) : printers;
+      rows = targetPrinters.map(p => [
         p.assetTag,
         p.name,
         p.company,
@@ -4122,8 +4400,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         p.observations || ''
       ]);
     } else if (!cat || cat === 'it') {
-      filename = `LebrunSA_Postes_IT_Materiel_${today}.xlsx`;
-      sheetTitle = 'Postes IT';
+      filename = isGrac ? `Obonprix_Postes_IT_Caisses_${today}.xlsx` : `LebrunSA_Postes_IT_Materiel_${today}.xlsx`;
+      sheetTitle = isGrac ? 'Postes Obonprix' : 'Postes IT';
       headers = [
         'Tag Matériel',
         'Désignation Poste',
@@ -4151,7 +4429,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         'Garantie',
         'Notes & Observations'
       ];
-      rows = itAssets.map(i => {
+      const targetIT = isGrac ? itAssets.filter(i => (i.company || '').toLowerCase().includes('obonprix')) : itAssets;
+      rows = targetIT.map(i => {
         const ws = i.workstation;
         return [
           i.assetTag,

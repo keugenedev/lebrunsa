@@ -173,105 +173,111 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
           </div>
 
           {/* Section 2: ERP & Session Accounts */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between pb-1 border-b border-slate-200">
-              <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <Building className="w-4 h-4 text-red-600" />
-                <span>Comptes Applicatifs & Microsoft GP</span>
-              </h4>
-              <button
-                type="button"
-                onClick={() => setShowPasswords(!showPasswords)}
-                className="flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700 font-medium transition-colors cursor-pointer"
-              >
-                {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                <span>{showPasswords ? 'Masquer mots de passe' : 'Afficher mots de passe'}</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Session Windows / PC */}
-              <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
-                <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
-                  <span>Session Windows Locale</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono">
-                    Windows
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">Username :</span>
-                  <span className="font-mono font-bold text-slate-900">{acc?.windowsUsername || 'N/A'}</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">Mot de passe :</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono font-semibold text-slate-900">
-                      {showPasswords ? (acc?.windowsPassword || 'N/A') : '••••••••'}
-                    </span>
-                    {acc?.windowsPassword && acc.windowsPassword !== 'N/A' && (
-                      <button
-                        onClick={() => handleCopy(acc.windowsPassword!)}
-                        className="text-slate-400 hover:text-slate-600"
-                        title="Copier le mot de passe"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+          {Boolean(acc?.appUsername || acc?.windowsUsername) && (
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <Building className="w-4 h-4 text-red-600" />
+                  <span>Comptes Applicatifs & Microsoft GP</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(!showPasswords)}
+                  className="flex items-center gap-1 text-[11px] text-red-600 hover:text-red-700 font-medium transition-colors cursor-pointer"
+                >
+                  {showPasswords ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showPasswords ? 'Masquer mots de passe' : 'Afficher mots de passe'}</span>
+                </button>
               </div>
 
-              {/* Application Logiciel Métier (Microsoft GP ou DealerPro) */}
-              <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
-                <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {acc?.applications?.toLowerCase().includes('dealer') ? (
-                      <img src="/logos/dealerpro.png" alt="DealerPro" className="h-4 w-auto object-contain max-w-[75px]" />
-                    ) : (
-                      <img src="/logos/gp.png" alt="Microsoft GP" className="h-4 w-auto object-contain max-w-[75px]" />
-                    )}
-                    <span>{acc?.applications || 'Microsoft GP'}</span>
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold font-mono ${
-                    acc?.applications?.toLowerCase().includes('dealer')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {acc?.applications?.toLowerCase().includes('dealer') ? 'DMS Automobile' : 'ERP Métier'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">
-                    Compte {acc?.applications?.toLowerCase().includes('dealer') ? 'DealerPro' : 'GP'} :
-                  </span>
-                  <span className="font-mono font-bold text-slate-900">{acc?.appUsername ? `@${acc.appUsername}` : 'N/A'}</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">
-                    Mot de passe {acc?.applications?.toLowerCase().includes('dealer') ? 'DealerPro' : 'GP'} :
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono font-semibold text-slate-900">
-                      {showPasswords ? (acc?.appPassword || '1234') : '••••••••'}
-                    </span>
-                    {acc?.appPassword && (
-                      <button
-                        onClick={() => handleCopy(acc.appPassword!)}
-                        className="text-slate-400 hover:text-slate-600"
-                        title="Copier le mot de passe"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Session Windows / PC */}
+                {acc?.windowsUsername && (
+                  <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
+                    <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
+                      <span>Session Windows Locale</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono">
+                        Windows
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">Username :</span>
+                      <span className="font-mono font-bold text-slate-900">{acc.windowsUsername}</span>
+                    </div>
+                    {acc.windowsPassword && acc.windowsPassword !== 'N/A' && (
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500">Mot de passe :</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-semibold text-slate-900">
+                            {showPasswords ? acc.windowsPassword : '••••••••'}
+                          </span>
+                          <button
+                            onClick={() => handleCopy(acc.windowsPassword!)}
+                            className="text-slate-400 hover:text-slate-600"
+                            title="Copier le mot de passe"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-                <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-200">
-                  Société : <strong>{acc?.organization || employee.company}</strong>
-                </div>
+                )}
+
+                {/* Application Logiciel Métier (Microsoft GP ou DealerPro) */}
+                {acc?.appUsername && (
+                  <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
+                    <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {acc?.applications?.toLowerCase().includes('dealer') ? (
+                          <img src="/logos/dealerpro.png" alt="DealerPro" className="h-4 w-auto object-contain max-w-[75px]" />
+                        ) : (
+                          <img src="/logos/gp.png" alt="Microsoft GP" className="h-4 w-auto object-contain max-w-[75px]" />
+                        )}
+                        <span>{acc?.applications || 'Microsoft GP'}</span>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded font-semibold font-mono ${
+                        acc?.applications?.toLowerCase().includes('dealer')
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {acc?.applications?.toLowerCase().includes('dealer') ? 'DMS Automobile' : 'ERP Métier'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">
+                        Compte {acc?.applications?.toLowerCase().includes('dealer') ? 'DealerPro' : 'GP'} :
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">@{acc.appUsername}</span>
+                    </div>
+                    {acc.appPassword && (
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500">
+                          Mot de passe {acc?.applications?.toLowerCase().includes('dealer') ? 'DealerPro' : 'GP'} :
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-semibold text-slate-900">
+                            {showPasswords ? acc.appPassword : '••••••••'}
+                          </span>
+                          <button
+                            onClick={() => handleCopy(acc.appPassword!)}
+                            className="text-slate-400 hover:text-slate-600"
+                            title="Copier le mot de passe"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-200">
+                      Société : <strong>{acc?.organization || employee.company}</strong>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Modal Footer Actions */}
