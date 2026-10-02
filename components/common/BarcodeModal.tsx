@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { useInventory } from '@/context/InventoryContext';
+import { isGraciama } from '@/lib/permissions';
 import Barcode from './Barcode';
 import { 
   Barcode as BarcodeIcon, 
@@ -16,7 +17,8 @@ import {
 } from 'lucide-react';
 
 export default function BarcodeModal() {
-  const { isQRModalOpen, qrTargetAsset, closeQRModal } = useInventory();
+  const { isQRModalOpen, qrTargetAsset, closeQRModal, currentUser } = useInventory();
+  const isObp = isGraciama(currentUser) || (qrTargetAsset as any)?.company?.toLowerCase().includes('obonprix');
   const [copied, setCopied] = useState(false);
   const badgeRef = useRef<HTMLDivElement>(null);
 
@@ -41,8 +43,10 @@ export default function BarcodeModal() {
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-black">
-              <BarcodeIcon className="w-4 h-4 text-black" />
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+              isObp ? 'bg-[#DA2027] text-[#FFCB06]' : 'bg-slate-100 text-black'
+            }`}>
+              <BarcodeIcon className={`w-4 h-4 ${isObp ? 'text-[#FFCB06]' : 'text-black'}`} />
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">Étiquette Code-Barres</h3>
@@ -109,7 +113,11 @@ export default function BarcodeModal() {
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
           <button
             onClick={handleCopyTag}
-            className="flex-1 py-2 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+            className={`flex-1 py-2 px-3 rounded-xl border text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
+              isObp
+                ? 'bg-slate-100 hover:bg-[#FFCB06]/20 text-[#574C46] border-[#574C46]/20'
+                : 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+            }`}
           >
             {copied ? (
               <>
@@ -118,7 +126,7 @@ export default function BarcodeModal() {
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-slate-400" />
+                <Copy className={`w-3.5 h-3.5 ${isObp ? 'text-[#DA2027]' : 'text-slate-400'}`} />
                 <span>Copier code</span>
               </>
             )}
@@ -126,9 +134,11 @@ export default function BarcodeModal() {
 
           <button
             onClick={handlePrint}
-            className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-medium transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+            className={`flex-1 py-2 px-3 rounded-xl active:scale-95 text-white text-xs font-semibold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${
+              isObp ? 'bg-[#DA2027] hover:bg-[#B8191F]' : 'bg-slate-900 hover:bg-slate-800 active:bg-slate-950'
+            }`}
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className={`w-3.5 h-3.5 ${isObp ? 'text-[#FFCB06]' : ''}`} />
             <span>Imprimer étiquette</span>
           </button>
         </div>

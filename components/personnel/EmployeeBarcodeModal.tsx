@@ -2,6 +2,8 @@
 
 import React, { useState, useRef } from 'react';
 import { Employee } from '@/types/inventory';
+import { useInventory } from '@/context/InventoryContext';
+import { isGraciama } from '@/lib/permissions';
 import Barcode from '@/components/common/Barcode';
 import { 
   X, 
@@ -27,11 +29,14 @@ interface EmployeeBarcodeModalProps {
 }
 
 export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: EmployeeBarcodeModalProps) {
+  const { currentUser } = useInventory();
   const [showPasswords, setShowPasswords] = useState(false);
   const [copied, setCopied] = useState(false);
   const badgeRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen || !employee) return null;
+
+  const isObp = isGraciama(currentUser) || employee.company?.toLowerCase().includes('obonprix');
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -54,8 +59,10 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
         {/* Header Modal */}
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
-              <BarcodeIcon className="w-5 h-5" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              isObp ? 'bg-[#DA2027] text-[#FFCB06]' : 'bg-slate-100 border border-slate-200 text-slate-800'
+            }`}>
+              <BarcodeIcon className={`w-5 h-5 ${isObp ? 'text-[#FFCB06]' : ''}`} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -293,14 +300,20 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                isObp
+                  ? 'bg-slate-100 hover:bg-[#FFCB06]/20 text-[#574C46] border-[#574C46]/20'
+                  : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+              }`}
             >
-              <Printer className="w-3.5 h-3.5 text-slate-500" />
+              <Printer className={`w-3.5 h-3.5 ${isObp ? 'text-[#DA2027]' : 'text-slate-500'}`} />
               <span>Imprimer l&apos;étiquette Code-Barres</span>
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition-colors cursor-pointer"
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-white ${
+                isObp ? 'bg-[#DA2027] hover:bg-[#B8191F]' : 'bg-slate-900 hover:bg-slate-800'
+              }`}
             >
               Fermer
             </button>

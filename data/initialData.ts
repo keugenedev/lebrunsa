@@ -3008,7 +3008,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     "lastName": "Guerrier",
     "firstName": "Mia",
     "fullName": "Mia Guerrier",
-    "email": "miaguerrier@obonprix83",
+    "email": "miaguerrier@obonprix83.com",
     "phone": "50937000083",
     "department": "Direction",
     "jobTitle": "Responsable Magasin",

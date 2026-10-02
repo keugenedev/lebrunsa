@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useInventory } from '@/context/InventoryContext';
+import { isGraciama } from '@/lib/permissions';
 import {
   X,
   ShieldCheck,
@@ -35,7 +36,8 @@ export default function AccountModal() {
 }
 
 function AccountForm() {
-  const { closeAccountModal, editingAccount, addITAccount, setAccountPassword, employees, itAccounts } = useInventory();
+  const { closeAccountModal, editingAccount, addITAccount, setAccountPassword, employees, itAccounts, currentUser } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   // Avec un compte sélectionné dans la liste : on réinitialise son mot de passe. Sinon : création d'un accès.
   const isReset = Boolean(editingAccount);
@@ -112,8 +114,14 @@ function AccountForm() {
         {/* En-tête */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center shrink-0">
-              {isReset ? <KeyRound className="w-5 h-5 text-emerald-400" /> : <ShieldCheck className="w-5 h-5 text-emerald-400" />}
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              isGraciamaUser ? 'bg-[#DA2027] text-[#FFCB06]' : 'bg-slate-900 text-emerald-400'
+            }`}>
+              {isReset ? (
+                <KeyRound className={`w-5 h-5 ${isGraciamaUser ? 'text-[#FFCB06]' : 'text-emerald-400'}`} />
+              ) : (
+                <ShieldCheck className={`w-5 h-5 ${isGraciamaUser ? 'text-[#FFCB06]' : 'text-emerald-400'}`} />
+              )}
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900 leading-tight">
@@ -250,7 +258,9 @@ function AccountForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-xl shadow-sm transition-all cursor-pointer disabled:cursor-not-allowed"
+              className={`flex items-center gap-2 px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition-all cursor-pointer disabled:cursor-not-allowed ${
+                isGraciamaUser ? 'bg-[#DA2027] hover:bg-[#B8191F] disabled:bg-[#DA2027]/40' : 'bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400'
+              }`}
             >
               {isSubmitting ? (
                 <>

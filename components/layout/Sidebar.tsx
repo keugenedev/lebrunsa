@@ -46,11 +46,6 @@ export default function Sidebar() {
   const isGraciamaUser = isGraciama(currentUser);
 
   const caribeCount = employees.filter(e => (e.company || '').toLowerCase().includes('caribe')).length;
-  const obpPrintersCount = printers.filter(p => (p.company || '').toLowerCase().includes('obonprix')).length;
-  const obpITCount = itAssets.filter(i => (i.company || '').toLowerCase().includes('obonprix')).length;
-  const obpEmpCount = employees.filter(e => (e.company || '').toLowerCase().includes('obonprix')).length;
-  const obpNetCount = (networkAssets || []).filter(n => (n.company || '').toLowerCase().includes('obonprix')).length;
-  const obpUpsCount = (upsAssets || []).filter(u => (u.company || '').toLowerCase().includes('obonprix')).length;
 
   const navItems: {
     id: NavigationTab | 'scanner';
@@ -63,17 +58,17 @@ export default function Sidebar() {
       ]
     : [
         { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'printers', label: 'Imprimantes', count: isGraciamaUser ? obpPrintersCount : printers.length, icon: Printer },
-        { id: 'it', label: 'Postes IT & Matériel', count: isGraciamaUser ? obpITCount : itAssets.length, icon: Laptop },
-        { id: 'network', label: 'Réseau', count: isGraciamaUser ? obpNetCount : (networkAssets?.length || 5), icon: Network },
-        { id: 'ups', label: 'Onduleurs UPS', count: isGraciamaUser ? obpUpsCount : (upsAssets?.length || 7), icon: Zap },
-        { id: 'applications', label: 'Applications', count: isGraciamaUser ? 0 : (applicationAccounts?.length || 13), icon: KeyRound },
-        { id: 'personnel', label: 'Personnel', count: isGraciamaUser ? obpEmpCount : employees.length, icon: Users },
+        { id: 'printers', label: 'Imprimantes', count: isGraciamaUser ? undefined : printers.length, icon: Printer },
+        { id: 'it', label: 'Postes IT & Matériel', count: isGraciamaUser ? undefined : itAssets.length, icon: Laptop },
+        { id: 'network', label: 'Réseau', count: isGraciamaUser ? undefined : (networkAssets?.length || 5), icon: Network },
+        { id: 'ups', label: 'Onduleurs UPS', count: isGraciamaUser ? undefined : (upsAssets?.length || 7), icon: Zap },
+        { id: 'applications', label: 'Applications', count: isGraciamaUser ? undefined : (applicationAccounts?.length || 13), icon: KeyRound },
+        { id: 'personnel', label: 'Personnel', count: isGraciamaUser ? undefined : employees.length, icon: Users },
         ...(!isGraciamaUser ? [{ id: 'accounts' as const, label: 'Comptes', count: itAccounts?.length || 0, icon: UserCheck }] : []),
-        { id: 'documents', label: 'Documents', count: isGraciamaUser ? 0 : (documents?.length || 0), icon: FileText },
-        { id: 'phones', label: 'Téléphones', count: isGraciamaUser ? 0 : phones.length, icon: Smartphone },
+        { id: 'documents', label: 'Documents', count: isGraciamaUser ? undefined : (documents?.length || 0), icon: FileText },
+        { id: 'phones', label: 'Téléphones', count: isGraciamaUser ? undefined : phones.length, icon: Smartphone },
         { id: 'tags', label: 'Tag', icon: Tag },
-        { id: 'badges', label: 'Badges', count: isGraciamaUser ? obpEmpCount : employees.length, icon: IdCard },
+        { id: 'badges', label: 'Badges', count: isGraciamaUser ? undefined : employees.length, icon: IdCard },
         { id: 'scanner', label: 'Scanner Code-barres', icon: Barcode },
         { id: 'settings', label: 'Configuration', icon: Settings }
       ];
@@ -94,11 +89,15 @@ export default function Sidebar() {
     <aside
       className={`${
         isCollapsed ? 'w-[72px]' : 'w-60'
-      } shrink-0 bg-white border-r border-slate-200/90 flex flex-col justify-between select-none shadow-2xs z-50 transition-all duration-300 ease-in-out relative overflow-visible`}
+      } shrink-0 bg-white ${
+        isGraciamaUser ? 'border-r border-[#574C46]/20' : 'border-r border-slate-200/90'
+      } flex flex-col justify-between select-none shadow-2xs z-50 transition-all duration-300 ease-in-out relative overflow-visible`}
     >
       {/* Top: Logo + Toggle Button */}
       <div
-        className={`border-b border-slate-100 flex items-center bg-white transition-all duration-300 ${
+        className={`border-b flex items-center bg-white transition-all duration-300 ${
+          isGraciamaUser ? 'border-[#574C46]/10' : 'border-slate-100'
+        } ${
           isCollapsed ? 'flex-col gap-2 py-3 px-2' : 'justify-between py-3.5 px-3'
         }`}
       >
@@ -128,7 +127,11 @@ export default function Sidebar() {
 
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-all cursor-pointer shrink-0"
+          className={`flex items-center justify-center w-6 h-6 rounded-lg transition-all cursor-pointer shrink-0 ${
+            isGraciamaUser
+              ? 'bg-slate-100 hover:bg-[#FFCB06]/30 text-[#574C46] hover:text-[#DA2027]'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600'
+          }`}
           title={isCollapsed ? 'Agrandir le menu' : 'Réduire le menu'}
         >
           {isCollapsed
@@ -144,7 +147,7 @@ export default function Sidebar() {
           isCollapsed ? 'px-2 space-y-1' : 'px-3 space-y-1'
         }`}
       >
-        {!isCollapsed && (
+        {!isCollapsed && !isGraciamaUser && (
           <div className="px-3 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
             {isRestrictedCarl ? 'Caribe Motors' : 'Menu Principal'}
           </div>
@@ -160,20 +163,44 @@ export default function Sidebar() {
               onClick={() => handleNavClick(item.id)}
               title={isCollapsed ? item.label : undefined}
               className={`w-full flex items-center rounded-xl text-xs font-medium transition-all duration-150 group cursor-pointer ${
-                isCollapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2'
+                isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
               } ${
-                isActive
-                  ? 'bg-slate-900 text-white shadow-2xs font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                isGraciamaUser
+                  ? isActive
+                    ? 'bg-[#DA2027] text-white shadow-xs font-semibold'
+                    : 'text-[#574C46] hover:bg-[#FFCB06]/20 hover:text-[#DA2027]'
+                  : isActive
+                    ? 'bg-slate-900 text-white shadow-2xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
               }`}
             >
-              <Icon
-                className={`shrink-0 transition-colors ${isCollapsed ? 'w-5 h-5' : 'w-4 h-4'} ${
-                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-800'
-                }`}
-              />
-              {!isCollapsed && (
-                <span className="truncate leading-tight">{item.label}</span>
+              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5 min-w-0'}`}>
+                <Icon
+                  className={`shrink-0 transition-colors ${isCollapsed ? 'w-5 h-5' : 'w-4 h-4'} ${
+                    isGraciamaUser
+                      ? isActive
+                        ? 'text-[#FFCB06]'
+                        : 'text-[#D99B00] group-hover:text-[#DA2027]'
+                      : isActive
+                        ? 'text-white'
+                        : 'text-slate-400 group-hover:text-slate-800'
+                  }`}
+                />
+                {!isCollapsed && (
+                  <span className="truncate leading-tight">{item.label}</span>
+                )}
+              </div>
+
+              {!isCollapsed && !isGraciamaUser && item.count !== undefined && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-none shrink-0 transition-colors ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-800'
+                  }`}
+                >
+                  {item.count}
+                </span>
               )}
             </button>
           );
@@ -182,7 +209,11 @@ export default function Sidebar() {
 
       {/* User Session & Logout */}
       <div
-        className={`border-t border-slate-100 bg-slate-50/60 transition-all duration-300 ${
+        className={`border-t transition-all duration-300 ${
+          isGraciamaUser 
+            ? 'border-[#574C46]/10 bg-slate-50/80' 
+            : 'border-slate-100 bg-slate-50/60'
+        } ${
           isCollapsed ? 'px-2 py-3 flex items-center justify-center' : 'px-3 py-2.5'
         }`}
       >
@@ -190,30 +221,52 @@ export default function Sidebar() {
           <button
             onClick={logout}
             title="Se déconnecter"
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer group"
+            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors cursor-pointer group ${
+              isGraciamaUser
+                ? 'bg-slate-100 hover:bg-[#DA2027]/10 text-[#574C46] hover:text-[#DA2027]'
+                : 'bg-slate-100 hover:bg-red-50 hover:text-red-600'
+            }`}
           >
-            <LogOut className="w-4 h-4 text-slate-500 group-hover:text-red-500 transition-colors" />
+            <LogOut className={`w-4 h-4 transition-colors ${
+              isGraciamaUser
+                ? 'text-[#574C46] group-hover:text-[#DA2027]'
+                : 'text-slate-500 group-hover:text-red-500'
+            }`} />
           </button>
         ) : (
           <button
             onClick={logout}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer group"
+            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer group ${
+              isGraciamaUser
+                ? 'text-[#574C46] hover:text-[#DA2027] hover:bg-[#FFCB06]/15'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
             title="Se déconnecter"
           >
             <div className="flex items-center gap-2 truncate">
-              <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-[11px] shrink-0">
-                {currentUser?.name ? currentUser.name[0].toUpperCase() : 'A'}
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${
+                isGraciamaUser
+                  ? 'bg-[#FFCB06] text-[#574C46]'
+                  : 'bg-slate-200 text-slate-800'
+              }`}>
+                {currentUser?.name ? currentUser.name[0].toUpperCase() : 'M'}
               </div>
               <div className="truncate text-left">
-                <p className="text-[11px] font-semibold text-slate-800 truncate leading-tight">
-                  {currentUser?.name || 'Administrateur'}
+                <p className={`text-[11px] font-semibold truncate leading-tight ${
+                  isGraciamaUser ? 'text-[#574C46]' : 'text-slate-800'
+                }`}>
+                  {currentUser?.name || (isGraciamaUser ? 'Mia Guerrier' : 'Administrateur')}
                 </p>
                 <p className="text-[10px] text-slate-400 truncate leading-tight">
-                  {currentUser?.email || 'admin@lebrunsa.com'}
+                  {currentUser?.email || (isGraciamaUser ? 'miaguerrier@obonprix83.com' : 'admin@lebrunsa.com')}
                 </p>
               </div>
             </div>
-            <LogOut className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-800 shrink-0" />
+            <LogOut className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+              isGraciamaUser
+                ? 'text-[#574C46] group-hover:text-[#DA2027]'
+                : 'text-slate-400 group-hover:text-slate-800'
+            }`} />
           </button>
         )}
       </div>

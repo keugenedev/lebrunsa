@@ -1268,6 +1268,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
     // Accès dédié Responsable Obonprix Delmas 83 (Mia Guerrier)
     const isObonprixAttempt = 
+      emailQuery === 'miaguerrier@obonprix83.com' ||
       emailQuery === 'miaguerrier@obonprix83' ||
       emailQuery === 'miaguerrier@obonprix.ht' ||
       emailQuery === 'miaguerrier' ||
@@ -1280,7 +1281,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       if (password === 'Obonprix@83!#2026') {
         const user = {
           name: 'Mia Guerrier',
-          email: 'miaguerrier@obonprix83',
+          email: 'miaguerrier@obonprix83.com',
           role: 'Responsable Magasin',
           company: 'Obonprix'
         };
@@ -1525,11 +1526,17 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               return true;
             });
 
-            // S'assurer que Gracia / Mia Guerrier est toujours présente dans la liste Obonprix
+            // S'assurer que Gracia / Mia Guerrier est toujours présente dans la liste Obonprix avec son email officiel
             const hasMia = cleanDb.some((e: any) => (e.email || '').toLowerCase().includes('miaguerrier') || (e.fullName || '').toLowerCase().includes('mia guerrier') || (e.fullName || '').toLowerCase().includes('gracia'));
             if (!hasMia) {
               const mia = INITIAL_EMPLOYEES.find(e => (e.email || '').includes('miaguerrier') || (e.company || '').toLowerCase().includes('obonprix'));
-              if (mia) cleanDb.push(mia);
+              if (mia) cleanDb.push({ ...mia, email: 'miaguerrier@obonprix83.com' });
+            } else {
+              cleanDb.forEach((e: any) => {
+                if ((e.company || '').toLowerCase().includes('obonprix') && ((e.fullName || '').toLowerCase().includes('mia') || (e.fullName || '').toLowerCase().includes('gracia') || (e.email || '').toLowerCase().includes('miaguerrier'))) {
+                  e.email = 'miaguerrier@obonprix83.com';
+                }
+              });
             }
 
             if (typeof window !== 'undefined') {

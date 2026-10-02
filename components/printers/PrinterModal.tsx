@@ -120,8 +120,8 @@ export default function PrinterModal() {
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
-              <Printer className="w-4 h-4" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isGraciamaUser ? 'bg-[#DA2027] text-[#FFCB06]' : 'bg-slate-100 border border-slate-200 text-slate-800'}`}>
+              <Printer className={`w-4 h-4 ${isGraciamaUser ? 'text-[#FFCB06]' : ''}`} />
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">
@@ -362,7 +362,7 @@ export default function PrinterModal() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed text-xs flex items-center gap-2"
+              className={`px-5 py-2.5 rounded-xl text-white font-semibold shadow-xs transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed text-xs flex items-center gap-2 ${isGraciamaUser ? 'bg-[#DA2027] hover:bg-[#B8191F] disabled:bg-[#DA2027]/40' : 'bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400'}`}
             >
               {isSubmitting ? (
                 <>

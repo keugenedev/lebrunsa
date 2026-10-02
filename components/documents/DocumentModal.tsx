@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useInventory } from '@/context/InventoryContext';
+import { isGraciama } from '@/lib/permissions';
 import { DocumentItem, DocumentCategory } from '@/types/inventory';
 import { 
   X, 
@@ -42,8 +43,10 @@ export default function DocumentModal() {
     editingDocument,
     addDocument,
     updateDocument,
-    documents
+    documents,
+    currentUser
   } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
 
   const [title, setTitle] = useState('');
   const [reference, setReference] = useState('');
@@ -166,8 +169,10 @@ export default function DocumentModal() {
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs shrink-0">
-              <FileText className="w-5 h-5 text-slate-200" />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs shrink-0 ${
+              isGraciamaUser ? 'bg-[#DA2027] text-[#FFCB06]' : 'bg-slate-900 text-white'
+            }`}>
+              <FileText className={`w-5 h-5 ${isGraciamaUser ? 'text-[#FFCB06]' : 'text-slate-200'}`} />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 leading-tight">
@@ -381,7 +386,9 @@ export default function DocumentModal() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-xl shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed active:scale-95"
+              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed active:scale-95 ${
+                isGraciamaUser ? 'bg-[#DA2027] hover:bg-[#B8191F] disabled:bg-[#DA2027]/40' : 'bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400'
+              }`}
             >
               {isSubmitting ? (
                 <>

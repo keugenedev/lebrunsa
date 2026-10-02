@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useInventory } from '@/context/InventoryContext';
 import { ITAsset, Employee } from '@/types/inventory';
+import { isGraciama } from '@/lib/permissions';
 import Barcode from '@/components/common/Barcode';
 import CompanyLogo from '@/components/common/CompanyLogo';
 import OSLogo from '@/components/common/OSLogo';
@@ -36,7 +37,8 @@ export default function WorkstationDetailsModal({
   onClose,
   onOpenEdit
 }: WorkstationDetailsModalProps) {
-  const { applicationAccounts, employees } = useInventory();
+  const { applicationAccounts, employees, currentUser } = useInventory();
+  const isGraciamaUser = isGraciama(currentUser);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [showPasswords, setShowPasswords] = useState(false);
 
@@ -473,7 +475,11 @@ export default function WorkstationDetailsModal({
                     onClose();
                     onOpenEdit(asset);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-medium transition-colors cursor-pointer"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-white ${
+                    (isGraciamaUser || companyName.toLowerCase().includes('obonprix'))
+                      ? 'bg-[#DA2027] hover:bg-[#B8191F]'
+                      : 'bg-slate-900 hover:bg-black'
+                  }`}
                 >
                   Modifier Fiche
                 </button>

@@ -172,8 +172,8 @@ function PhoneForm() {
       <div className="w-full max-w-xl bg-white border border-slate-200 shadow-2xl p-6 relative max-h-[92vh] overflow-y-auto rounded-2xl">
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
-              <Smartphone className="w-4 h-4" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isGraciamaUser ? 'bg-[#DA2027] text-[#FFCB06]' : 'bg-slate-100 border border-slate-200 text-slate-800'}`}>
+              <Smartphone className={`w-4 h-4 ${isGraciamaUser ? 'text-[#FFCB06]' : ''}`} />
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900">
@@ -357,7 +357,7 @@ function PhoneForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-9 px-5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer disabled:opacity-60"
+                className={`h-9 px-5 rounded-xl text-xs font-semibold text-white transition-colors cursor-pointer disabled:opacity-60 ${isGraciamaUser ? 'bg-[#DA2027] hover:bg-[#B8191F]' : 'bg-slate-900 hover:bg-slate-800'}`}
               >
                 {isSubmitting ? 'Enregistrement...' : editingPhone ? 'Enregistrer' : 'Ajouter le téléphone'}
               </button>

@@ -71,6 +71,7 @@ export function isGraciama(user: UserProfile | null | undefined): boolean {
   }
 
   return (
+    email === 'miaguerrier@obonprix83.com' ||
     email === 'miaguerrier@obonprix83' ||
     email.startsWith('miaguerrier') ||
     email.includes('miaguerrier') ||

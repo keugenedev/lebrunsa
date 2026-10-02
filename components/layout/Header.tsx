@@ -65,10 +65,12 @@ export default function Header() {
       {/* Breadcrumbs & Organization */}
       <div className="flex items-center gap-1.5 sm:gap-2 text-xs shrink-0 min-w-0">
         <div 
-          className="flex items-center gap-1.5 text-slate-700 font-semibold cursor-pointer hover:text-slate-900 transition-colors shrink-0" 
+          className={`flex items-center gap-1.5 font-semibold cursor-pointer transition-colors shrink-0 ${
+            isGraciamaUser ? 'text-[#DA2027] hover:text-[#B8191F]' : 'text-slate-700 hover:text-slate-900'
+          }`}
           onClick={() => setActiveTab(isRestrictedCarl ? 'personnel' : 'overview')}
         >
-          <Building2 className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+          <Building2 className={`w-3.5 h-3.5 shrink-0 ${isGraciamaUser ? 'text-[#DA2027]' : 'text-slate-700'}`} />
           <span className="whitespace-nowrap">{isRestrictedCarl ? 'Caribe Motors' : isGraciamaUser ? 'Obonprix' : 'Lebrun S.A.'}</span>
         </div>
         <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
@@ -81,9 +83,15 @@ export default function Header() {
       <div className="flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-2 sm:mx-3 md:mx-4 min-w-[120px]">
         <div 
           onClick={() => setIsSpotlightOpen(true)}
-          className="relative flex items-center w-full px-3 py-1.5 rounded-xl bg-slate-50/80 hover:bg-slate-100 border border-slate-300 text-xs text-slate-500 hover:text-slate-800 transition-all cursor-pointer group shadow-2xs"
+          className={`relative flex items-center w-full px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer group shadow-2xs ${
+            isGraciamaUser
+              ? 'bg-slate-50/80 hover:bg-slate-100 border-[#574C46]/20 text-[#574C46] hover:text-slate-900'
+              : 'bg-slate-50/80 hover:bg-slate-100 border-slate-300 text-slate-500 hover:text-slate-800'
+          }`}
         >
-          <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 mr-2 transition-colors shrink-0" />
+          <Search className={`w-3.5 h-3.5 mr-2 transition-colors shrink-0 ${
+            isGraciamaUser ? 'text-[#DA2027] group-hover:text-[#DA2027]' : 'text-slate-400 group-hover:text-slate-600'
+          }`} />
           <span className="flex-1 text-slate-400 group-hover:text-slate-600 truncate text-xs">
             {isRestrictedCarl ? 'Rechercher collaborateur Caribe Motors...' : getSearchPlaceholder(activeTab)}
           </span>
@@ -101,10 +109,14 @@ export default function Header() {
         {!isRestrictedCarl && (
           <button
             onClick={() => openBarcodeScanner()}
-            className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 text-xs font-semibold transition-all cursor-pointer shrink-0"
+            className={`flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+              isGraciamaUser
+                ? 'text-[#574C46] hover:text-[#DA2027] hover:bg-[#FFCB06]/20'
+                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
+            }`}
             title="Ouvrir la station de lecture code-barres"
           >
-            <Barcode className="w-4 h-4 text-slate-500 shrink-0" />
+            <Barcode className={`w-4 h-4 shrink-0 ${isGraciamaUser ? 'text-[#DA2027]' : 'text-slate-500'}`} />
             <span className="hidden sm:inline whitespace-nowrap">Scanner Code-barres</span>
           </button>
         )}
@@ -129,10 +141,14 @@ export default function Header() {
             };
             exportCSV(validTabs[activeTab] || 'it');
           }}
-          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 text-xs font-semibold transition-all cursor-pointer shrink-0"
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+            isGraciamaUser
+              ? 'text-[#574C46] hover:text-[#DA2027] hover:bg-[#FFCB06]/20'
+              : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
+          }`}
           title="Exporter la liste en Excel"
         >
-          <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          <Download className={`w-3.5 h-3.5 shrink-0 ${isGraciamaUser ? 'text-[#DA2027]' : 'text-slate-500'}`} />
           <span className="hidden md:inline whitespace-nowrap">Export Excel</span>
         </button>
       </div>

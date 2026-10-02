@@ -549,17 +549,25 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
             <>
               <button
                 onClick={() => openDocumentModal()}
-                className="h-8 flex items-center gap-1.5 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer active:scale-95"
+                className={`h-8 flex items-center gap-1.5 px-3.5 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer active:scale-95 ${
+                  isGraciamaUser
+                    ? 'bg-[#DA2027] hover:bg-[#B8191F] text-white shadow-xs'
+                    : 'bg-slate-900 hover:bg-slate-800 text-white'
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className={`w-3.5 h-3.5 ${isGraciamaUser ? 'text-[#FFCB06]' : ''}`} />
                 <span>Nouveau Document</span>
               </button>
               <button
                 onClick={() => exportCSV('documents')}
-                className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 border border-slate-300 shadow-2xs transition-colors cursor-pointer active:scale-95"
+                className={`h-8 flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold border shadow-2xs transition-colors cursor-pointer active:scale-95 ${
+                  isGraciamaUser
+                    ? 'bg-slate-100 hover:bg-[#FFCB06]/20 text-[#574C46] border-[#574C46]/20'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                }`}
                 title="Exporter le registre en Excel (.xlsx)"
               >
-                <Download className="w-3.5 h-3.5 text-slate-600" />
+                <Download className={`w-3.5 h-3.5 ${isGraciamaUser ? 'text-[#DA2027]' : 'text-slate-600'}`} />
                 <span>Export Excel</span>
               </button>
             </>
@@ -1035,9 +1043,11 @@ Certifié conforme par le Système Central de Gestion Informatique Lebrun S.A.
                         <p className="text-xs text-slate-400 mt-1">Modifiez vos filtres ou ajoutez un nouveau document.</p>
                         <button
                           onClick={() => openDocumentModal()}
-                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 cursor-pointer"
+                          className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white cursor-pointer ${
+                            isGraciamaUser ? 'bg-[#DA2027] hover:bg-[#B8191F]' : 'bg-slate-900 hover:bg-slate-800'
+                          }`}
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className={`w-3.5 h-3.5 ${isGraciamaUser ? 'text-[#FFCB06]' : ''}`} />
                           Ajouter un document
                         </button>
                       </td>
