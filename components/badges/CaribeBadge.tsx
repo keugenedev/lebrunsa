@@ -23,88 +23,21 @@ interface CaribeBadgeProps {
 
 /**
  * RECTO : Badge Caribe Motors
- * - Fond blanc pur en haut pour valoriser le logo officiel Caribe Motors
- * - Courbes dynamiques organiques en dégradé Bleu Royal Caribe (#0A2540) & Vert Lime (#52BA23)
- * - Groupe sanguin vertical avancé (left: 238px, top: 248px)
- * - Cadre photo arrondi posé avec élégance sur la vague
- * - Bloc identité : Nom, NIF, filet vert lime, Poste
- * - Bas de carte épuré : ID Matricule et Code 128
+ * - Fond blanc pur et professionnel
+ * - Grand cadre photo rehaussé et agrandi (w-[176px] h-[208px]) pour afficher confortablement la personne
+ * - Cadrage photo avec 'object-top' pour préserver l'intégralité des cheveux et de la tête
+ * - Section Identité : Nom du collaborateur en grand gras navy (#0A2540), NIF, GS, Poste
+ * - Pied de carte épuré : Fond blanc pur (sans couleur verte ni vagues), ID centré et Code-barres 128 agrandi haute lisibilité
  */
 export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee, brand, refId }: CaribeBadgeProps) {
-  const cleanId = (employee.id || employee.employeeId || 'caribe').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const gradientNavyId = `caribeNavy_${cleanId}`;
-  const gradientLimeId = `caribeLime_${cleanId}`;
-  const softGlowId = `caribeGlow_${cleanId}`;
-
   return (
     <div
       id={refId}
       className="badge-front font-montserrat relative w-[288px] h-[456.5px] rounded-2xl overflow-hidden select-none shadow-xl bg-white flex flex-col justify-between print:border-none print:rounded-none print:shadow-none"
     >
-      {/* ── COURBES ORGANIQUES CARIBE EN ARRIÈRE-PLAN (Bleu Royal & Vert Lime) ── */}
-      <svg
-        viewBox="0 0 288 456"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="absolute pointer-events-none"
-        style={{ zIndex: 1, left: '-4px', width: 'calc(100% + 8px)', top: 0, height: '100%' }}
-        preserveAspectRatio="none"
-      >
-        <defs>
-          {/* Dégradé Bleu Royal Caribe Motors */}
-          <linearGradient id={gradientNavyId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#0A2540" />
-            <stop offset="50%" stopColor="#0F355C" />
-            <stop offset="100%" stopColor="#071B30" />
-          </linearGradient>
-
-          {/* Dégradé Vert Lime Caribe Motors */}
-          <linearGradient id={gradientLimeId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#64CE30" />
-            <stop offset="50%" stopColor="#52BA23" />
-            <stop offset="100%" stopColor="#3C9115" />
-          </linearGradient>
-
-          {/* Voile pastel doux */}
-          <linearGradient id={softGlowId} x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#DDF6CE" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#C6EDB0" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
-
-        {/* Vague 1 : Voile doux pastel */}
-        <path
-          d="M -20,140 C 75,100 165,175 308,125 L 308,205 C 185,250 80,175 -20,225 Z"
-          fill={`url(#${softGlowId})`}
-        />
-
-        {/* Vague 2 : Ruban dynamique Bleu Royal Caribe */}
-        <path
-          d="M -20,155 C 65,115 160,190 308,140 L 308,195 C 190,240 85,165 -20,215 Z"
-          fill={`url(#${gradientNavyId})`}
-        />
-
-        {/* Vague 3 : Vague d'accent Vert Lime */}
-        <path
-          d="M -20,185 C 80,215 175,150 308,185 L 308,210 C 180,175 90,235 -20,205 Z"
-          fill={`url(#${gradientLimeId})`}
-          opacity="0.9"
-        />
-
-        {/* Filet lumineux Vert Lime supérieur */}
-        <path
-          d="M -20,153 C 65,113 160,188 308,138"
-          stroke="#7CE845"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          opacity="0.95"
-          fill="none"
-        />
-      </svg>
-
       {/* ── 1. EN-TÊTE : FOND BLANC PUR POUR LE LOGO CARIBE MOTORS ── */}
       <div
-        className="relative flex items-center justify-center bg-white pt-5 pb-2 px-6 shrink-0"
+        className="relative flex items-center justify-center bg-white pt-4 pb-1 px-6 shrink-0"
         style={{ zIndex: 10 }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -119,83 +52,82 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
         />
       </div>
 
-      {/* ── 2. CADRE PHOTO POSÉ SUR LA COURBE ── */}
+      {/* ── 2. CADRE PHOTO AGRANDI & REHAUSSÉ (VISAGE & CHEVEUX 100% VISIBLES SANS COUPURE) ── */}
       <div
-        className="relative px-6 flex items-center justify-center"
-        style={{ zIndex: 10, marginTop: '2px' }}
+        className="relative px-6 flex items-center justify-center shrink-0 my-auto"
+        style={{ zIndex: 10 }}
       >
         <div
-          className="w-44 h-48 rounded-[28px] overflow-hidden flex items-center justify-center relative shadow-md border-[2.5px] border-white"
-          style={{ backgroundColor: '#EAF5E6' }}
+          className="w-[176px] h-[208px] rounded-2xl overflow-hidden flex items-center justify-center relative shadow-sm border-2 border-slate-100 bg-white"
         >
           {employee.photoUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={employee.photoUrl}
               alt={employee.fullName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
           ) : (
-            <div className="w-24 h-24 rounded-full flex items-center justify-center bg-white border border-[#52BA23]/50 shadow-xs">
-              <User className="w-14 h-14 text-[#0A2540]" />
+            <div className="w-24 h-24 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200/80 shadow-2xs">
+              <User className="w-14 h-14 text-[#0A2540]/75" />
             </div>
           )}
         </div>
       </div>
 
-      {/* ── 3. IDENTITÉ : NOM, NIF, GROUPE SANGUIN (APRÈS NIF), FILET VERT LIME, TITRE DU POSTE ── */}
+      {/* ── 3. IDENTITÉ : NOM DU COLLABORATEUR, NIF / GS & TITRE DU POSTE ── */}
       <div
         className="relative px-4 text-center my-auto"
         style={{ zIndex: 10 }}
       >
+        {/* Nom du Collaborateur */}
         <h2 className="text-[16px] font-extrabold uppercase tracking-wide text-[#0A2540] leading-tight truncate px-1">
           {employee.fullName}
         </h2>
 
-        {/* NIF & GROUPE SANGUIN PLACÉ DIRECTEMENT APRÈS LE NIF */}
-        <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-          {employee.nif && employee.nif.trim() ? (
-            <span className="text-[10px] font-mono tracking-wider text-black uppercase font-medium">
-              NIF : <span className="font-semibold text-black">{formatNif(employee.nif)}</span>
-            </span>
-          ) : null}
+        {/* NIF & GS (Sans vert, neutre et haute lisibilité) */}
+        {(employee.nif || employee.bloodGroup) && (
+          <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+            {employee.nif && employee.nif.trim() ? (
+              <span className="text-[10px] font-mono tracking-wider text-slate-700 uppercase font-medium">
+                NIF : <span className="font-semibold text-slate-900">{formatNif(employee.nif)}</span>
+              </span>
+            ) : null}
 
-          {employee.nif && employee.nif.trim() && employee.bloodGroup && employee.bloodGroup.trim() ? (
-            <span className="text-slate-300">•</span>
-          ) : null}
+            {employee.nif && employee.nif.trim() && employee.bloodGroup && employee.bloodGroup.trim() ? (
+              <span className="text-slate-300">•</span>
+            ) : null}
 
-          {employee.bloodGroup && employee.bloodGroup.trim() ? (
-            <span className="text-[10px] font-mono tracking-wider text-red-600 uppercase font-semibold">
-              GS : <span className="font-black text-red-600">{employee.bloodGroup.toUpperCase()}</span>
-            </span>
-          ) : null}
-        </div>
+            {employee.bloodGroup && employee.bloodGroup.trim() ? (
+              <span className="text-[10px] font-mono tracking-wider text-red-600 uppercase font-semibold">
+                GS : <span className="font-black text-red-600">{employee.bloodGroup.toUpperCase()}</span>
+              </span>
+            ) : null}
+          </div>
+        )}
 
-        <div className="flex justify-center my-1.5">
-          <div className="w-16 h-[2.5px] rounded-full bg-[#52BA23]" />
-        </div>
-
-        <p className="text-xs font-bold uppercase tracking-wider text-[#0A2540] truncate">
+        {/* Titre du Poste (comme TECHNICIEN placé juste au-dessus de la ligne séparatrice) */}
+        <p className="text-[11.5px] font-bold uppercase tracking-wider text-[#0A2540] truncate mt-1">
           {employee.jobTitle || 'COLLABORATEUR'}
         </p>
       </div>
 
-      {/* ── 4. BAS ÉPURÉ : FOND BLANC, ID MATRICULE ET CODE-BARRES ── */}
+      {/* ── 4. PIED DE CARTE ÉPURÉ : FOND BLANC PUR, ID & CODE-BARRES AGRANDI CONFORME AU MODÈLE ── */}
       <div
-        className="relative pt-1 pb-3 px-4 flex flex-col items-center justify-center shrink-0 bg-white border-t border-slate-100"
+        className="relative pt-2 pb-3 px-4 flex flex-col items-center justify-center shrink-0 bg-white border-t border-slate-200/90"
         style={{ zIndex: 10 }}
       >
-        <span className="text-xs font-bold tracking-widest font-mono uppercase mb-1 text-[#0A2540]">
+        <span className="text-[11.5px] font-bold tracking-wider font-mono uppercase mb-1.5 text-[#0A2540]">
           ID {employee.employeeId}
         </span>
         <div className="w-full flex items-center justify-center">
           <Barcode
             value={employee.employeeId}
-            width={1.4}
-            height={34}
+            width={1.5}
+            height={42}
             fontSize={9}
             displayValue={false}
             background="#FFFFFF"
@@ -208,12 +140,11 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
 });
 
 /**
- * VERSO : Verso Caribe Motors Épuré & Haute Précision
+ * VERSO : Verso Caribe Motors 100% Sobre & Épuré
  * - En-tête : Grand logo officiel Caribe Motors en haut sur fond blanc
- * - Centre : Code QR clair et scannable avec grandes traces nettes
- * - Coordonnées : Téléphones (509) 2940-3001 à 3005 + 2 Adresses exactes sur lignes dédiées
- * - Écritures en noir net, icônes en vert lime Caribe (#52BA23)
- * - Clause légale de propriété et bandeau inférieur "Personnel Autorisé"
+ * - Centre : Code QR clair et scannable
+ * - Coordonnées : Téléphones + Adresses + Contact web/email (100% monochrome, écritures et icônes en noir/slate, sans couleur verte)
+ * - Clause légale de propriété et bandeau inférieur "Personnel Autorisé" en noir/slate
  */
 export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee, brand, refId, qrCodeUrl }: CaribeBadgeProps) {
   const phoneNumbers = brand.phoneFormatted || '(509) 2940-3001 à (509) 2940-3005';
@@ -251,16 +182,16 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
               style={{ imageRendering: 'pixelated' }}
             />
           ) : (
-            <div className="w-24 h-24 bg-emerald-50/50 rounded-lg flex items-center justify-center text-black text-xs font-mono">
+            <div className="w-24 h-24 bg-slate-100 rounded-lg flex items-center justify-center text-black text-xs font-mono">
               QR CODE...
             </div>
           )}
         </div>
       </div>
 
-      {/* 3. COORDONNÉES OFFICIELLES CARIBE MOTORS (WEB & EMAIL L'UN EN BAS DE L'AUTRE EN BLEU) */}
+      {/* 3. COORDONNÉES OFFICIELLES CARIBE MOTORS (EXACTEMENT COMME SUR LE MODÈLE) */}
       <div className="px-3 space-y-1 text-black">
-        {/* Site Web en Bleu sur sa propre ligne */}
+        {/* Site Web en Bleu */}
         <div className="flex items-center gap-1.5 text-black">
           <Globe className="w-3.5 h-3.5 shrink-0 text-[#0066CC]" />
           <span className="font-mono font-bold text-[#0066CC] text-[9.5px] tracking-tight whitespace-nowrap">
@@ -268,7 +199,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
           </span>
         </div>
 
-        {/* Email en Bleu sur sa propre ligne (en bas du site web) */}
+        {/* Email en Bleu */}
         <div className="flex items-center gap-1.5 text-black">
           <Mail className="w-3.5 h-3.5 shrink-0 text-[#0066CC]" />
           <span className="font-mono font-bold text-[#0066CC] text-[9.5px] tracking-tight whitespace-nowrap">
@@ -276,7 +207,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
           </span>
         </div>
 
-        {/* Téléphone */}
+        {/* Téléphone (Icône verte, texte noir gras) */}
         <div className="flex items-center gap-1.5 text-black">
           <Phone className="w-3.5 h-3.5 shrink-0 text-[#52BA23]" />
           <span className="font-mono font-bold text-black text-[9.5px] whitespace-nowrap">
@@ -284,7 +215,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
           </span>
         </div>
 
-        {/* Adresse 1 */}
+        {/* Adresse 1 (Icône verte, texte noir gras) */}
         <div className="flex items-center gap-1.5 text-black">
           <MapPin className="w-3.5 h-3.5 shrink-0 text-[#52BA23]" />
           <span className="font-bold text-[7.8px] text-black tracking-tight leading-tight">
@@ -292,7 +223,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
           </span>
         </div>
 
-        {/* Adresse 2 */}
+        {/* Adresse 2 (Icône verte, texte noir gras) */}
         <div className="flex items-center gap-1.5 text-black">
           <MapPin className="w-3.5 h-3.5 shrink-0 text-[#52BA23]" />
           <span className="font-bold text-[7.8px] text-black tracking-tight leading-tight">
@@ -310,7 +241,7 @@ export const CaribeBadgeVerso = React.memo(function CaribeBadgeVerso({ employee,
         </p>
       </div>
 
-      {/* 5. BANDEAU INFÉRIEUR ÉPURÉ (ICÔNE EN VERT LIME) */}
+      {/* 5. BANDEAU INFÉRIEUR CONFORME AU MODÈLE (ICÔNE EN VERT LIME, TEXTES EN NOIR) */}
       <div className="py-2 px-4 w-full flex items-center justify-between shrink-0 bg-slate-50 border-t border-slate-200 text-black">
         <div className="flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-[#52BA23]" />

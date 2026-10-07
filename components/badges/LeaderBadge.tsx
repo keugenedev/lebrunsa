@@ -132,7 +132,7 @@ export const LeaderBadgeRecto = React.memo(function LeaderBadgeRecto({ employee,
             <img
               src={employee.photoUrl}
               alt={employee.fullName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}

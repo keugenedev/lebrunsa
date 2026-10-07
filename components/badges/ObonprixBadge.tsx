@@ -159,7 +159,7 @@ export const ObonprixBadgeRecto = React.memo(function ObonprixBadgeRecto({ emplo
             <img
               src={employee.photoUrl}
               alt={employee.fullName}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
