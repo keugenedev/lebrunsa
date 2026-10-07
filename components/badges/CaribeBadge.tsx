@@ -30,6 +30,8 @@ interface CaribeBadgeProps {
  * - Pied de carte épuré : Fond blanc pur (sans couleur verte ni vagues), ID centré et Code-barres 128 agrandi haute lisibilité
  */
 export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee, brand, refId }: CaribeBadgeProps) {
+  const fullNameLength = (employee.fullName || '').length;
+
   return (
     <div
       id={refId}
@@ -58,7 +60,7 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
         style={{ zIndex: 10 }}
       >
         <div
-          className="w-[176px] h-[208px] rounded-2xl overflow-hidden flex items-center justify-center relative shadow-sm border-2 border-slate-100 bg-white"
+          className="w-[176px] h-[208px] rounded-2xl overflow-hidden flex items-center justify-center relative shadow-sm border-[2px] border-slate-300 bg-white"
         >
           {employee.photoUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -83,8 +85,17 @@ export const CaribeBadgeRecto = React.memo(function CaribeBadgeRecto({ employee,
         className="relative px-4 text-center my-auto"
         style={{ zIndex: 10 }}
       >
-        {/* Nom du Collaborateur */}
-        <h2 className="text-[16px] font-extrabold uppercase tracking-wide text-[#0A2540] leading-tight truncate px-1">
+        {/* Nom du Collaborateur (Complet en gras majuscules, adaptatif pour afficher 100% du nom sans troncature) */}
+        <h2
+          className={`font-extrabold uppercase text-[#0A2540] px-1 text-center line-clamp-2 ${
+            fullNameLength > 25
+              ? 'text-[12px] leading-snug tracking-tight'
+              : fullNameLength > 18
+              ? 'text-[13.5px] leading-snug tracking-normal'
+              : 'text-[15.5px] leading-tight tracking-wide'
+          }`}
+          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+        >
           {employee.fullName}
         </h2>
 

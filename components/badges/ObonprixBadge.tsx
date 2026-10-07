@@ -32,6 +32,7 @@ interface ObonprixBadgeProps {
  * - Bas de carte épuré : ID Matricule en Rouge #DA2027 et Code 128
  */
 export const ObonprixBadgeRecto = React.memo(function ObonprixBadgeRecto({ employee, brand, refId }: ObonprixBadgeProps) {
+  const fullNameLength = (employee.fullName || '').length;
   const cleanId = (employee.id || employee.employeeId || 'obonprix').replace(/[^a-zA-Z0-9_-]/g, '_');
   const gradientRedId = `obpRed_${cleanId}`;
   const gradientYellowId = `obpYellow_${cleanId}`;
@@ -174,7 +175,17 @@ export const ObonprixBadgeRecto = React.memo(function ObonprixBadgeRecto({ emplo
 
       {/* ── 3. IDENTITÉ : NOM, NIF, FILET JAUNE, POSTE ── */}
       <div className="relative px-4 text-center my-auto" style={{ zIndex: 10 }}>
-        <h2 className="text-[16px] font-extrabold uppercase tracking-wide text-[#574C46] leading-tight truncate px-1">
+        {/* Nom du Collaborateur (Complet en gras majuscules, adaptatif pour afficher 100% du nom sans troncature) */}
+        <h2
+          className={`font-extrabold uppercase text-[#574C46] px-1 text-center line-clamp-2 ${
+            fullNameLength > 25
+              ? 'text-[12px] leading-snug tracking-tight'
+              : fullNameLength > 18
+              ? 'text-[13.5px] leading-snug tracking-normal'
+              : 'text-[15.5px] leading-tight tracking-wide'
+          }`}
+          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+        >
           {employee.fullName}
         </h2>
 

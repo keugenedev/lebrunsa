@@ -276,7 +276,8 @@ async function createRenderableBadgeElement(
       Object.assign(img.style, {
         width: '100%',
         height: '100%',
-        objectFit: 'cover'
+        objectFit: 'cover',
+        objectPosition: 'center top'
       });
       frame.appendChild(img);
     } else {
@@ -306,12 +307,15 @@ async function createRenderableBadgeElement(
     Object.assign(idContainer.style, { textAlign: 'center', padding: '0 16px', marginBottom: '10px' });
     const nameEl = document.createElement('div');
     nameEl.textContent = emp.fullName;
+    const nameLen = (emp.fullName || '').length;
     Object.assign(nameEl.style, {
       fontWeight: '800',
-      fontSize: '17px',
+      fontSize: nameLen > 25 ? '13px' : nameLen > 18 ? '14.5px' : '16px',
       textTransform: 'uppercase',
       letterSpacing: '0.5px',
-      color: '#ffffff'
+      color: '#ffffff',
+      wordBreak: 'break-word',
+      lineHeight: '1.2'
     });
     idContainer.appendChild(nameEl);
     if (emp.nif && emp.nif.trim()) {

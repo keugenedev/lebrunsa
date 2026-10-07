@@ -112,6 +112,8 @@ export default React.memo(function BadgeCard({
       return <ObonprixBadgeRecto employee={employee} brand={brand} refId={refId} />;
     }
 
+    const fullNameLength = (employee.fullName || '').length;
+
     return (
       <div
         id={refId}
@@ -160,7 +162,17 @@ export default React.memo(function BadgeCard({
 
         {/* 3. IDENTITÉ : NOM, NIF, GROUPE SANGUIN, FILET, TITRE DU POSTE */}
         <div className="relative px-4 text-center my-auto" style={{ zIndex: 10 }}>
-          <h2 className="text-[16px] font-extrabold uppercase tracking-wide text-slate-900 leading-tight truncate px-1">
+          {/* Nom du Collaborateur (Complet en gras majuscules, adaptatif pour afficher 100% du nom sans troncature) */}
+          <h2
+            className={`font-extrabold uppercase text-slate-900 px-1 text-center line-clamp-2 ${
+              fullNameLength > 25
+                ? 'text-[12px] leading-snug tracking-tight'
+                : fullNameLength > 18
+                ? 'text-[13.5px] leading-snug tracking-normal'
+                : 'text-[15.5px] leading-tight tracking-wide'
+            }`}
+            style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+          >
             {employee.fullName}
           </h2>
 
