@@ -47,11 +47,17 @@ function prepareBadgeForPrint(rootEl: HTMLElement): void {
 /**
  * Construit un élément DOM sobre et propre pour le rendu PDF haute résolution
  */
+// Cache global des QR codes pour éviter tout recalcul lors des téléchargements
+const vCardQrCache = new Map<string, string>();
+
+/**
+ * Construit un élément DOM sobre et propre pour le rendu PDF haute résolution
+ */
 async function createRenderableBadgeElement(
   emp: Employee,
   brand: BrandConfig,
   face: 'recto' | 'verso'
-): Promise<HTMLDivElement> {
+): Promise<{ element: HTMLDivElement; cleanup: () => void }> {
   const existingId = face === 'recto' ? `badge-recto-${emp.id}` : `badge-verso-${emp.id}`;
   const existingEl = document.getElementById(existingId);
   if (existingEl) {
@@ -75,7 +81,12 @@ async function createRenderableBadgeElement(
       })
     );
 
-    return clone;
+    return {
+      element: clone,
+      cleanup: () => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+      }
+    };
   }
 
   // Rendu spécifique pour Leader Foods, Caribe Motors & Obonprix via les composants dédiés
@@ -91,8 +102,21 @@ async function createRenderableBadgeElement(
     await new Promise<void>((resolve) => {
       if (face === 'verso') {
         const vCardData = buildVCardString(emp, brand);
-        QRCode.toDataURL(vCardData, { width: 320, margin: 1, errorCorrectionLevel: 'L', color: { dark: '#000000', light: '#ffffff' } })
-          .then(url => {
+        const cachedQr = vCardQrCache.get(vCardData);
+        const qrPromise = cachedQr
+          ? Promise.resolve(cachedQr)
+          : QRCode.toDataURL(vCardData, {
+              width: 320,
+              margin: 1,
+              errorCorrectionLevel: 'L',
+              color: { dark: '#000000', light: '#ffffff' }
+            }).then((url) => {
+              vCardQrCache.set(vCardData, url);
+              return url;
+            });
+
+        qrPromise
+          .then((url) => {
             if (brand.id === 'caribe') {
               root.render(
                 React.createElement(CaribeBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
@@ -106,7 +130,7 @@ async function createRenderableBadgeElement(
                 React.createElement(ObonprixBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
               );
             }
-            setTimeout(resolve, 80);
+            setTimeout(resolve, 30);
           })
           .catch(() => {
             if (brand.id === 'caribe') {
@@ -122,7 +146,7 @@ async function createRenderableBadgeElement(
                 React.createElement(ObonprixBadgeVerso, { employee: emp, brand })
               );
             }
-            setTimeout(resolve, 80);
+            setTimeout(resolve, 30);
           });
       } else {
         if (brand.id === 'caribe') {
@@ -138,7 +162,7 @@ async function createRenderableBadgeElement(
             React.createElement(ObonprixBadgeRecto, { employee: emp, brand })
           );
         }
-        setTimeout(resolve, 80);
+        setTimeout(resolve, 30);
       }
     });
 
@@ -157,7 +181,15 @@ async function createRenderableBadgeElement(
       })
     );
 
-    return badgeEl;
+    return {
+      element: badgeEl,
+      cleanup: () => {
+        try {
+          root.unmount();
+        } catch {}
+        if (mountPoint.parentNode) mountPoint.parentNode.removeChild(mountPoint);
+      }
+    };
   }
 
   const container = document.createElement('div');
@@ -546,7 +578,12 @@ async function createRenderableBadgeElement(
     })
   );
 
-  return container;
+  return {
+    element: container,
+    cleanup: () => {
+      if (container.parentNode) container.parentNode.removeChild(container);
+    }
+  };
 }
 
 /**
@@ -555,7 +592,7 @@ async function createRenderableBadgeElement(
 async function captureElementToCanvas(el: HTMLElement): Promise<HTMLCanvasElement> {
   const { default: html2canvas } = await import('html2canvas-pro');
   return html2canvas(el, {
-    scale: 3.5, // 300+ DPI qualité imprimerie
+    scale: 2.2, // ~300 DPI netteté parfaite (298 DPI réel pour 54mm) et vitesse maximale
     useCORS: true,
     allowTaint: true,
     backgroundColor: '#ffffff',
@@ -565,6 +602,23 @@ async function captureElementToCanvas(el: HTMLElement): Promise<HTMLCanvasElemen
     width: 288,
     height: 457
   });
+}
+
+/**
+ * Capture une face de badge en JPEG haute qualité avec libération mémoire immédiate
+ */
+async function renderBadgeFaceToDataUrl(
+  emp: Employee,
+  brand: BrandConfig,
+  face: 'recto' | 'verso'
+): Promise<string> {
+  const { element, cleanup } = await createRenderableBadgeElement(emp, brand, face);
+  try {
+    const canvas = await captureElementToCanvas(element);
+    return canvas.toDataURL('image/jpeg', 0.95);
+  } finally {
+    cleanup();
+  }
 }
 
 /**
@@ -588,20 +642,15 @@ export async function downloadSingleBadgeCR80PDF(
     compress: true
   });
 
-  // 1. Rendu Recto
-  const rectoEl = await createRenderableBadgeElement(emp, brand, 'recto');
-  const rectoCanvas = await captureElementToCanvas(rectoEl);
-  if (rectoEl.parentNode) rectoEl.parentNode.removeChild(rectoEl);
-  const rectoImgData = rectoCanvas.toDataURL('image/png');
-  doc.addImage(rectoImgData, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  // Capture simultanée Recto et Verso en parallèle
+  const [rectoImg, versoImg] = await Promise.all([
+    renderBadgeFaceToDataUrl(emp, brand, 'recto'),
+    renderBadgeFaceToDataUrl(emp, brand, 'verso')
+  ]);
 
-  // 2. Rendu Verso (Page 2)
+  doc.addImage(rectoImg, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM, undefined, 'FAST');
   doc.addPage([BADGE_WIDTH_MM, BADGE_HEIGHT_MM], 'portrait');
-  const versoEl = await createRenderableBadgeElement(emp, brand, 'verso');
-  const versoCanvas = await captureElementToCanvas(versoEl);
-  if (versoEl.parentNode) versoEl.parentNode.removeChild(versoEl);
-  const versoImgData = versoCanvas.toDataURL('image/png');
-  doc.addImage(versoImgData, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  doc.addImage(versoImg, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM, undefined, 'FAST');
 
   const cleanName = emp.fullName.replace(/[^a-zA-Z0-9_-]/g, '_');
   const cleanId = emp.employeeId.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -627,15 +676,11 @@ export async function downloadBadgePlancheA4PDF(
     compress: true
   });
 
-  const rectoEl = await createRenderableBadgeElement(emp, brand, 'recto');
-  const rectoCanvas = await captureElementToCanvas(rectoEl);
-  if (rectoEl.parentNode) rectoEl.parentNode.removeChild(rectoEl);
-  const rectoImg = rectoCanvas.toDataURL('image/png');
-
-  const versoEl = await createRenderableBadgeElement(emp, brand, 'verso');
-  const versoCanvas = await captureElementToCanvas(versoEl);
-  if (versoEl.parentNode) versoEl.parentNode.removeChild(versoEl);
-  const versoImg = versoCanvas.toDataURL('image/png');
+  // Capture simultanée Recto et Verso en parallèle
+  const [rectoImg, versoImg] = await Promise.all([
+    renderBadgeFaceToDataUrl(emp, brand, 'recto'),
+    renderBadgeFaceToDataUrl(emp, brand, 'verso')
+  ]);
 
   const spacing = 12;
   const totalW = BADGE_WIDTH_MM * 2 + spacing;
@@ -654,10 +699,10 @@ export async function downloadBadgePlancheA4PDF(
   doc.text(`Imprimer à échelle 100%`, 105, 31, { align: 'center' });
 
   const rectoX = startX;
-  doc.addImage(rectoImg, 'PNG', rectoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  doc.addImage(rectoImg, 'JPEG', rectoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM, undefined, 'FAST');
 
   const versoX = startX + BADGE_WIDTH_MM + spacing;
-  doc.addImage(versoImg, 'PNG', versoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+  doc.addImage(versoImg, 'JPEG', versoX, startY, BADGE_WIDTH_MM, BADGE_HEIGHT_MM, undefined, 'FAST');
 
   // Repères de coupe
   doc.setDrawColor(180, 180, 180);
@@ -707,27 +752,46 @@ export async function downloadBatchBadgesPDF(
     compress: true
   });
 
-  for (let i = 0; i < employees.length; i++) {
-    const emp = employees[i];
-    const brand = getBrandConfig(emp.company);
+  const totalSteps = employees.length * 2;
+  let completedSteps = 0;
 
+  // Traitement optimisé par petits lots parallèles (2 collaborateurs = 4 faces simultanées)
+  const CONCURRENCY = 2;
+  const results: { recto: string; verso: string }[] = new Array(employees.length);
+
+  for (let i = 0; i < employees.length; i += CONCURRENCY) {
+    const chunk = employees.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      chunk.map(async (emp, chunkIdx) => {
+        const empIndex = i + chunkIdx;
+        const brand = getBrandConfig(emp.company);
+
+        const [recto, verso] = await Promise.all([
+          renderBadgeFaceToDataUrl(emp, brand, 'recto').then((res) => {
+            completedSteps++;
+            onProgress?.(completedSteps, totalSteps);
+            return res;
+          }),
+          renderBadgeFaceToDataUrl(emp, brand, 'verso').then((res) => {
+            completedSteps++;
+            onProgress?.(completedSteps, totalSteps);
+            return res;
+          })
+        ]);
+
+        results[empIndex] = { recto, verso };
+      })
+    );
+  }
+
+  // Écriture instantanée dans le document PDF
+  for (let i = 0; i < results.length; i++) {
+    const item = results[i];
+    if (!item) continue;
     if (i > 0) doc.addPage([BADGE_WIDTH_MM, BADGE_HEIGHT_MM], 'portrait');
-    onProgress?.(i * 2 + 1, employees.length * 2);
-
-    const rectoEl = await createRenderableBadgeElement(emp, brand, 'recto');
-    const rectoCanvas = await captureElementToCanvas(rectoEl);
-    if (rectoEl.parentNode) rectoEl.parentNode.removeChild(rectoEl);
-    const rectoImg = rectoCanvas.toDataURL('image/png');
-    doc.addImage(rectoImg, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
-
+    doc.addImage(item.recto, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM, undefined, 'FAST');
     doc.addPage([BADGE_WIDTH_MM, BADGE_HEIGHT_MM], 'portrait');
-    onProgress?.(i * 2 + 2, employees.length * 2);
-
-    const versoEl = await createRenderableBadgeElement(emp, brand, 'verso');
-    const versoCanvas = await captureElementToCanvas(versoEl);
-    if (versoEl.parentNode) versoEl.parentNode.removeChild(versoEl);
-    const versoImg = versoCanvas.toDataURL('image/png');
-    doc.addImage(versoImg, 'PNG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM);
+    doc.addImage(item.verso, 'JPEG', 0, 0, BADGE_WIDTH_MM, BADGE_HEIGHT_MM, undefined, 'FAST');
   }
 
   doc.save(`Badges_Total_${employees.length}_Employes.pdf`);

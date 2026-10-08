@@ -154,7 +154,7 @@ export default function ApplicationModal() {
       }
       const isObp = emp.company?.toLowerCase().includes('obonprix') || (emp.site || '').toLowerCase().includes('83') || isGraciamaUser;
       setUsername(existingAcc.username);
-      setPassword(existingAcc.password || '1234');
+      setPassword(existingAcc.password || '');
       setOrganization(existingAcc.organization || (isObp ? 'Obonprix' : (emp.company || 'Lebrun S.A.')));
       setWindowsUsername(existingAcc.windowsUsername || emp.accounts?.windowsUsername || emp.firstName);
       setWindowsPassword(existingAcc.windowsPassword || emp.accounts?.windowsPassword || '');
@@ -233,7 +233,7 @@ export default function ApplicationModal() {
         username: username.trim().toLowerCase(),
         firstName: selectedEmployee ? selectedEmployee.firstName : '',
         lastName: selectedEmployee ? selectedEmployee.lastName : '',
-        password: password.trim() || '1234',
+        password: password.trim(),
         applications: finalApp,
         organization: organization.trim() || selectedEmployee?.company || 'Lebrun S.A.',
         windowsUsername: windowsUsername.trim(),

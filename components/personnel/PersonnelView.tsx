@@ -519,9 +519,8 @@ export default function PersonnelView() {
               ) : undefined;
 
               const hasAccounts = Boolean(
-                appAcc ||
-                selectedEmployee.accounts?.appUsername ||
-                selectedEmployee.accounts?.windowsUsername
+                (appAcc && appAcc.username && !appAcc.username.toLowerCase().startsWith('emp')) ||
+                (selectedEmployee.accounts?.appUsername && !selectedEmployee.accounts.appUsername.toLowerCase().startsWith('emp'))
               );
 
               if (!hasAccounts) {
@@ -532,7 +531,7 @@ export default function PersonnelView() {
               const winPass = selectedEmployee.accounts?.windowsPassword || appAcc?.windowsPassword;
               const appUser = selectedEmployee.accounts?.appUsername || appAcc?.username;
               const appPass = selectedEmployee.accounts?.appPassword || appAcc?.password;
-              const appName = selectedEmployee.accounts?.applications || appAcc?.applications || (selectedEmployee.company === 'Caribe Motors' ? 'DealerPro DMS' : 'Microsoft GP');
+              const appName = selectedEmployee.accounts?.applications || appAcc?.applications || (appUser ? 'Microsoft GP' : '');
               const isDealer = appName.toLowerCase().includes('dealer');
 
               return (
@@ -540,7 +539,7 @@ export default function PersonnelView() {
                   <div className="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
                     <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <KeyRound className="w-4 h-4 text-slate-700" />
-                      <span>Session Windows & Accès Applicatif ({appName})</span>
+                      <span>Session Windows & Accès Applicatif {appName ? `(${appName})` : ''}</span>
                     </span>
                     <span className="text-[11px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
                       {selectedEmployee.accounts?.organization || selectedEmployee.company}

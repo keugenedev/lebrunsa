@@ -8,7 +8,7 @@ import type { jsPDF } from 'jspdf';
 /* -------------------------------------------------------------------------- */
 
 export interface AssignmentSheetOptions {
-  /** Code inventaire du poste remis (ex: AST-PC-LEB123). */
+  /** Code inventaire du poste remis (ex: AST-CRB-001). */
   assetTag?: string;
   /** Date d'émission (par défaut : aujourd'hui). */
   date?: Date;
@@ -193,13 +193,15 @@ const logoCache = new Map<string, Promise<LogoData | null>>();
  */
 export function getLogoData(url: string): Promise<LogoData | null> {
   if (typeof window === 'undefined' || !url) return Promise.resolve(null);
-  const cached = logoCache.get(url);
+  const safeUrl = encodeURI(url);
+  const cached = logoCache.get(safeUrl);
   if (cached) return cached;
 
   const promise = new Promise<LogoData | null>((resolve) => {
-    const timer = setTimeout(() => resolve(null), 3000);
+    const timer = setTimeout(() => resolve(null), 1000);
 
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       clearTimeout(timer);
       try {
@@ -221,10 +223,10 @@ export function getLogoData(url: string): Promise<LogoData | null> {
       clearTimeout(timer);
       resolve(null);
     };
-    img.src = url;
+    img.src = safeUrl;
   });
 
-  logoCache.set(url, promise);
+  logoCache.set(safeUrl, promise);
   return promise;
 }
 
@@ -497,10 +499,20 @@ export async function downloadAllAssignmentSheetsPDF(
   const { default: JsPDF } = await import('jspdf');
   const doc = newDoc(JsPDF);
 
+  // Pré-charger tous les logos en parallèle une seule fois pour éliminer toute latence dans la boucle
+  const origin = window.location.origin;
+  const uniqueUrls = new Set<string>();
+  uniqueUrls.add(`${origin}${MAIN_LOGO}`);
+  sheets.forEach((s) => {
+    const p = getCompanyLogo(s.employee.company);
+    if (p) uniqueUrls.add(`${origin}${p}`);
+  });
+  await Promise.all(Array.from(uniqueUrls).map((u) => getLogoData(u)));
+
   for (let i = 0; i < sheets.length; i++) {
     if (i > 0) doc.addPage('a4', 'portrait');
     onProgress?.(i + 1, sheets.length);
-    await renderVectorAssignmentSheet(doc, sheets[i].employee, window.location.origin, sheets[i].options);
+    await renderVectorAssignmentSheet(doc, sheets[i].employee, origin, sheets[i].options);
   }
 
   doc.save(`Fiches_Affectation_Total_${sheets.length}.pdf`);

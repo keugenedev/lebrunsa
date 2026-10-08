@@ -51,7 +51,7 @@ import { buildPhoneDocRef, downloadPhoneSheetPDF, PhoneSheetOptions } from '@/li
 import { generatePhoneCode } from '@/lib/phones';
 import { formatNif } from '@/lib/formatNif';
 import { isCarlHens, isGraciama } from '@/lib/permissions';
-import { normalizeEmployeeId, normalizePrinterId, generateEmployeeId, generateITAssetTag, generatePrinterId, generateNetworkId, generateUPSId } from '@/lib/badgeBrands';
+import { normalizeEmployeeId, normalizePrinterId, normalizeITAssetTag, generateEmployeeId, generateITAssetTag, generatePrinterId, generateNetworkId, generateUPSId } from '@/lib/badgeBrands';
 
 // Documents : colonnes ajoutées après coup (site, type, taille, date). Tant que le SQL correspondant
 // n'a pas été exécuté dans Supabase, on retente sans elles pour ne jamais bloquer l'enregistrement.
@@ -585,27 +585,15 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-10-01-v24-clean-db-only-employees';
+  const CURRENT_DATA_VERSION = '2026-10-08-v27-deduplicate-it-assets';
 
-  // Tri prioritaire : Tous les comptes Caribe Motors en premier dans la table, puis logique antéchronologique (nouveaux ajouts en tête)
+  // Tri antéchronologique des comptes applicatifs (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
     return [...items].sort((a, b) => {
-      // 1. Tous les comptes Caribe Motors doivent être en premier dans la table
-      const isCaribeA = (a.organization || '').toLowerCase().includes('caribe') ||
-                        (a.username || '').toLowerCase().includes('caribe') ||
-                        (a.applications || '').toLowerCase().includes('dealer');
-      const isCaribeB = (b.organization || '').toLowerCase().includes('caribe') ||
-                        (b.username || '').toLowerCase().includes('caribe') ||
-                        (b.applications || '').toLowerCase().includes('dealer');
-      if (isCaribeA && !isCaribeB) return -1;
-      if (!isCaribeA && isCaribeB) return 1;
-
-      // 2. Ensuite la logique : nouvel ajout en 1ère position, puis descente
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
 
-      // 3. Ordre naturel des identifiants (app-1, app-2, ...)
       const idA = String(a.id || '');
       const idB = String(b.id || '');
       return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
@@ -625,6 +613,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('lebron_inv_data_version', CURRENT_DATA_VERSION);
       localStorage.removeItem('lebron_inv_employees');
       localStorage.removeItem('lebron_inv_it');
+      localStorage.removeItem('lebron_inv_applications');
     }
   }
 
@@ -641,10 +630,19 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               .filter((e: any) => !isTestEmployee(e))
               .map((e: any) => {
                 const normId = normalizeEmployeeId(e.employeeId || e.id, e.company);
+                // Purger uniquement les faux comptes inventés par d'anciens mocks (mots de passe génériques factices)
+                const isFakeAccount = !e.accounts ? false : (
+                  (e.accounts.windowsPassword === '1234' && (!e.accounts.applications || e.accounts.applications === 'Aucun')) ||
+                  (e.accounts.appPassword === 'CP@2026') ||
+                  (Boolean(e.accounts.appUsername) && e.accounts.appUsername.toLowerCase().startsWith('emp-')) ||
+                  (Boolean(e.accounts.windowsUsername) && e.accounts.windowsUsername.toLowerCase().startsWith('emp-'))
+                );
+                const cleanAccounts = isFakeAccount ? undefined : e.accounts;
                 return {
                   ...e,
                   id: normId,
                   employeeId: normId,
+                  accounts: cleanAccounts,
                   nif: undefined // Effacement des anciens NIFs locaux en cache
                 };
               })
@@ -700,8 +698,16 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         try { 
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            const mapped = parsed.map((a: any, idx: number) => {
+              const normTag = normalizeITAssetTag(a.assetTag || a.id, a.company, idx + 1);
+              return {
+                ...a,
+                id: a.id || normTag,
+                assetTag: normTag
+              };
+            });
             // Supprimer tout faux poste inventé pour Obonprix
-            return parsed.filter((a: any) => !(a.company || '').toLowerCase().includes('obonprix') && !(a.assetTag || '').includes('OBP'));
+            return mapped.filter((a: any) => !(a.company || '').toLowerCase().includes('obonprix') && !(a.assetTag || '').includes('OBP'));
           }
         } catch (e) { console.error(e); }
       }
@@ -1488,14 +1494,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 createdAt: r.created_at || new Date().toISOString(),
                 notes: r.notes !== undefined && r.notes !== null ? r.notes : (r.observations !== undefined && r.observations !== null ? r.observations : (existingLocal?.notes ?? initLocal?.notes ?? '')),
                 workstation: existingLocal?.workstation ?? initLocal?.workstation,
-                accounts: {
-                  windowsUsername: r.username || fullName,
-                  windowsPassword: '1234',
-                  appUsername: r.username || '',
-                  appPassword: '',
-                  applications: 'Microsoft GP',
-                  organization: r.entreprise || 'Lebrun S.A.'
-                }
+                accounts: existingLocal?.accounts ?? initLocal?.accounts
               };
             });
 
@@ -1619,12 +1618,19 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               const existingAcc = prev.find(initApp => 
                 (strId && initApp.id.replace('app-', '') === strId) ||
                 (row.username && initApp.username && row.username.toLowerCase() === initApp.username.toLowerCase()) ||
-                (row.user_id && initApp.employeeId && row.user_id === initApp.employeeId)
+                (row.user_id && initApp.employeeId && (row.user_id === initApp.employeeId || row.user_id.toUpperCase() === initApp.employeeId.toUpperCase()))
+              );
+
+              const matchedUser = dbUsers?.find((u: any) => 
+                (row.user_id && (u.user_id === row.user_id || u.id === row.user_id || String(u.user_id).toUpperCase() === String(row.user_id).toUpperCase())) ||
+                (row.username && u.email && u.email.toLowerCase() === row.username.toLowerCase()) ||
+                (row.username && u.username && u.username.toLowerCase() === row.username.toLowerCase())
               );
 
               const matchedEmp = INITIAL_EMPLOYEES.find(e => 
-                (row.user_id && (e.employeeId === row.user_id || e.id === row.user_id)) ||
-                (row.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === row.username.toLowerCase())
+                (row.user_id && (e.employeeId === row.user_id || e.id === row.user_id || e.employeeId?.toUpperCase() === String(row.user_id).toUpperCase())) ||
+                (row.username && e.accounts?.appUsername && e.accounts.appUsername.toLowerCase() === row.username.toLowerCase()) ||
+                (row.username && e.email && e.email.toLowerCase() === row.username.toLowerCase())
               );
 
               const appId = existingAcc?.id || (strId ? `app-${strId}` : `app-${row.username}`);
@@ -1635,17 +1641,22 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 deducedCreated = new Date(Date.now() - (1000000 - Math.min(numId, 999999)) * 1000).toISOString();
               }
 
+              const firstName = matchedUser?.prenom || matchedEmp?.firstName || existingAcc?.firstName || '';
+              const lastName = matchedUser?.nom || matchedEmp?.lastName || existingAcc?.lastName || '';
+              const org = row.organisation || matchedUser?.entreprise || matchedEmp?.company || existingAcc?.organization || 'Lebrun S.A.';
+              const empId = matchedUser?.user_id || matchedEmp?.id || existingAcc?.employeeId || row.user_id;
+
               return {
                 id: appId,
                 username: row.username || existingAcc?.username || '',
-                lastName: existingAcc?.lastName || matchedEmp?.lastName || '',
-                firstName: existingAcc?.firstName || matchedEmp?.firstName || '',
-                password: row.password_source || row.password || existingAcc?.password || 'CP@2026',
-                applications: row.application || existingAcc?.applications || 'Microsoft GP',
-                organization: row.organisation || existingAcc?.organization || (matchedEmp?.company || 'Lebrun S.A.'),
-                employeeId: matchedEmp ? matchedEmp.id : (existingAcc?.employeeId || row.user_id),
-                windowsUsername: existingAcc?.windowsUsername || matchedEmp?.accounts?.windowsUsername || (matchedEmp ? matchedEmp.fullName : ''),
-                windowsPassword: existingAcc?.windowsPassword || matchedEmp?.accounts?.windowsPassword || '1234',
+                lastName,
+                firstName,
+                password: row.password_source || row.password || existingAcc?.password || '',
+                applications: row.application || existingAcc?.applications || '',
+                organization: org,
+                employeeId: empId,
+                windowsUsername: existingAcc?.windowsUsername || matchedEmp?.accounts?.windowsUsername || '',
+                windowsPassword: existingAcc?.windowsPassword || matchedEmp?.accounts?.windowsPassword || '',
                 createdAt: deducedCreated
               };
             });
@@ -1674,18 +1685,25 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
           setEmployees(prevEmp => {
             return prevEmp.map(emp => {
               const appRow = dbApps.find((r: any) => 
-                (r.user_id && (r.user_id === emp.employeeId || r.user_id === emp.id)) ||
-                (r.username && emp.accounts?.appUsername && r.username.toLowerCase() === emp.accounts.appUsername.toLowerCase())
+                (r.user_id && (
+                  r.user_id === emp.employeeId || 
+                  r.user_id === emp.id ||
+                  (emp.employeeId && r.user_id.toUpperCase() === emp.employeeId.toUpperCase()) ||
+                  (emp.id && r.user_id.toUpperCase() === emp.id.toUpperCase())
+                )) ||
+                (r.username && emp.accounts?.appUsername && r.username.toLowerCase() === emp.accounts.appUsername.toLowerCase()) ||
+                (r.username && emp.email && r.username.toLowerCase() === emp.email.toLowerCase()) ||
+                (r.username && (emp as any).username && r.username.toLowerCase() === (emp as any).username.toLowerCase())
               );
               if (!appRow) return emp;
               return {
                 ...emp,
                 accounts: {
-                  windowsUsername: emp.accounts?.windowsUsername || emp.fullName || emp.firstName,
-                  windowsPassword: emp.accounts?.windowsPassword || '1234',
-                  appUsername: appRow.username || emp.accounts?.appUsername || '',
-                  appPassword: appRow.password_source || emp.accounts?.appPassword || '',
-                  applications: appRow.application || emp.accounts?.applications || 'Microsoft GP',
+                  windowsUsername: emp.accounts?.windowsUsername || appRow.windows_username || '',
+                  windowsPassword: emp.accounts?.windowsPassword || appRow.windows_password || '',
+                  appUsername: appRow.username || '',
+                  appPassword: appRow.password_source || appRow.password || '',
+                  applications: appRow.application || '',
                   organization: appRow.organisation || emp.accounts?.organization || emp.company
                 }
               };
@@ -1698,9 +1716,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         if (!itErr && dbIT && dbIT.length > 0) {
           setItAssets(prev => {
             const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
-              const tag = r.equipment_id ? String(r.equipment_id) : `AST-PC-${(r.id || idx + 1).toString().padStart(3, '0')}`;
-              const existingLocal = prev.find(a => a.assetTag === tag || a.id === tag);
-              const initLocal = INITIAL_IT_ASSETS.find(a => a.assetTag === tag || a.id === tag);
+              const rawTag = r.equipment_id ? String(r.equipment_id) : `AST-${r.entreprise?.toLowerCase().includes('caribe') ? 'CRB' : r.entreprise?.toLowerCase().includes('autobiz') ? 'ATB' : 'LBN'}-${(r.id || idx + 1).toString().padStart(3, '0')}`;
+              const tag = normalizeITAssetTag(rawTag, r.entreprise, idx + 1);
+              const existingLocal = prev.find(a => a.assetTag === tag || a.id === tag || a.assetTag === rawTag);
+              const initLocal = INITIAL_IT_ASSETS.find(a => a.assetTag === tag || a.id === tag || a.assetTag === rawTag);
 
               const rowPerson = (r.prenom && r.nom) ? `${r.prenom} ${r.nom}` : (r.nom || r.prenom || r.assigne_a);
               const pcSerial = r.numero_serie_pc || r.numero_serie || existingLocal?.serialNumber || initLocal?.serialNumber || 'N/A';
@@ -1770,6 +1789,46 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               localStorage.setItem('lebron_inv_it', JSON.stringify(merged));
             }
             return merged;
+          });
+
+          setEmployees(prevEmp => {
+            return prevEmp.map(emp => {
+              const itRow = dbIT.find((it: any) => 
+                (it.user_id && (
+                  it.user_id === emp.employeeId || 
+                  it.user_id === emp.id ||
+                  (emp.employeeId && it.user_id.toUpperCase() === emp.employeeId.toUpperCase()) ||
+                  (emp.id && it.user_id.toUpperCase() === emp.id.toUpperCase())
+                )) ||
+                (it.email && emp.email && it.email.toLowerCase() === emp.email.toLowerCase()) ||
+                (it.prenom && it.nom && emp.firstName && emp.lastName &&
+                 it.prenom.trim().toLowerCase() === emp.firstName.trim().toLowerCase() &&
+                 it.nom.trim().toLowerCase() === emp.lastName.trim().toLowerCase())
+              );
+              if (!itRow) return emp;
+              const pcSerial = itRow.numero_serie_pc || itRow.numero_serie || emp.workstation?.pcSerial || 'N/A';
+              const pcName = itRow.nom_pc || itRow.nom || emp.workstation?.pcName || `Poste ${itRow.equipment_id || pcSerial}`;
+              return {
+                ...emp,
+                workstation: {
+                  type: itRow.type_poste?.toLowerCase().includes('laptop') ? 'Laptop' : (emp.workstation?.type || 'Desktop'),
+                  pcName: pcName,
+                  pcSerial: pcSerial,
+                  pcSpecs: itRow.details_pc || emp.workstation?.pcSpecs || '',
+                  monitorModel: itRow.ecran || emp.workstation?.monitorModel || '',
+                  monitorSerial: itRow.numero_serie_ecran || emp.workstation?.monitorSerial || '',
+                  monitorObs: itRow.observation_ecran || emp.workstation?.monitorObs || 'Good',
+                  keyboard: itRow.clavier || emp.workstation?.keyboard || '',
+                  keyboardDetails: itRow.details_clavier || emp.workstation?.keyboardDetails || '',
+                  keyboardObs: itRow.observation_clavier || emp.workstation?.keyboardObs || 'Good',
+                  mouse: itRow.souris || emp.workstation?.mouse || '',
+                  mouseDetails: itRow.details_souris || emp.workstation?.mouseDetails || '',
+                  mouseObs: itRow.observation_souris || emp.workstation?.mouseObs || 'Good',
+                  generalState: itRow.etat_general || emp.workstation?.generalState || 'Good',
+                  observations: itRow.observations || emp.workstation?.observations || ''
+                }
+              };
+            });
           });
         }
 
@@ -2847,8 +2906,10 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     // Auto generate IT tag using backend logic if missing or needs company prefix
     const existingTags = itAssets.map(a => a.assetTag);
     let finalTag = asset.assetTag;
-    if (!finalTag || finalTag.startsWith('it-') || finalTag.includes('undefined')) {
+    if (!finalTag || finalTag.startsWith('it-') || finalTag.includes('undefined') || !finalTag.startsWith('AST-')) {
       finalTag = generateITAssetTag(effectiveCompany, existingTags);
+    } else {
+      finalTag = normalizeITAssetTag(finalTag, effectiveCompany);
     }
 
     const newAsset: ITAsset = {

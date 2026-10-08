@@ -309,7 +309,7 @@ export default function IncidentReportForm() {
                 value={assetTag}
                 onChange={(e) => setAssetTag(e.target.value)}
                 maxLength={30}
-                placeholder="AST-PC-LEB123"
+                placeholder="AST-CRB-001"
                 className={`${inputCls} font-mono`}
               />
             </Field>

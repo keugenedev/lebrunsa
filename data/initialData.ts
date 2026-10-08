@@ -672,90 +672,6 @@ export const INITIAL_UPS_ASSETS: UPSAsset[] = [
 
 export const INITIAL_APPLICATIONS: ApplicationAccount[] = [
   {
-    "id": "app-1",
-    "employeeId": "emp-1",
-    "username": "phjbastien",
-    "lastName": "Paul-Henry",
-    "firstName": "Jacques",
-    "password": "CP@2026",
-    "applications": "DealerPro DMS",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Jacques Paul-Henry",
-    "windowsPassword": "1234"
-  },
-  {
-    "id": "app-2",
-    "employeeId": "emp-2",
-    "username": "accounting",
-    "lastName": "Marie Richenaderline",
-    "firstName": "Lafleur",
-    "password": "CP@2026",
-    "applications": "Microsoft GP & DealerPro",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Lafleur Marie Richenaderline",
-    "windowsPassword": "1234"
-  },
-  {
-    "id": "app-3",
-    "employeeId": "emp-3",
-    "username": "mgelin",
-    "lastName": "Lamarre",
-    "firstName": "Marjorie",
-    "password": "CP@2026",
-    "applications": "DealerPro DMS",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Marjorie Lamarre",
-    "windowsPassword": "1234"
-  },
-  {
-    "id": "app-4",
-    "employeeId": "emp-4",
-    "username": "chjoseph",
-    "lastName": "Joseph",
-    "firstName": "Carl-Hens",
-    "password": "CP@2026",
-    "applications": "DealerPro DMS",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Carl-Hens Joseph",
-    "windowsPassword": "1234"
-  },
-  {
-    "id": "app-5",
-    "employeeId": "emp-5",
-    "username": "oboisson",
-    "lastName": "Boisson",
-    "firstName": "Olivier",
-    "password": "CP@2026",
-    "applications": "DealerPro DMS",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Olivier Boisson",
-    "windowsPassword": "1234"
-  },
-  {
-    "id": "app-6",
-    "employeeId": "emp-6",
-    "username": "Vraymond",
-    "lastName": "Vamir Nycole",
-    "firstName": "Raymond",
-    "password": "CP@2026",
-    "applications": "DealerPro DMS",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Raymond Vamir Nycole",
-    "windowsPassword": "1234"
-  },
-  {
-    "id": "app-7",
-    "employeeId": "emp-7",
-    "username": "scadet",
-    "lastName": "Cadet",
-    "firstName": "Sebastien",
-    "password": "CP@2026",
-    "applications": "DealerPro DMS",
-    "organization": "Caribe Motors",
-    "windowsUsername": "Sebastien Cadet",
-    "windowsPassword": "1234"
-  },
-  {
     "id": "app-8",
     "employeeId": "emp-8",
     "username": "rmdguerrier",
@@ -877,9 +793,9 @@ export const INITIAL_APPLICATIONS: ApplicationAccount[] = [
   },
   {
     "id": "app-18",
-    "employeeId": "emp-18",
+    "employeeId": "EMP-ATB-011",
     "username": "fbellevu",
-    "lastName": "Bellevu",
+    "lastName": "Bellevue",
     "firstName": "Frantz",
     "password": "4299",
     "applications": "Microsoft GP",
@@ -955,7 +871,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB596",
+    "assetTag": "AST-CRB-001",
     "name": "Poste Dell Laptop CAR5CD2124TSG",
     "brand": "HP",
     "model": "Hp Pavilion Laptop",
@@ -1002,7 +918,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB907",
+    "assetTag": "AST-CRB-002",
     "name": "Poste Desktop Dell CAR4LVT942",
     "brand": "Dell",
     "model": "OptiPlex 3020",
@@ -1049,7 +965,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB859",
+    "assetTag": "AST-CRB-003",
     "name": "Poste Dell CARG7S10C2",
     "brand": "Dell",
     "model": "OptiPlex 5040",
@@ -1096,7 +1012,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB858",
+    "assetTag": "AST-CRB-004",
     "name": "Poste Dell CAR8X30BZ2",
     "brand": "Dell",
     "model": "OptiPlex 3060",
@@ -1143,7 +1059,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB264",
+    "assetTag": "AST-CRB-005",
     "name": "Poste Desktop Dell CAR2S86DH2",
     "brand": "Dell",
     "model": "OptiPlex 3040",
@@ -1190,7 +1106,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB343",
+    "assetTag": "AST-CRB-006",
     "name": "Poste Dell CAR7FM5Y12",
     "brand": "Dell",
     "model": "OptiPlex 3020",
@@ -1237,7 +1153,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Caribe Motors",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB149",
+    "assetTag": "AST-CRB-007",
     "name": "Poste Desktop Hp CAR4CS41100PQ",
     "brand": "HP- Hewlett-Packard",
     "model": "23-m230",
@@ -1284,7 +1200,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB01",
+    "assetTag": "AST-LBN-001",
     "name": "Poste Desktop LEBHWP6KH2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEBHWP6KH2)",
@@ -1331,7 +1247,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Autobiz",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-AUT02",
+    "assetTag": "AST-ATB-001",
     "name": "Poste Desktop AUTDR4G9N2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (AUTDR4G9N2)",
@@ -1378,7 +1294,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Autobiz",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-AUT03",
+    "assetTag": "AST-ATB-002",
     "name": "Poste Desktop AUTJKZKDH2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (AUTJKZKDH2)",
@@ -1425,7 +1341,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB04",
+    "assetTag": "AST-LBN-002",
     "name": "Poste Desktop LEB36LF4Z2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEB36LF4Z2)",
@@ -1472,7 +1388,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB05",
+    "assetTag": "AST-LBN-003",
     "name": "Poste Desktop GMMSRW1",
     "brand": "Dell",
     "model": "OptiPlex Workstation (GMMSRW1)",
@@ -1519,7 +1435,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB06",
+    "assetTag": "AST-LBN-004",
     "name": "Poste Desktop LEB31PY0T2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEB31PY0T2)",
@@ -1566,7 +1482,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB07",
+    "assetTag": "AST-LBN-005",
     "name": "Poste Desktop LEB1FC7XK2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEB1FC7XK2)",
@@ -1613,7 +1529,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB08",
+    "assetTag": "AST-LBN-006",
     "name": "Poste Desktop LEBHQW4HH2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEBHQW4HH2)",
@@ -1660,7 +1576,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB09",
+    "assetTag": "AST-LBN-007",
     "name": "Poste Desktop LEBJ33DH63",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEBJ33DH63)",
@@ -1707,7 +1623,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Autobiz",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-AUT10",
+    "assetTag": "AST-ATB-003",
     "name": "Poste Desktop AUT59PYQD2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (AUT59PYQD2)",
@@ -1754,7 +1670,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Autobiz",
     "subCategory": "laptop",
-    "assetTag": "AST-PC-AUT11",
+    "assetTag": "AST-ATB-004",
     "name": "Poste Laptop AUTFXMQTW3",
     "brand": "Dell",
     "model": "Dell Inspiron 15 Laptop",
@@ -1763,8 +1679,8 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "ram": "16 GB RAM",
     "storage": "1 TB SSD",
     "os": "Windows 11 Home",
-    "assignedTo": "Frantz Bellevu",
-    "assignedPersonnelId": "emp-18",
+    "assignedTo": "Frantz Bellevue",
+    "assignedPersonnelId": "EMP-ATB-011",
     "assignedDepartment": "Ventes & Showroom",
     "location": "Delmas 52",
     "status": "in_use",
@@ -1801,7 +1717,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "laptop",
-    "assetTag": "AST-PC-LEB12",
+    "assetTag": "AST-LBN-008",
     "name": "Poste Laptop LEB1H85350LG1",
     "brand": "Dell",
     "model": "Dell Inspiron 15 Laptop",
@@ -1848,7 +1764,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB13",
+    "assetTag": "AST-LBN-009",
     "name": "Poste Desktop LEB99RSMN2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEB99RSMN2)",
@@ -1895,7 +1811,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "laptop",
-    "assetTag": "AST-PC-LEB14",
+    "assetTag": "AST-LBN-010",
     "name": "Poste Laptop LEB1H8531195N",
     "brand": "HP",
     "model": "HP Victus Gaming Laptop",
@@ -1942,7 +1858,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Lebrun S.A.",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-LEB15",
+    "assetTag": "AST-LBN-011",
     "name": "Poste Desktop LEBJKLHZ23",
     "brand": "Dell",
     "model": "OptiPlex Workstation (LEBJKLHZ23)",
@@ -1989,7 +1905,7 @@ export const INITIAL_IT_ASSETS: ITAsset[] = [
     "category": "it",
     "company": "Autobiz",
     "subCategory": "desktop",
-    "assetTag": "AST-PC-AUT16",
+    "assetTag": "AST-ATB-005",
     "name": "Poste Desktop AUT3LTJMD2",
     "brand": "Dell",
     "model": "OptiPlex Workstation (AUT3LTJMD2)",
@@ -2066,14 +1982,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 11 Pro Intel Core i7 @ 2.80 GHz 500 GB SSD 16 GB RAM • Écran Hp 15.6\""
-    },
-    "accounts": {
-      "windowsUsername": "Jacques Paul-Henry",
-      "windowsPassword": "1234",
-      "appUsername": "phjbastien",
-      "appPassword": "CP@2026",
-      "applications": "DealerPro DMS",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2108,14 +2016,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 10 Pro Intel Core i3 @ 3.60 GHz 453 GB SSD 4 GB RAM • Écran Dell 24\" (SN: CN-0T776R-72872-0BA-0DHM)"
-    },
-    "accounts": {
-      "windowsUsername": "Lafleur Marie Richenaderline",
-      "windowsPassword": "1234",
-      "appUsername": "accounting",
-      "appPassword": "CP@2026",
-      "applications": "Microsoft GP & DealerPro",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2150,14 +2050,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 10 Pro Intel Core i7 @ 3.40 GHz 1 TB SSD 8 GB RAM • Écran Dell 27\" (SN: CN-0FM54-WSL00-38H-HTTL-A00)"
-    },
-    "accounts": {
-      "windowsUsername": "Marjorie Lamarre",
-      "windowsPassword": "1234",
-      "appUsername": "mgelin",
-      "appPassword": "CP@2026",
-      "applications": "DealerPro DMS",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2192,14 +2084,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 10 Pro Intel Core i5 @ 3.00 GHz 465 GB SSD 16 GB RAM • Écran Dell 24\" (SN: IN-0464TR-B8TFC-5CD-15HX-A01)"
-    },
-    "accounts": {
-      "windowsUsername": "Carl-Hens Joseph",
-      "windowsPassword": "1234",
-      "appUsername": "chjoseph",
-      "appPassword": "CP@2026",
-      "applications": "DealerPro DMS",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2234,14 +2118,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 10 Pro Intel Core i3 @ 3.70 GHz 500 GB SSD 8 GB RAM • Écran Dell 22\" (SN: CN-OHN22V-FCC00-1BT-DREB-A16)"
-    },
-    "accounts": {
-      "windowsUsername": "Olivier Boisson",
-      "windowsPassword": "1234",
-      "appUsername": "oboisson",
-      "appPassword": "CP@2026",
-      "applications": "DealerPro DMS",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2276,14 +2152,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 10 Pro Intel Core i3 @ 3.40 GHz 450 GB SSD 4 GB RAM • Écran Dell 23\" (SN: CN-0CFGKT-64180-38U-1G3T)"
-    },
-    "accounts": {
-      "windowsUsername": "Raymond Vamir Nycole",
-      "windowsPassword": "1234",
-      "appUsername": "Vraymond",
-      "appPassword": "CP@2026",
-      "applications": "DealerPro DMS",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2318,14 +2186,6 @@ export const INITIAL_EMPLOYEES: Employee[] = [
       "mouseObs": "Good",
       "generalState": "Good",
       "observations": "Windows 10 Pro Intel Core i5 @ 2.90 GHz 1 TB SSD 8 GB RAM • Écran Dell 23\" (SN: 4CS41100PQ) • Clavier: Défectueux"
-    },
-    "accounts": {
-      "windowsUsername": "Sebastien Cadet",
-      "windowsPassword": "1234",
-      "appUsername": "scadet",
-      "appPassword": "CP@2026",
-      "applications": "DealerPro DMS",
-      "organization": "Caribe Motors"
     }
   },
   {
@@ -2753,9 +2613,9 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     "employeeId": "EMP-ATB-011",
     "company": "Autobiz",
     "site": "Delmas 52",
-    "lastName": "Bellevu",
+    "lastName": "Bellevue",
     "firstName": "Frantz",
-    "fullName": "Frantz Bellevu",
+    "fullName": "Frantz Bellevue",
     "email": "fbellevu@autobizsa.com",
     "phone": "50938901234",
     "department": "Ventes & Showroom",

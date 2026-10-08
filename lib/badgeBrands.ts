@@ -303,12 +303,39 @@ export function generatePrinterId(company?: string, existingTags?: string[]): st
 }
 
 /**
- * Génère un tag de poste informatique conforme au parc : AST-PC-[CODE][NUMERO]
- * Ex : AST-PC-LEB01, AST-PC-AUT02, AST-PC-OBP01, AST-PC-CRB01
+ * Normalise un tag de poste informatique au format officiel : AST-[CODE]-[3_CHIFFRES]
+ * Ex : AST-PC-LEB596 (Caribe Motors) -> AST-CRB-001
+ * Ex : AST-PC-AUT02 (Autobiz) -> AST-ATB-001
+ * Ex : AST-PC-LEB01 (Lebrun S.A.) -> AST-LBN-001
+ */
+export function normalizeITAssetTag(currentTag: string, company?: string, fallbackIndex: number = 1): string {
+  const targetCode = getCompanyCode(company);
+  if (!currentTag) {
+    return `AST-${targetCode}-${String(fallbackIndex).padStart(3, '0')}`;
+  }
+
+  const clean = currentTag.trim().toUpperCase();
+  if (clean.startsWith(`AST-${targetCode}-`) && /^AST-[A-Z]{3}-\d{3}$/.test(clean)) {
+    return clean;
+  }
+
+  const digitsMatch = clean.match(/\d+/g);
+  let numStr = String(fallbackIndex).padStart(3, '0');
+  if (digitsMatch && digitsMatch.length > 0) {
+    const lastDigits = digitsMatch[digitsMatch.length - 1];
+    numStr = lastDigits.slice(-3).padStart(3, '0');
+  }
+
+  return `AST-${targetCode}-${numStr}`;
+}
+
+/**
+ * Génère un tag de poste informatique conforme au parc : AST-[CODE]-[3_CHIFFRES]
+ * Ex : AST-CRB-001, AST-LBN-001, AST-ATB-001, AST-OBP-001
  */
 export function generateITAssetTag(company?: string, existingTags?: string[]): string {
   const code = getCompanyCode(company);
-  const prefix = `AST-PC-${code}`;
+  const prefix = `AST-${code}-`;
 
   if (existingTags && existingTags.length > 0) {
     const matchingNumbers = existingTags
@@ -319,10 +346,10 @@ export function generateITAssetTag(company?: string, existingTags?: string[]): s
       });
     const maxNum = matchingNumbers.length > 0 ? Math.max(...matchingNumbers) : 0;
     const nextNum = maxNum + 1;
-    return `${prefix}${String(nextNum).padStart(2, '0')}`;
+    return `${prefix}${String(nextNum).padStart(3, '0')}`;
   }
 
-  return `${prefix}01`;
+  return `${prefix}001`;
 }
 
 /**

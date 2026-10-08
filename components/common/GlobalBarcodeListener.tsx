@@ -44,21 +44,13 @@ export default function GlobalBarcodeListener() {
 
           if (foundPrinter) {
             e.preventDefault();
-            if (openQRModal) {
-              openQRModal({
-                id: foundPrinter.id,
-                assetTag: foundPrinter.serialNumber || foundPrinter.assetTag,
-                name: `${foundPrinter.name} (${foundPrinter.model})`,
-                category: 'it',
-                location: foundPrinter.site || 'Delmas 52',
-                company: foundPrinter.company || 'Lebrun S.A.',
-                status: 'in_use' as any
-              } as any);
+            if (openBarcodeScanner) {
+              openBarcodeScanner(foundPrinter.assetTag || foundPrinter.serialNumber || scannedCode);
             }
             return;
           }
 
-          // 2. Chercher dans les postes IT Dell
+          // 2. Chercher dans les postes IT Dell / HP
           const foundIT = (itAssets || []).find((item: any) => 
             item && (
               (item.serialNumber && item.serialNumber.toUpperCase() === scannedCode) ||
@@ -70,8 +62,8 @@ export default function GlobalBarcodeListener() {
 
           if (foundIT) {
             e.preventDefault();
-            if (openQRModal) {
-              openQRModal(foundIT as any);
+            if (openBarcodeScanner) {
+              openBarcodeScanner(foundIT.assetTag || foundIT.serialNumber || scannedCode);
             }
             return;
           }
@@ -89,6 +81,15 @@ export default function GlobalBarcodeListener() {
             e.preventDefault();
             if (openBarcodeScanner) {
               openBarcodeScanner(foundEmp.employeeId || scannedCode);
+            }
+            return;
+          }
+
+          // 4. Si le code commence par les préfixes d'inventaire AST-, PRN- ou EMP-
+          if (scannedCode.startsWith('AST-') || scannedCode.startsWith('PRN-') || scannedCode.startsWith('EMP-')) {
+            e.preventDefault();
+            if (openBarcodeScanner) {
+              openBarcodeScanner(scannedCode);
             }
             return;
           }

@@ -63,7 +63,7 @@ export default function WorkstationDetailsModal({
 
   const accounts = linkedEmp?.accounts || (appAcc ? {
     windowsUsername: appAcc.windowsUsername || linkedEmp?.fullName || 'N/A',
-    windowsPassword: appAcc.windowsPassword || '1234',
+    windowsPassword: appAcc.windowsPassword || '',
     appUsername: appAcc.username,
     appPassword: appAcc.password,
     applications: appAcc.applications,
@@ -410,7 +410,7 @@ export default function WorkstationDetailsModal({
                       {accounts.windowsUsername}
                     </div>
                     <div className="text-[11px] font-mono text-slate-500">
-                      MDP: {showPasswords ? (accounts.windowsPassword || 'N/A') : '••••••••'}
+                      MDP: {accounts.windowsPassword ? (showPasswords ? accounts.windowsPassword : '••••••••') : 'Non configuré'}
                     </div>
                   </div>
 
@@ -429,7 +429,7 @@ export default function WorkstationDetailsModal({
                       @{accounts.appUsername}
                     </div>
                     <div className="text-[11px] font-mono text-slate-500">
-                      MDP: {showPasswords ? (accounts.appPassword || 'N/A') : '••••••••'}
+                      MDP: {accounts.appPassword ? (showPasswords ? accounts.appPassword : '••••••••') : 'Non configuré'}
                     </div>
                   </div>
                 </div>

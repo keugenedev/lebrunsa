@@ -12,6 +12,7 @@ interface BarcodeProps {
   className?: string;
   background?: string;
   lineColor?: string;
+  margin?: number;
 }
 
 export default React.memo(function Barcode({
@@ -22,7 +23,8 @@ export default React.memo(function Barcode({
   fontSize = 12,
   className = '',
   background = '#ffffff',
-  lineColor = '#0f172a'
+  lineColor = '#0f172a',
+  margin = 4
 }: BarcodeProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -37,18 +39,18 @@ export default React.memo(function Barcode({
         displayValue,
         font: 'monospace',
         fontSize,
-        textMargin: 4,
+        textMargin: 3,
         textAlign: 'center',
         textPosition: 'bottom',
         background,
         lineColor,
-        margin: 6,
+        margin,
         valid: () => true
       });
     } catch (err) {
       console.error('Erreur de génération Code 128:', err);
     }
-  }, [value, width, height, displayValue, fontSize, background, lineColor]);
+  }, [value, width, height, displayValue, fontSize, background, lineColor, margin]);
 
   if (!value) return null;
 

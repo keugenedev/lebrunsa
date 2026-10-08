@@ -60,6 +60,11 @@ export default function TagsPrintView() {
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [printCols, setPrintCols] = useState<3 | 4>(3);
+  const [rowSpacing, setRowSpacing] = useState<'normal' | 'comfortable' | 'spacious'>('comfortable');
+  const [fillSheet, setFillSheet] = useState<boolean>(false);
+
+  // Espacements dynamiques pour l'affichage écran
+  const screenRowGapClass = rowSpacing === 'spacious' ? 'gap-y-8' : rowSpacing === 'normal' ? 'gap-y-4' : 'gap-y-6';
 
   // Unified tags list
   const allTags: TagItem[] = useMemo(() => {
@@ -256,21 +261,54 @@ export default function TagsPrintView() {
 
   // Determine tags to print
   const printableTags = useMemo(() => {
-    if (selectedTagIds.size > 0) {
-      return filteredTags.filter((t) => selectedTagIds.has(t.id));
+    const baseList = selectedTagIds.size > 0
+      ? filteredTags.filter((t) => selectedTagIds.has(t.id))
+      : filteredTags;
+
+    if (!fillSheet || baseList.length === 0) {
+      return baseList;
     }
-    return filteredTags;
-  }, [filteredTags, selectedTagIds]);
+
+    // Capacité d'une feuille complète Letter : 18 tags (3 cols x 6 lignes) ou 24 (4 cols x 6 lignes)
+    const sheetCapacity = printCols * 6;
+    if (baseList.length >= sheetCapacity) {
+      return baseList;
+    }
+
+    const filledList: TagItem[] = [];
+    let idx = 0;
+    while (filledList.length < sheetCapacity) {
+      const original = baseList[idx % baseList.length];
+      filledList.push({
+        ...original,
+        id: `${original.id}-copy-${filledList.length}`
+      });
+      idx++;
+    }
+    return filledList;
+  }, [filteredTags, selectedTagIds, fillSheet, printCols]);
 
   const handlePrint = (singleTagId?: string) => {
+    const originalTitle = document.title;
+    // Supprimer le titre temporairement pour éviter que le navigateur n'imprime "Lebrun S.A." en haut de feuille
+    document.title = ' ';
+
+    const restoreTitle = () => {
+      document.title = originalTitle;
+      window.removeEventListener('afterprint', restoreTitle);
+    };
+    window.addEventListener('afterprint', restoreTitle);
+
     if (singleTagId) {
       const singleSet = new Set<string>([singleTagId]);
       setSelectedTagIds(singleSet);
       setTimeout(() => {
         window.print();
+        setTimeout(restoreTitle, 1500);
       }, 100);
     } else {
       window.print();
+      setTimeout(restoreTitle, 1500);
     }
   };
 
@@ -293,60 +331,72 @@ export default function TagsPrintView() {
       <style jsx global>{`
         @media print {
           @page {
-            size: portrait;
-            margin: 6mm 5mm;
+            size: letter portrait;
+            margin: 6mm 5mm !important;
           }
-          /* Déblocage de l'overflow pour imprimer TOUTES les pages */
-          html, body, div, main, section {
+          /* Déblocage et réinitialisation pour imprimer toutes les pages proprement */
+          html, body {
+            overflow: visible !important;
+            height: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          div, main, section {
             overflow: visible !important;
             height: auto !important;
             max-height: none !important;
             position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           /* Masquer les menus de navigation, la sidebar et le header */
           aside, header, nav, .no-print {
             display: none !important;
           }
-          body {
-            background: #ffffff !important;
-            color: #000000 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
           img {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          main {
+          /* Grille d'impression parfaitement calibrée pour 6 lignes (18 tags) par feuille Letter */
+          .print-area {
+            display: grid !important;
+            grid-template-columns: repeat(${printCols}, minmax(0, 1fr)) !important;
+            column-gap: 3.5mm !important;
+            row-gap: ${rowSpacing === 'spacious' ? '5mm' : rowSpacing === 'normal' ? '2mm' : '3mm'} !important;
             padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
           }
-          .print-area {
-            display: grid !important;
-            grid-template-columns: repeat(${printCols}, 1fr) !important;
-            gap: 6px !important;
-            padding: 0 !important;
-            width: 100% !important;
-            overflow: visible !important;
-            height: auto !important;
-          }
-          /* Style épuré Noir & Blanc compact anti-coupure */
+          /* Étiquettes individuelles calibrées pour 6 lignes par feuille Letter */
           .tag-print-badge {
             break-inside: avoid !important;
             page-break-inside: avoid !important;
             -webkit-column-break-inside: avoid !important;
             border: 1px solid #000000 !important;
             border-radius: 4px !important;
-            padding: 6px 8px !important;
+            padding: 4px 6px !important;
             background: #ffffff !important;
             color: #000000 !important;
             box-shadow: none !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
           }
         }
       `}</style>
@@ -553,11 +603,11 @@ export default function TagsPrintView() {
             )}
           </div>
 
-          {/* Print Columns Selector & View Mode Toggle */}
-          <div className="flex items-center gap-3">
+          {/* Print Columns Selector, Row Spacing & View Mode Toggle */}
+          <div className="flex items-center gap-2.5 flex-wrap">
             {/* 3 or 4 Tags per Line Selector */}
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-500 uppercase px-1.5 hidden sm:inline">Impression :</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase px-1.5 hidden sm:inline">Colonnes :</span>
               <button
                 onClick={() => setPrintCols(3)}
                 className={`px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer ${
@@ -581,6 +631,59 @@ export default function TagsPrintView() {
                 4 / ligne
               </button>
             </div>
+
+            {/* Espacement de découpe (Spécial papier adhésif Talbot) */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <span className="text-[10px] font-bold text-slate-500 uppercase px-1.5 hidden sm:inline">Espace coupe :</span>
+              <button
+                onClick={() => setRowSpacing('normal')}
+                className={`px-2 py-1 rounded-lg text-xs transition-all cursor-pointer ${
+                  rowSpacing === 'normal'
+                    ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 font-medium'
+                }`}
+                title="Espacement compact (2 mm)"
+              >
+                2mm
+              </button>
+              <button
+                onClick={() => setRowSpacing('comfortable')}
+                className={`px-2 py-1 rounded-lg text-xs transition-all cursor-pointer ${
+                  rowSpacing === 'comfortable'
+                    ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 font-medium'
+                }`}
+                title="Espacement optimal (3 mm - 6 rangées complètes / feuille)"
+              >
+                3mm (Optimal)
+              </button>
+              <button
+                onClick={() => setRowSpacing('spacious')}
+                className={`px-2 py-1 rounded-lg text-xs transition-all cursor-pointer ${
+                  rowSpacing === 'spacious'
+                    ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 font-medium'
+                }`}
+                title="Espacement large (5 mm)"
+              >
+                5mm
+              </button>
+            </div>
+
+            {/* Remplir la feuille Toggle pour ne laisser aucun vide */}
+            <button
+              onClick={() => setFillSheet(!fillSheet)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                fillSheet
+                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-2xs font-bold'
+                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:text-slate-900'
+              }`}
+              title="Dupliquer les étiquettes pour remplir toute la feuille sans gaspiller de papier adhésif"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Remplir la feuille</span>
+              {fillSheet && <span className="text-[10px] bg-black/20 px-1 py-0.2 rounded font-bold">Pleine</span>}
+            </button>
 
             {/* View Mode Toggle */}
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -610,6 +713,14 @@ export default function TagsPrintView() {
           </div>
         </div>
 
+        {/* Conseil impression propre sans en-tête / pied de page navigateur */}
+        <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+          <span className="font-semibold text-slate-700 shrink-0">💡 Conseil impression :</span>
+          <span>
+            Si votre navigateur affiche encore l&apos;heure ou l&apos;URL, ouvrez <strong>Plus de paramètres</strong> dans la fenêtre d&apos;impression et décochez <strong>&quot;En-têtes et pieds de page&quot;</strong>.
+          </span>
+        </div>
+
       </div>
 
       {/* Empty State */}
@@ -634,12 +745,12 @@ export default function TagsPrintView() {
 
       {/* Printable Area / Tags Display Grid */}
       {filteredTags.length > 0 && (
-        <div className={`print-area ${
+        <div className={`print-area ${screenRowGapClass} ${
           viewMode === 'grid'
             ? printCols === 4
-              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3'
-              : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'
-            : 'grid grid-cols-1 md:grid-cols-2 gap-3'
+              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3'
+              : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4'
+            : 'grid grid-cols-1 md:grid-cols-2 gap-x-3'
         }`}>
           {printableTags.map((item) => {
             const isSelected = selectedTagIds.has(item.id);
@@ -654,8 +765,8 @@ export default function TagsPrintView() {
                 }`}
               >
                 {/* Header Badge: Company & Site (No Tag Number at Top) */}
-                <div className="flex items-center justify-between border-b border-black/20 pb-1.5 mb-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex items-center justify-between border-b border-black/20 pb-0.5 mb-1">
+                  <div className="flex items-center gap-1 min-w-0">
                     <button
                       onClick={() => toggleSelectTag(item.id)}
                       className="no-print p-0.5 text-slate-400 hover:text-black cursor-pointer shrink-0"
@@ -669,40 +780,41 @@ export default function TagsPrintView() {
                     </button>
                     <CompanyLogo 
                       company={item.company} 
-                      className="h-5 sm:h-5.5 max-w-[90px] w-auto object-contain shrink-0" 
+                      className="h-4 max-w-[75px] w-auto object-contain shrink-0" 
                       showText={false} 
                     />
                   </div>
-                  <span className="text-[10px] font-bold text-black/80 truncate">
+                  <span className="text-[9.5px] font-bold text-black shrink-0 ml-1">
                     {item.site}
                   </span>
                 </div>
 
                 {/* Main Content: Asset Name & Details */}
-                <div className="space-y-0.5 mb-2 text-center">
-                  <h4 className="text-[11px] font-bold text-black leading-tight line-clamp-1">
+                <div className="space-y-0.5 mb-0.5 text-center min-w-0">
+                  <h4 className="text-[10px] font-bold text-black leading-tight line-clamp-1 truncate">
                     {item.name}
                   </h4>
-                  <div className="text-[10px] font-mono text-black/80 truncate">
+                  <div className="text-[9px] font-mono text-black/80 truncate">
                     {item.categoryLabel} {item.serialOrDetail ? `• ${item.serialOrDetail}` : ''}
                   </div>
                   {item.assignedTo && (
-                    <p className="text-[9px] text-black/70 italic truncate">
+                    <p className="text-[8.5px] font-medium text-black/80 truncate">
                       Attribué: {item.assignedTo}
                     </p>
                   )}
                 </div>
 
-                {/* Pure Black & White Code 128 Barcode (Displays Tag Number under barcode) */}
-                <div className="bg-white rounded p-1 border border-black/15 flex flex-col items-center justify-center my-0.5">
+                {/* Code-barres direct sans aucune boîte, carré ni fond gris */}
+                <div className="w-full flex flex-col items-center justify-center my-0.5 overflow-hidden">
                   <Barcode
                     value={item.tag}
-                    width={printCols === 4 ? 1.2 : 1.4}
-                    height={36}
-                    fontSize={10}
+                    width={printCols === 4 ? 1.05 : 1.18}
+                    height={30}
+                    fontSize={9}
                     displayValue={true}
                     lineColor="#000000"
-                    background="#ffffff"
+                    background="transparent"
+                    margin={2}
                   />
                 </div>
 

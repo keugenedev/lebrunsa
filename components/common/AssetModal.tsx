@@ -88,7 +88,7 @@ export default function AssetModal() {
       setName(it.name);
       setAssetTag(it.assetTag);
       setLocation(it.location || '');
-      setCompany((it as any).company || (it.assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.'));
+      setCompany((it as any).company || (it.assetTag.includes('CRB') ? 'Caribe Motors' : (it.assetTag.includes('AUT') || it.assetTag.includes('ATB')) ? 'Autobiz' : 'Lebrun S.A.'));
       setStatus(it.status);
       setNotes(it.notes || '');
       setAssignedPersonnelId(it.assignedPersonnelId || '');
@@ -231,7 +231,7 @@ export default function AssetModal() {
         (assignedEmp?.fullName || '').toLowerCase().includes('mia')
       );
 
-      const resolvedCompany = isDom ? 'Lebrun S.A.' : (isObp ? 'Obonprix' : (company || assignedEmp?.company || (assetTag.includes('AUT') ? 'Autobiz' : 'Lebrun S.A.')));
+      const resolvedCompany = isDom ? 'Lebrun S.A.' : (isObp ? 'Obonprix' : (company || assignedEmp?.company || (assetTag.includes('CRB') ? 'Caribe Motors' : (assetTag.includes('AUT') || assetTag.includes('ATB')) ? 'Autobiz' : 'Lebrun S.A.')));
       const resolvedLocation = isDom ? 'Delmas 52' : (isObp ? 'Delmas 83' : (location || assignedEmp?.site || assignedEmp?.location || 'Delmas 52'));
       const resolvedTag = assetTag.trim() || generateITAssetTag(resolvedCompany, itAssets.map(a => a.assetTag));
 
@@ -363,7 +363,7 @@ export default function AssetModal() {
                   required
                   value={assetTag}
                   onChange={(e) => setAssetTag(e.target.value)}
-                  placeholder="AST-PC-LEB01"
+                  placeholder="AST-CRB-001"
                   className="w-full h-10 px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono font-bold focus:outline-none focus:border-slate-400"
                 />
               </div>

@@ -199,7 +199,7 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Session Windows / PC */}
-                {acc?.windowsUsername && (
+                {acc?.windowsUsername && !acc.windowsUsername.toLowerCase().startsWith('emp') && (
                   <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
                     <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
                       <span>Session Windows Locale</span>
@@ -232,7 +232,7 @@ export default function EmployeeBarcodeModal({ employee, isOpen, onClose }: Empl
                 )}
 
                 {/* Application Logiciel Métier (Microsoft GP ou DealerPro) */}
-                {acc?.appUsername && (
+                {acc?.appUsername && !acc.appUsername.toLowerCase().startsWith('emp') && (
                   <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200 space-y-2">
                     <div className="font-semibold text-slate-800 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
