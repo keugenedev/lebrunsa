@@ -585,7 +585,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-10-08-v27-deduplicate-it-assets';
+  const CURRENT_DATA_VERSION = '2026-10-08-v29-sync-33-it-assets';
 
   // Tri antéchronologique des comptes applicatifs (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
@@ -707,7 +707,18 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
             // Supprimer tout faux poste inventé pour Obonprix
-            return mapped.filter((a: any) => !(a.company || '').toLowerCase().includes('obonprix') && !(a.assetTag || '').includes('OBP'));
+            const cleaned = mapped.filter((a: any) => !(a.company || '').toLowerCase().includes('obonprix') && !(a.assetTag || '').includes('OBP'));
+            const seenTags = new Set<string>();
+            const seenSerials = new Set<string>();
+            return cleaned.filter((a: any) => {
+              const tagKey = (a.assetTag || a.id || '').trim().toUpperCase();
+              if (!tagKey || seenTags.has(tagKey)) return false;
+              const snKey = (a.serialNumber || '').trim().toUpperCase();
+              if (snKey && snKey !== 'N/A' && snKey !== 'NONE' && seenSerials.has(snKey)) return false;
+              seenTags.add(tagKey);
+              if (snKey && snKey !== 'N/A' && snKey !== 'NONE') seenSerials.add(snKey);
+              return true;
+            });
           }
         } catch (e) { console.error(e); }
       }
@@ -1712,8 +1723,75 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         }
 
         // 6. Load IT Equipment from Supabase (Newest first)
-        const { data: dbIT, error: itErr } = await supabase.from('it_equipment').select('*');
-        if (!itErr && dbIT && dbIT.length > 0) {
+        const { data: rawDbIT, error: itErr } = await supabase.from('it_equipment').select('*');
+        let dbIT = rawDbIT || [];
+
+        // Insertion / synchronisation garantie du poste de Frantz Bellevue AST-ATB-004
+        const frantzAssetPayload = {
+          equipment_id: 'AST-ATB-004',
+          entreprise: 'Autobiz',
+          site: 'Delmas 52',
+          type_poste: 'Poste Laptop',
+          nom_pc: 'Poste Laptop AUTFXMQTW3',
+          marque: 'Dell',
+          modele: 'OptiPlex Workstation',
+          numero_serie_pc: 'FXMQTW3',
+          windows_os: 'Windows 11 Home',
+          cpu: 'Intel Core i7',
+          ram: '16 GB RAM',
+          stockage: '1 TB SSD',
+          details_pc: 'Windows 11 Home Intel Core i7 1 TB SSD 16 GB RAM',
+          assigne_a: 'Frantz Bellevue',
+          prenom: 'Frantz',
+          nom: 'Bellevue',
+          user_id: 'EMP-ATB-011',
+          departement: 'Ventes & Showroom',
+          ecran: 'Dell 27" (monitor)',
+          numero_serie_ecran: 'CN-01YCHF-WSL00-315-701B-A02',
+          observation_ecran: 'Good',
+          clavier: 'Clavier Logitech Wirless',
+          details_clavier: 'Clavier Logitech Wirless',
+          observation_clavier: 'Good',
+          souris: 'Logitech',
+          details_souris: 'Logitech',
+          observation_souris: 'Good',
+          etat_general: 'En service',
+          statut: 'in_use',
+          observations: 'Windows 11 Home Intel Core i7 1 TB SSD 16 GB RAM • Écran Dell 27" (monitor) (SN: CN-01YCHF-WSL00-315-701B-A02)',
+          notes: 'Windows 11 Home Intel Core i7 1 TB SSD 16 GB RAM • Écran Dell 27" (monitor) (SN: CN-01YCHF-WSL00-315-701B-A02)',
+          created_at: '2024-01-15T00:00:00.000Z'
+        };
+
+        const hasFrantzInDb = dbIT.some((r: any) => 
+          (r.equipment_id && r.equipment_id.toUpperCase() === 'AST-ATB-004') ||
+          (r.numero_serie_pc && r.numero_serie_pc.toUpperCase() === 'FXMQTW3') ||
+          (r.numero_serie && r.numero_serie.toUpperCase() === 'FXMQTW3')
+        );
+
+        if (!hasFrantzInDb) {
+          try {
+            const { data: inserted, error: insErr } = await supabase.from('it_equipment').upsert(frantzAssetPayload, { onConflict: 'equipment_id' }).select();
+            if (!insErr && inserted && inserted.length > 0) {
+              dbIT = [...dbIT, inserted[0]];
+            } else {
+              dbIT = [...dbIT, frantzAssetPayload];
+            }
+          } catch (e) {
+            dbIT = [...dbIT, frantzAssetPayload];
+          }
+        } else {
+          // Mise à jour de sécurité si existant avec données partielles
+          dbIT = dbIT.map((r: any) => {
+            if ((r.equipment_id && r.equipment_id.toUpperCase() === 'AST-ATB-004') ||
+                (r.numero_serie_pc && r.numero_serie_pc.toUpperCase() === 'FXMQTW3')) {
+              return { ...r, ...frantzAssetPayload };
+            }
+            return r;
+          });
+          void supabase.from('it_equipment').update(frantzAssetPayload).eq('equipment_id', 'AST-ATB-004');
+        }
+
+        if (dbIT && dbIT.length > 0) {
           setItAssets(prev => {
             const mappedFromDb: ITAsset[] = dbIT.map((r: any, idx: number) => {
               const rawTag = r.equipment_id ? String(r.equipment_id) : `AST-${r.entreprise?.toLowerCase().includes('caribe') ? 'CRB' : r.entreprise?.toLowerCase().includes('autobiz') ? 'ATB' : 'LBN'}-${(r.id || idx + 1).toString().padStart(3, '0')}`;
@@ -1739,7 +1817,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 model: r.modele || existingLocal?.model || initLocal?.model || 'OptiPlex Workstation',
                 serialNumber: pcSerial,
                 category: 'it' as const,
-                subCategory: (r.type_poste?.toLowerCase().includes('laptop') ? 'laptop' : existingLocal?.subCategory || initLocal?.subCategory || 'desktop') as ITAsset['subCategory'],
+                subCategory: (r.type_poste?.toLowerCase().includes('laptop') || r.type_poste?.toLowerCase().includes('portable') ? 'laptop' : existingLocal?.subCategory || initLocal?.subCategory || 'desktop') as ITAsset['subCategory'],
                 cpu: r.cpu || existingLocal?.cpu || initLocal?.cpu || 'Intel Core i5',
                 ram: r.ram || existingLocal?.ram || initLocal?.ram || '8 GB RAM',
                 storage: r.stockage || existingLocal?.storage || initLocal?.storage || '500 GB SSD',
@@ -1755,7 +1833,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 warrantyExpiry: existingLocal?.warrantyExpiry || initLocal?.warrantyExpiry || '2027-01-15',
                 purchaseCost: existingLocal?.purchaseCost || initLocal?.purchaseCost || 850,
                 workstation: {
-                  type: r.type_poste?.toLowerCase().includes('laptop') ? 'Laptop' : (existingLocal?.workstation?.type || initLocal?.workstation?.type || 'Desktop'),
+                  type: r.type_poste?.toLowerCase().includes('laptop') || r.type_poste?.toLowerCase().includes('portable') ? 'Laptop' : (existingLocal?.workstation?.type || initLocal?.workstation?.type || 'Desktop'),
                   pcName: pcName,
                   pcSerial: pcSerial,
                   pcSpecs: r.details_pc !== undefined && r.details_pc !== null ? r.details_pc : (existingLocal?.workstation?.pcSpecs || initLocal?.workstation?.pcSpecs || ''),
@@ -1776,15 +1854,31 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               };
             });
 
-            const localOnly = prev.filter(a => !mappedFromDb.some(dbA => dbA.assetTag === a.assetTag || dbA.id === a.id));
-            const seenIT = new Set<string>();
-            const deduplicated = [...localOnly, ...mappedFromDb].filter(a => {
-              const k = a.assetTag || a.id;
-              if (!k || seenIT.has(k)) return false;
-              seenIT.add(k);
+            // Déduplication stricte par Tag et Numéro de Série (aucun doublon)
+            const seenTags = new Set<string>();
+            const seenSerials = new Set<string>();
+            const cleanDbItems = mappedFromDb.filter(a => {
+              const tagKey = (a.assetTag || a.id || '').trim().toUpperCase();
+              if (!tagKey || seenTags.has(tagKey)) return false;
+              const snKey = (a.serialNumber || '').trim().toUpperCase();
+              if (snKey && snKey !== 'N/A' && snKey !== 'NONE' && seenSerials.has(snKey)) return false;
+
+              seenTags.add(tagKey);
+              if (snKey && snKey !== 'N/A' && snKey !== 'NONE') seenSerials.add(snKey);
               return true;
             });
-            const merged = sortByNewest(deduplicated);
+
+            // Ne conserver les éléments locaux uniquement s'ils sont réels, non obsolètes et absents de Supabase
+            const localOnly = prev.filter(a => {
+              const tagKey = (a.assetTag || a.id || '').trim().toUpperCase();
+              const snKey = (a.serialNumber || '').trim().toUpperCase();
+              if (!tagKey || seenTags.has(tagKey)) return false;
+              if (snKey && snKey !== 'N/A' && snKey !== 'NONE' && seenSerials.has(snKey)) return false;
+              if (tagKey.startsWith('IT-') || tagKey.includes('AST-PC-')) return false;
+              return true;
+            });
+
+            const merged = sortByNewest([...cleanDbItems, ...localOnly]);
             if (typeof window !== 'undefined') {
               localStorage.setItem('lebron_inv_it', JSON.stringify(merged));
             }
@@ -1811,7 +1905,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               return {
                 ...emp,
                 workstation: {
-                  type: itRow.type_poste?.toLowerCase().includes('laptop') ? 'Laptop' : (emp.workstation?.type || 'Desktop'),
+                  type: (itRow.type_poste?.toLowerCase().includes('laptop') || itRow.type_poste?.toLowerCase().includes('portable')) ? 'Laptop' : (emp.workstation?.type || 'Desktop'),
                   pcName: pcName,
                   pcSerial: pcSerial,
                   pcSpecs: itRow.details_pc || emp.workstation?.pcSpecs || '',
