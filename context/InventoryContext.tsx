@@ -585,7 +585,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Master data versioning - keeps cache synchronized with Supabase
-  const CURRENT_DATA_VERSION = '2026-10-08-v29-sync-33-it-assets';
+  const CURRENT_DATA_VERSION = '2026-10-08-v30-restore-employees';
 
   // Tri antéchronologique des comptes applicatifs (nouveaux ajouts en tête)
   const sortApplicationAccounts = (items: ApplicationAccount[]): ApplicationAccount[] => {
@@ -604,7 +604,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   const isTestEmployee = (e: any) => {
     const name = (e.fullName || `${e.firstName || ''} ${e.lastName || ''}`).toLowerCase().trim();
     const id = (e.employeeId || e.id || '').toLowerCase().trim();
-    return name.includes('madreige') || name.includes('laguerre') || name.startsWith('test') || id.startsWith('test-');
+    return name.startsWith('test ') || name === 'test' || id.startsWith('test-');
   };
 
   if (typeof window !== 'undefined') {
@@ -671,19 +671,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               return e;
             });
 
-            // Pour Obonprix : ne conserver strictement que la seule collaboratrice réelle (Gracia / Mia Guerrier)
-            const listWithoutFakeObp = sanitizedList.filter((e: any) => 
-              !(e.company || '').toLowerCase().includes('obonprix') || 
-              (e.fullName || '').toLowerCase().includes('mia') || 
-              (e.fullName || '').toLowerCase().includes('gracia') || 
-              (e.email || '').toLowerCase().includes('miaguerrier')
-            );
-            const hasMia = listWithoutFakeObp.some((e: any) => (e.email || '').toLowerCase().includes('miaguerrier') || (e.fullName || '').toLowerCase().includes('mia guerrier'));
+            // S'assurer que Gracia / Mia Guerrier est présente dans la liste Obonprix avec son email officiel
+            const hasMia = sanitizedList.some((e: any) => (e.email || '').toLowerCase().includes('miaguerrier') || (e.fullName || '').toLowerCase().includes('mia guerrier') || (e.fullName || '').toLowerCase().includes('gracia'));
             if (!hasMia) {
               const mia = INITIAL_EMPLOYEES.find(e => (e.email || '').includes('miaguerrier') || (e.company || '').toLowerCase().includes('obonprix'));
-              if (mia) listWithoutFakeObp.push(mia);
+              if (mia) sanitizedList.push(mia);
             }
-            return listWithoutFakeObp;
+            return sanitizedList;
           }
         } catch (e) { console.error(e); }
       }
@@ -1524,19 +1518,9 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
                 };
               }
               return e;
-            }).filter(e => {
-              if (isTestEmployee(e)) return false;
-              // Règle stricte Obonprix : une seule et unique collaboratrice (Gracia / Mia Guerrier)
-              if ((e.company || '').toLowerCase().includes('obonprix')) {
-                const isGraciaMia = (e.fullName || '').toLowerCase().includes('mia') ||
-                                    (e.fullName || '').toLowerCase().includes('gracia') ||
-                                    (e.email || '').toLowerCase().includes('miaguerrier');
-                return isGraciaMia;
-              }
-              return true;
-            });
+            }).filter(e => !isTestEmployee(e));
 
-            // S'assurer que Gracia / Mia Guerrier est toujours présente dans la liste Obonprix avec son email officiel
+            // S'assurer que Gracia / Mia Guerrier est présente dans la liste Obonprix avec son email officiel
             const hasMia = cleanDb.some((e: any) => (e.email || '').toLowerCase().includes('miaguerrier') || (e.fullName || '').toLowerCase().includes('mia guerrier') || (e.fullName || '').toLowerCase().includes('gracia'));
             if (!hasMia) {
               const mia = INITIAL_EMPLOYEES.find(e => (e.email || '').includes('miaguerrier') || (e.company || '').toLowerCase().includes('obonprix'));
@@ -1549,10 +1533,13 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
               });
             }
 
+            const localOnly = prev.filter(e => !cleanDb.some(dbE => dbE.employeeId === e.employeeId || dbE.id === e.id));
+            const merged = [...localOnly, ...cleanDb];
+
             if (typeof window !== 'undefined') {
-              localStorage.setItem('lebron_inv_employees', JSON.stringify(cleanDb));
+              localStorage.setItem('lebron_inv_employees', JSON.stringify(merged));
             }
-            return cleanDb;
+            return merged;
           });
         }
 

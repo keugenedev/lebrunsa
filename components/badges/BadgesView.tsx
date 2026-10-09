@@ -62,7 +62,7 @@ export default function BadgesView() {
   const isTestBadge = (emp: Employee) => {
     const name = (emp.fullName || '').toLowerCase().trim();
     const id = (emp.employeeId || emp.id || '').toLowerCase().trim();
-    return name.includes('madreige') || name.includes('laguerre') || name.startsWith('test') || id.startsWith('test-');
+    return name.startsWith('test ') || name === 'test' || id.startsWith('test-');
   };
 
   const filteredEmployees = useMemo(() => {
