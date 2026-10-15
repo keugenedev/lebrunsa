@@ -23,6 +23,7 @@ import { formatNif } from '@/lib/formatNif';
 import { LeaderBadgeRecto, LeaderBadgeVerso } from './LeaderBadge';
 import { CaribeBadgeRecto, CaribeBadgeVerso } from './CaribeBadge';
 import { ObonprixBadgeRecto, ObonprixBadgeVerso } from './ObonprixBadge';
+import { AutobizBadgeRecto, AutobizBadgeVerso } from './AutobizBadge';
 
 interface BadgeCardProps {
   employee: Employee;
@@ -49,6 +50,8 @@ export default React.memo(function BadgeCard({
 
   // QR Code vCard au verso (instantané grâce au cache)
   useEffect(() => {
+    if (brand.id === 'autobiz') return;
+
     if (qrCodeCache.has(cacheKey)) {
       setQrCodeUrl(qrCodeCache.get(cacheKey)!);
       return;
@@ -110,6 +113,9 @@ export default React.memo(function BadgeCard({
     }
     if (brand.id === 'obonprix') {
       return <ObonprixBadgeRecto employee={employee} brand={brand} refId={refId} />;
+    }
+    if (brand.id === 'autobiz') {
+      return <AutobizBadgeRecto employee={employee} brand={brand} refId={refId} />;
     }
 
     const fullNameLength = (employee.fullName || '').length;
@@ -263,6 +269,9 @@ export default React.memo(function BadgeCard({
           qrCodeUrl={qrCodeUrl}
         />
       );
+    }
+    if (brand.id === 'autobiz') {
+      return <AutobizBadgeVerso employee={employee} brand={brand} refId={refId} />;
     }
 
     return (

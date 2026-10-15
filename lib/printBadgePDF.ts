@@ -8,6 +8,7 @@ import { formatNif } from '@/lib/formatNif';
 import { LeaderBadgeRecto, LeaderBadgeVerso } from '@/components/badges/LeaderBadge';
 import { CaribeBadgeRecto, CaribeBadgeVerso } from '@/components/badges/CaribeBadge';
 import { ObonprixBadgeRecto, ObonprixBadgeVerso } from '@/components/badges/ObonprixBadge';
+import { AutobizBadgeRecto, AutobizBadgeVerso } from '@/components/badges/AutobizBadge';
 
 // Dimensions officielles standard CR80 (ISO 7810 ID-1) : 54 mm × 85.6 mm
 export const BADGE_WIDTH_MM = 54.0;
@@ -90,6 +91,43 @@ async function createRenderableBadgeElement(
   }
 
   // Rendu spécifique pour Leader Foods, Caribe Motors & Obonprix via les composants dédiés
+  if (brand.id === 'autobiz') {
+    const mountPoint = document.createElement('div');
+    mountPoint.style.position = 'fixed';
+    mountPoint.style.top = '-9999px';
+    mountPoint.style.left = '-9999px';
+    mountPoint.style.zIndex = '-1000';
+    document.body.appendChild(mountPoint);
+
+    const root = createRoot(mountPoint);
+    await new Promise<void>((resolve) => {
+      root.render(
+        face === 'recto'
+          ? React.createElement(AutobizBadgeRecto, { employee: emp, brand })
+          : React.createElement(AutobizBadgeVerso, { employee: emp, brand })
+      );
+      setTimeout(resolve, 30);
+    });
+
+    const badgeEl = (mountPoint.firstElementChild as HTMLDivElement) || mountPoint;
+    prepareBadgeForPrint(badgeEl);
+    const images = Array.from(badgeEl.querySelectorAll('img'));
+    await Promise.all(
+      images.map((img) => img.complete ? Promise.resolve() : new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      }))
+    );
+
+    return {
+      element: badgeEl,
+      cleanup: () => {
+        try { root.unmount(); } catch {}
+        if (mountPoint.parentNode) mountPoint.parentNode.removeChild(mountPoint);
+      }
+    };
+  }
+
   if (brand.id === 'leader' || brand.id === 'caribe' || brand.id === 'obonprix') {
     const mountPoint = document.createElement('div');
     mountPoint.style.position = 'fixed';
