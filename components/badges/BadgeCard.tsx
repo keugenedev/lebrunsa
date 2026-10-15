@@ -112,7 +112,7 @@ export default React.memo(function BadgeCard({
       return <CaribeBadgeRecto employee={employee} brand={brand} refId={refId} />;
     }
     if (brand.id === 'obonprix') {
-      return <ObonprixBadgeRecto employee={employee} brand={brand} refId={refId} />;
+      return <ObonprixBadgeVerso employee={employee} brand={brand} refId={refId} />;
     }
     if (brand.id === 'autobiz') {
       return <AutobizBadgeRecto employee={employee} brand={brand} refId={refId} />;
@@ -261,14 +261,7 @@ export default React.memo(function BadgeCard({
       );
     }
     if (brand.id === 'obonprix') {
-      return (
-        <ObonprixBadgeVerso
-          employee={employee}
-          brand={brand}
-          refId={refId}
-          qrCodeUrl={qrCodeUrl}
-        />
-      );
+      return <ObonprixBadgeRecto employee={employee} brand={brand} refId={refId} qrCodeUrl={qrCodeUrl} />;
     }
     if (brand.id === 'autobiz') {
       return <AutobizBadgeVerso employee={employee} brand={brand} refId={refId} />;

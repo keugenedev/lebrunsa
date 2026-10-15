@@ -62,7 +62,7 @@ export const AutobizBadgeRecto = React.memo(function AutobizBadgeRecto({ employe
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex justify-center px-7 pt-7 pb-3"><AutobizLogo className="h-[58px] max-w-[224px]" /></div>
         <div className="mt-4 flex justify-center px-6">
-          <div className="relative h-[181px] w-[163px] overflow-hidden rounded-[22px] border-[3px] border-white bg-slate-100 shadow-lg ring-1 ring-slate-300">
+          <div className="relative h-[181px] w-[163px] overflow-hidden rounded-[22px] border-[3px] border-slate-600 bg-slate-100 shadow-lg ring-1 ring-slate-800/60">
             {employee.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={employee.photoUrl} alt={employee.fullName} className="h-full w-full object-cover object-top" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -82,7 +82,7 @@ export const AutobizBadgeRecto = React.memo(function AutobizBadgeRecto({ employe
           <p className="truncate text-[10.5px] font-bold uppercase tracking-[0.11em] text-slate-700">{employee.jobTitle || 'COLLABORATEUR'}</p>
         </div>
         <div className="relative mt-auto border-t border-slate-200/80 bg-white/95 px-4 pt-2 pb-3 text-center">
-          <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#ed1c24]">ID {employee.employeeId}</p>
+          <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#ed1c24]">ID : {employee.employeeId}</p>
           <div className="flex justify-center"><Barcode value={employee.employeeId} width={1.25} height={31} fontSize={8} displayValue={false} background="#FFFFFF" lineColor="#15181c" /></div>
         </div>
       </div>

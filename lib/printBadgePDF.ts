@@ -165,7 +165,7 @@ async function createRenderableBadgeElement(
               );
             } else {
               root.render(
-                React.createElement(ObonprixBadgeVerso, { employee: emp, brand, qrCodeUrl: url })
+                React.createElement(ObonprixBadgeRecto, { employee: emp, brand, qrCodeUrl: url })
               );
             }
             setTimeout(resolve, 30);
@@ -181,9 +181,33 @@ async function createRenderableBadgeElement(
               );
             } else {
               root.render(
-                React.createElement(ObonprixBadgeVerso, { employee: emp, brand })
+                React.createElement(ObonprixBadgeRecto, { employee: emp, brand })
               );
             }
+            setTimeout(resolve, 30);
+          });
+      } else if (brand.id === 'obonprix') {
+        const vCardData = buildVCardString(emp, brand);
+        const cachedQr = vCardQrCache.get(vCardData);
+        const qrPromise = cachedQr
+          ? Promise.resolve(cachedQr)
+          : QRCode.toDataURL(vCardData, {
+              width: 320,
+              margin: 1,
+              errorCorrectionLevel: 'L',
+              color: { dark: '#000000', light: '#ffffff' }
+            }).then((url) => {
+              vCardQrCache.set(vCardData, url);
+              return url;
+            });
+
+        qrPromise
+          .then((url) => {
+            root.render(React.createElement(ObonprixBadgeVerso, { employee: emp, brand, qrCodeUrl: url }));
+            setTimeout(resolve, 30);
+          })
+          .catch(() => {
+            root.render(React.createElement(ObonprixBadgeVerso, { employee: emp, brand }));
             setTimeout(resolve, 30);
           });
       } else {
@@ -194,10 +218,6 @@ async function createRenderableBadgeElement(
         } else if (brand.id === 'leader') {
           root.render(
             React.createElement(LeaderBadgeRecto, { employee: emp, brand })
-          );
-        } else {
-          root.render(
-            React.createElement(ObonprixBadgeRecto, { employee: emp, brand })
           );
         }
         setTimeout(resolve, 30);
