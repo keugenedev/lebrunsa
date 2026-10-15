@@ -116,12 +116,12 @@ export const AutobizBadgeVerso = React.memo(function AutobizBadgeVerso({ employe
             ))}
           </div>
         </div>
-        <div className="mt-5 space-y-2 border-t border-slate-200 pt-3 text-[8.5px] font-semibold text-slate-600">
+        <div className="-mx-2 mt-5 space-y-1.5 border-t border-slate-200 px-2 py-2 text-[8px] font-bold text-black">
           <div className="flex items-center gap-2"><Globe className="h-3.5 w-3.5 text-[#ed1c24]" /><span>{brand.website}</span></div>
           <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-[#ed1c24]" /><span>{brand.phoneFormatted}</span></div>
           <div className="flex items-start gap-2"><MapPin className="mt-px h-3.5 w-3.5 shrink-0 text-[#ed1c24]" /><span>{brand.address}</span></div>
         </div>
-        <p className="mt-auto border-t border-slate-200 py-2 text-center text-[7px] font-medium leading-snug text-slate-500">Ce badge est strictement personnel et demeure la propriété d&apos;Autobiz S.A. En cas de perte, merci de le rapporter à la Direction.</p>
+        <p className="-mx-2 mt-auto border-t border-slate-200 bg-slate-50/80 px-2 py-2 text-left text-[6.8px] font-medium leading-tight text-black">Ce badge est strictement personnel et demeure la propriété d&apos;Autobiz S.A. En cas de perte, merci de le rapporter à la Direction.</p>
         <div className="-mx-5 flex items-center justify-between bg-[#171a1e] px-5 py-2.5 text-white">
           <span className="flex items-center gap-1.5 text-[8.5px] font-bold uppercase tracking-wide"><Lock className="h-3.5 w-3.5 text-[#ed1c24]" />Personnel autorisé</span>
           <span className="font-mono text-[9px] font-bold text-slate-200">{employee.employeeId}</span>
