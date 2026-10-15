@@ -14,11 +14,11 @@ interface AutobizBadgeProps {
 }
 
 const PARTNERS = [
-  { name: 'Automotive Art', src: '/logos/partners/art.png', className: 'h-11 w-11' },
   { name: 'Alomoto', src: '/logos/partners/alomoto.png', className: 'h-8 w-[62px]' },
   { name: 'Titan', src: '/logos/partners/titan.png', className: 'h-7 w-[58px]' },
   { name: 'Toro', src: '/logos/partners/toro.png', className: 'h-7 w-[58px]' },
   { name: 'Shell', src: '/logos/partners/shell.png', className: 'h-9 w-[48px]' },
+  { name: 'Automotive Art', src: '/logos/partners/art.png', className: 'h-11 w-11' },
 ] as const;
 
 function AutobizLogo({ className = 'h-14 max-w-[220px]' }: { className?: string }) {
@@ -52,7 +52,7 @@ function CornerArtwork({ id }: { id: string }) {
 }
 
 /** Badge Autobiz : blanc, gris pâle et rouge avec partenaires au verso. */
-export const AutobizBadgeRecto = React.memo(function AutobizBadgeRecto({ employee, brand, refId }: AutobizBadgeProps) {
+export const AutobizBadgeRecto = React.memo(function AutobizBadgeRecto({ employee, refId }: AutobizBadgeProps) {
   const fullNameLength = (employee.fullName || '').length;
   const artId = (employee.id || employee.employeeId || 'autobiz').replace(/[^a-zA-Z0-9_-]/g, '_');
 
@@ -61,10 +61,8 @@ export const AutobizBadgeRecto = React.memo(function AutobizBadgeRecto({ employe
       <CornerArtwork id={`front-${artId}`} />
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex justify-center px-7 pt-7 pb-3"><AutobizLogo className="h-[58px] max-w-[224px]" /></div>
-        <div className="mx-auto h-1 w-20 rounded-full" style={{ backgroundColor: brand.accentColor }} />
         <div className="mt-4 flex justify-center px-6">
           <div className="relative h-[181px] w-[163px] overflow-hidden rounded-[22px] border-[3px] border-white bg-slate-100 shadow-lg ring-1 ring-slate-300">
-            <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ed1c24]" />
             {employee.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={employee.photoUrl} alt={employee.fullName} className="h-full w-full object-cover object-top" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -75,10 +73,10 @@ export const AutobizBadgeRecto = React.memo(function AutobizBadgeRecto({ employe
         </div>
         <div className="mt-3 px-5 text-center">
           <h2 className={`font-extrabold uppercase text-[#171a1e] line-clamp-2 ${fullNameLength > 25 ? 'text-[12px] leading-snug tracking-tight' : fullNameLength > 18 ? 'text-[13.5px] leading-snug' : 'text-[15.5px] leading-tight tracking-wide'}`} style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>{employee.fullName}</h2>
-          <div className="mt-1 flex flex-wrap justify-center gap-x-2 text-[9px] font-mono font-semibold uppercase tracking-wide text-slate-600">
-            {employee.nif?.trim() && <span>NIF : {formatNif(employee.nif)}</span>}
+          <div className="mt-1 flex flex-wrap justify-center gap-x-2 text-[9px] font-mono uppercase tracking-wide">
+            {employee.nif?.trim() && <span className="font-extrabold text-black">NIF : {formatNif(employee.nif)}</span>}
             {employee.nif?.trim() && employee.bloodGroup?.trim() && <span className="text-slate-300">•</span>}
-            {employee.bloodGroup?.trim() && <span className="text-[#ed1c24]">GS : {employee.bloodGroup.toUpperCase()}</span>}
+            {employee.bloodGroup?.trim() && <span className="font-extrabold text-[#ed1c24]">GS : {employee.bloodGroup.toUpperCase()}</span>}
           </div>
           <div className="mx-auto my-2 h-[2px] w-14 rounded-full bg-[#ed1c24]" />
           <p className="truncate text-[10.5px] font-bold uppercase tracking-[0.11em] text-slate-700">{employee.jobTitle || 'COLLABORATEUR'}</p>
@@ -99,15 +97,24 @@ export const AutobizBadgeVerso = React.memo(function AutobizBadgeVerso({ employe
       <CornerArtwork id={`back-${artId}`} />
       <div className="relative z-10 flex h-full flex-col px-5">
         <div className="flex justify-center pt-8"><AutobizLogo className="h-[64px] max-w-[232px]" /></div>
-        <div className="mx-auto mt-1 h-1 w-24 rounded-full bg-[#ed1c24]" />
         <p className="mt-5 text-center text-[8.5px] font-bold uppercase tracking-[0.2em] text-slate-500">Marques distribuées</p>
-        <div className="mt-3 grid grid-cols-3 items-center gap-x-2 gap-y-3 rounded-2xl border border-slate-200 bg-white/95 px-2 py-4 shadow-sm">
-          {PARTNERS.map((partner, index) => (
-            <div key={partner.name} className={`flex h-12 items-center justify-center ${index === 3 ? 'col-start-1 col-end-3 translate-x-5' : ''}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={partner.src} alt={partner.name} className={`${partner.className} object-contain`} />
-            </div>
-          ))}
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-white/95 px-2 py-4 shadow-sm">
+          <div className="grid grid-cols-3 items-center gap-x-2">
+            {PARTNERS.slice(0, 3).map((partner) => (
+              <div key={partner.name} className="flex h-12 items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={partner.src} alt={partner.name} className={`${partner.className} object-contain`} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-8">
+            {PARTNERS.slice(3).map((partner) => (
+              <div key={partner.name} className="flex h-12 w-14 items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={partner.src} alt={partner.name} className={`${partner.className} object-contain`} />
+              </div>
+            ))}
+          </div>
         </div>
         <div className="mt-5 space-y-2 border-t border-slate-200 pt-3 text-[8.5px] font-semibold text-slate-600">
           <div className="flex items-center gap-2"><Globe className="h-3.5 w-3.5 text-[#ed1c24]" /><span>{brand.website}</span></div>

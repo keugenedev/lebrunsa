@@ -70,10 +70,10 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
     legalName: 'Autobiz S.A.',
     logo: '/logos/Autobiz.png',
     fallbackLogo: '/Autobiz.png',
-    website: 'www.autobiz.ht',
+    website: 'www.autobizsa.com',
     email: 'info@autobiz.ht',
-    phone: '29403002',
-    phoneFormatted: '(+509) 2940-3002',
+    phone: '34011919',
+    phoneFormatted: '(+509) 3401-1919',
     address: 'Delmas 52, Port-au-Prince, Haïti',
     // Exact Autobiz Colors: Charcoal & Autobiz Red
     bgPrimary: '#14171A',
@@ -82,7 +82,7 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
     footerText: '#ffffff',
     textColor: '#ffffff',
     lineColor: '#E11D24',
-    terms: 'Ce badge est strictement personnel et demeure la propriété d\'Autobiz S.A. En cas de perte, contacter la Direction au (+509) 2940-3002.'
+    terms: 'Ce badge est strictement personnel et demeure la propriété d\'Autobiz S.A. En cas de perte, contacter la Direction au (+509) 3401-1919.'
   },
   leader: {
     id: 'leader',
