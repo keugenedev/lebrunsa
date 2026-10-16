@@ -52,12 +52,12 @@ export const ObonprixBadgeRecto = React.memo(function ObonprixBadgeRecto({ emplo
         <ObonprixIcon className="absolute -top-4 -left-2 h-[414px] w-[305px] max-w-none object-left-top" />
       </div>
       {qrCodeUrl && (
-        <div className="absolute left-1/2 top-[103px] z-10 -translate-x-1/2 rounded-xl bg-white p-1.5 shadow-sm">
+        <div className="absolute left-1/2 top-[103px] z-10 -translate-x-1/2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrCodeUrl} alt="QR Code Obonprix" className="h-24 w-24 object-contain" style={{ imageRendering: 'pixelated' }} />
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 flex h-[94px] flex-col items-center justify-center bg-white px-3 pt-1.5 pb-2 border-t border-slate-100 z-10">
+      <div className="absolute inset-x-0 bottom-0 z-10 flex h-[94px] flex-col items-center justify-center px-3 pt-1.5 pb-2">
         <ObonprixLogo brand={brand} className="h-[34px] max-w-[210px]" />
         <div className="mt-1.5 w-full flex items-center justify-center">
           <Barcode
