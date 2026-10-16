@@ -44,6 +44,8 @@ function splitName(fullName: string) {
 
 /** Face marque : l'icône Obonprix et le logo officiel occupent toute la carte. */
 export const ObonprixBadgeRecto = React.memo(function ObonprixBadgeRecto({ employee, brand, refId, qrCodeUrl }: ObonprixBadgeProps) {
+  const barcodeValue = (employee.employeeId || employee.id || 'EMP-OBP-001').trim().toUpperCase();
+
   return (
     <div id={refId} className="badge-front font-montserrat relative w-[288px] h-[456.5px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl print:border-none print:rounded-none print:shadow-none">
       <div className="absolute inset-x-0 top-0 h-[380px] overflow-hidden">
@@ -55,10 +57,18 @@ export const ObonprixBadgeRecto = React.memo(function ObonprixBadgeRecto({ emplo
           <img src={qrCodeUrl} alt="QR Code Obonprix" className="h-24 w-24 object-contain" style={{ imageRendering: 'pixelated' }} />
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 flex h-[76px] flex-col items-center bg-white pt-1">
+      <div className="absolute inset-x-0 bottom-0 flex h-[94px] flex-col items-center justify-center bg-white px-3 pt-1.5 pb-2 border-t border-slate-100 z-10">
         <ObonprixLogo brand={brand} className="h-[34px] max-w-[210px]" />
-        <div className="mt-1 flex h-[24px] justify-center overflow-hidden">
-          <Barcode value={employee.employeeId} width={0.82} height={24} fontSize={6} displayValue={false} background="#FFFFFF" lineColor="#171717" />
+        <div className="mt-1.5 w-full flex items-center justify-center">
+          <Barcode
+            value={barcodeValue}
+            width={1.35}
+            height={38}
+            displayValue={false}
+            background="#FFFFFF"
+            lineColor="#000000"
+            margin={2}
+          />
         </div>
       </div>
     </div>

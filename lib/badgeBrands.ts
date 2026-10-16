@@ -130,7 +130,7 @@ export const BRAND_CONFIGS: Record<string, BrandConfig> = {
     legalName: 'Obonprix S.A.',
     logo: '/logos/obonprix.png',
     fallbackLogo: '/obonprixlogo.png',
-    website: 'www.obonprix53.com',
+    website: 'www.obonprix83.com',
     email: 'info@obonprix83.com',
     phone: '29403006',
     phoneFormatted: '(+509) 2940-3006',
