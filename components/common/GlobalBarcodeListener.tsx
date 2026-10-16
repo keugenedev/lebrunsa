@@ -21,14 +21,20 @@ export default function GlobalBarcodeListener() {
       const diff = now - lastKeyTimeRef.current;
       lastKeyTimeRef.current = now;
 
-      // Si le délai entre deux frappes est supérieur à 100ms, ce n'est pas une douchette rapide
-      if (diff > 100) {
+      // Si le délai entre deux frappes est supérieur à 300ms, réinitialiser le tampon
+      // (300ms garantit que les douchettes USB/Bluetooth avec délai inter-caractères ne sont pas tronquées)
+      if (diff > 300) {
         bufferRef.current = '';
       }
 
-      if (e.key === 'Enter') {
-        const scannedCode = (bufferRef.current || '').trim().toUpperCase();
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        let scannedCode = (bufferRef.current || '').trim().toUpperCase();
         bufferRef.current = '';
+
+        // Supprimer les identifiants AIM éventuels transmis par certains scanners (ex: ]C1, ]Q1, ]e0)
+        if (/^\][A-Z0-9]{2}/i.test(scannedCode)) {
+          scannedCode = scannedCode.substring(3);
+        }
 
         if (scannedCode && scannedCode.length >= 3 && !isInput) {
           // 1. Chercher dans les imprimantes HP
@@ -72,6 +78,7 @@ export default function GlobalBarcodeListener() {
           const foundEmp = (employees || []).find(emp => 
             emp && (
               (emp.employeeId && emp.employeeId.toUpperCase() === scannedCode) ||
+              (emp.id && emp.id.toUpperCase() === scannedCode) ||
               (emp.workstation?.pcSerial && emp.workstation.pcSerial.toUpperCase() === scannedCode) ||
               (emp.workstation?.pcName && emp.workstation.pcName.toUpperCase() === scannedCode)
             )
@@ -105,7 +112,7 @@ export default function GlobalBarcodeListener() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [itAssets, printers, employees, openQRModal]);
+  }, [itAssets, printers, employees, openQRModal, openBarcodeScanner]);
 
   return null;
 }

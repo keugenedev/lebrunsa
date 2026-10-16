@@ -90,7 +90,20 @@ export const ObonprixBadgeVerso = React.memo(function ObonprixBadgeVerso({ emplo
             <p className="text-[14px] font-medium leading-none text-[#574C46]">{firstName}</p>
             {lastName && <p className="mt-1 text-[16px] font-extrabold uppercase leading-none text-[#574C46]">{lastName}</p>}
             <p className="mt-1.5 text-[9px] font-extrabold leading-tight text-[#574C46]">{employee.jobTitle || 'Collaborateur'}</p>
-            {employee.nif?.trim() && <p className="mt-2 text-[8.5px] font-extrabold uppercase tracking-wide text-[#574C46]">NIF : {formatNif(employee.nif)}</p>}
+            {(employee.nif?.trim() || employee.bloodGroup?.trim()) && (
+              <div className="mt-1">
+                {employee.nif?.trim() && (
+                  <p className="text-[8.5px] font-extrabold uppercase tracking-wide text-[#574C46]">
+                    NIF : {formatNif(employee.nif)}
+                  </p>
+                )}
+                {employee.bloodGroup?.trim() && (
+                  <p className="mt-0.5 text-[8.5px] font-mono font-extrabold uppercase tracking-wide text-[#DA2027]">
+                    GS : {employee.bloodGroup.toUpperCase()}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

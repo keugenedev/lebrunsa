@@ -103,10 +103,19 @@ export default function BarcodeScannerModal({ isOpen, onClose }: BarcodeScannerM
   if (!isOpen) return null;
 
   const processBarcode = (code: string) => {
-    const cleanCode = code.trim().toUpperCase();
+    let cleanCode = code.trim().toUpperCase();
     if (!cleanCode) return;
 
-    const matchStr = (val?: string) => Boolean(val && val.trim().toUpperCase() === cleanCode);
+    // Supprimer les identifiants AIM éventuels (ex: ]C1)
+    if (/^\][A-Z0-9]{2}/i.test(cleanCode)) {
+      cleanCode = cleanCode.substring(3);
+    }
+
+    const matchStr = (val?: string) => {
+      if (!val) return false;
+      const v = val.trim().toUpperCase();
+      return v === cleanCode || (cleanCode.startsWith('EMP-') && v === cleanCode) || (!cleanCode.startsWith('EMP-') && v === `EMP-${cleanCode}`);
+    };
 
     // 1. Chercher dans les imprimantes HP
     const foundPrinter = printers.find(p => 
